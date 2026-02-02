@@ -1,0 +1,7 @@
+{
+  "name": "OJTrack",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
