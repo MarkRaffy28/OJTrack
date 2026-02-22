@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
 
   server: {
-    url: process.env.API_URL,
+    url: process.env.SERVER_URL,
     cleartext: true,
     androidScheme: "http",
   },
