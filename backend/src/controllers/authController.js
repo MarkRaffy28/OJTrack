@@ -1,38 +1,32 @@
 const bcrypt = require("bcrypt");
 const userModel = require("../models/userModel");
+const userValidator = require("../validators/userValidator");
 
-exports.register = async (req, res) => {
+exports.registerStudent = async (req, res) => {
+  const { error, value } = userValidator.studentRegistrationSchema.validate(req.body);
+
+  if (error) {
+    return res.status(400).json({
+      message: error.details[0].message
+    });
+  }
+
   try {
-    const { name, email, password } = req.body;
-
-    // 1️⃣ Validate input
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    // 2️⃣ Check if user exists
-    const existingUser = await userModel.findByEmail(email);
+    const existingUser = await userModel.findByUsername(value.username);
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+      return res.status(409).json({ message: "Username already exists" });
     }
 
-    // 3️⃣ Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 4️⃣ Create user
-    const userId = await userModel.createUser(
-      name,
-      email,
-      hashedPassword
-    );
+    value.password = await bcrypt.hash(value.password, 10);
+    const userID = await userModel.createStudentUser(value);
 
     res.status(201).json({
       message: "User registered successfully",
-      userId
+      userID
     });
 
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
-};
+}

@@ -31,15 +31,15 @@ CREATE TABLE supervisor_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
   supervisor_id INT NOT NULL UNIQUE,
   office_id INT NOT NULL,
-  FOREIGN KEY (supervisor_id) REFERENCES supervisor(id),
-  FOREIGN KEY (office_id) REFERENCES office(id)
+  FOREIGN KEY (supervisor_id) REFERENCES users(id),
+  FOREIGN KEY (office_id) REFERENCES offices(id)
 );
 
-CREATE TABLE office (
+CREATE TABLE offices (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL, 
   address VARCHAR(255),
   contact_email VARCHAR(150), 
   contact_phone VARCHAR(20),  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
