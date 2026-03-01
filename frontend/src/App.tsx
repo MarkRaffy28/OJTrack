@@ -17,6 +17,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
 import Register from './pages/Register';
+import Login from './pages/Login';
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -28,7 +29,8 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonRouterOutlet>
         <Route exact path="/register" component={Register} />
-        <Redirect to="/register" />
+        <Route exact path="/login" component={Login} />
+        <Redirect to="login" />
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>
