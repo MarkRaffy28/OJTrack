@@ -17,7 +17,9 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "joi": "^18.0.2",
-    "mysql2": "^3.17.2"
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.17.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

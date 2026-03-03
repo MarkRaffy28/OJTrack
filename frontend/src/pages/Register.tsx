@@ -152,7 +152,6 @@ function Register() {
     setUserIdError("");
 
     const userId = selectedRole === "student" ? studentId : employeeId;
-    console.log(userId)
 
     if (studentId.length > 5 || employeeId.length > 3) {
       try {
@@ -400,12 +399,10 @@ function Register() {
   const handleRegister = async () => {
     if (!termsAccepted || !formDataRef.current) return;
 
-    console.log(formDataRef.current)
-
     try {
       const response = await API.post(`/auth/register/${selectedRole}`, formDataRef.current);
 
-      if (response.data.userId) {
+      if (response.data.newUserId) {
         formDataRef.current = null;
         setRedirectMessage("Account created! Redirecting to login...");
         setIsRedirecting(true);
@@ -418,6 +415,11 @@ function Register() {
       setRegistrationError("Registration failed. Please try again later.");
     } finally {
       setShowTermsModal(false);
+      setTimeout(() => {
+        setRegistrationStep("role");
+        setRedirectMessage("");
+        setIsRedirecting(false);
+      }, 3000)
     }
   };
 
@@ -493,7 +495,10 @@ function Register() {
         </IonText>
       </div>
 
-      <div className="register-form">
+      <form 
+        className="register-form"
+        onSubmit={(e) => { e.preventDefault(); handleUsernameCheck(); }}
+      >
         <div className={`input-group ${usernameError ? 'input-error' : ''}`}>
           <label className="floating-label">
             <IonIcon icon={personOutline} className="label-icon" />
@@ -542,10 +547,10 @@ function Register() {
         </div>
 
         <button
+          type="submit"
           className={`register-button ${
             username.length >= 3 && !usernameError && usernameAvailable ? 'button-ready' : ''
           }`}
-          onClick={handleUsernameCheck}
           disabled={usernameAvailable || username.length < 3 || isCheckingUsername}
         >
           {isCheckingUsername ? (
@@ -573,7 +578,7 @@ function Register() {
             </IonText>
           </button>
         )}
-      </div>
+      </form>
     </div>
   );
 
@@ -607,7 +612,10 @@ function Register() {
           </button>
         </div>
 
-        <div className="register-form">
+        <form 
+          className="register-form"
+          onSubmit={(e) => { e.preventDefault(); onRegisterSubmit(); }}
+        >
           {/* Password */}
           <div className={`input-group ${isPasswordTouched && !isPasswordValid ? "input-error" : ""}`}>
             <label className="floating-label">
@@ -630,6 +638,7 @@ function Register() {
                 placeholder="Create a password"
               />
               <button
+                type="button"
                 className="password-toggle"
                 onClick={() => setShowPassword(!showPassword)}
               >
@@ -675,6 +684,7 @@ function Register() {
                 placeholder="Confirm your password"
               />
               <button
+                type="button"
                 className="password-toggle"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
@@ -1333,14 +1343,14 @@ function Register() {
 
           {/* Submit */}
           <button
+            type="submit"
             className={`register-button ${formReady ? "button-ready" : ""}`}
-            onClick={onRegisterSubmit}
             disabled={!formReady}
           >
             <span>Continue</span>
             <IonIcon icon={arrowForwardOutline} className="button-icon" />
           </button>
-        </div>
+        </form>
       </div>
     );
   };
