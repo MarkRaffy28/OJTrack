@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner, useIonRouter } from '@ionic/react';
-import { Preferences } from '@capacitor/preferences';
 import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, personRemove } from 'ionicons/icons';
 import { useAuth } from '../context/authContext';
 import API from '../api/api';
 
 const Login: React.FC = () => {
   const ionRouter = useIonRouter();
-  const { login, role } = useAuth();
+  const { login, role, loading } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -18,26 +17,25 @@ const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formReady = username && password;
+  
+  useEffect(() => {
+    if (loading || !role) return;
+
+    if (role === "student") {
+      ionRouter.push("/dashboard", "forward", "replace");
+    }
+  }, [role, loading]);
 
   const handleLogin = async () => {
     if (isSubmitting || !formReady) return;
     setIsSubmitting(true);
 
     try {
-      const response = await API.post("/auth/login", { 
-        username: username,
-        password: password
-      });
+      const response = await API.post("/auth/login", { username, password });
 
       if (response.data.token) {
         setLoginError("");
-
         await login(response.data.token);
-
-        if (role === "user") {
-          ionRouter.push("/dashboard", "forward", "replace");
-        }
-
       } else {
         setLoginError("Invalid username and password");
       }
@@ -143,7 +141,7 @@ const Login: React.FC = () => {
               <button
                 type="submit"
                 className={`login-button ${formReady ? 'button-ready' : ''}`}
-                disabled={!formReady || isSubmitting}
+                disabled={!formReady || isSubmitting || loading}
               >
                 {
                   isSubmitting ? (

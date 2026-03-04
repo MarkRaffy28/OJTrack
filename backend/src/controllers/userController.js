@@ -71,3 +71,23 @@ exports.checkEmail = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 }
+
+exports.fetchStudentInformation = async (req, res) => {
+  const { databaseId } = req.body;
+
+  try {
+    const student = await userModel.fetchStudentInformation(databaseId);
+
+    if (!student) {
+      res.status(404).json({
+        message: "Student not found"
+      })
+    }
+
+    return res.status(200).json(student);
+
+  } catch(error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+}

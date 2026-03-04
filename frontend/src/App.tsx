@@ -18,12 +18,14 @@ import { IonReactRouter } from '@ionic/react-router';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
 import { AuthProvider } from './context/authContext';
+import { UserProvider } from './context/userContext';
 import { RoleRoute } from './components/RoleRoute';
 
 import Register from './pages/Register';
 import Login from './pages/Login';
+import Logout from './pages/Logout';
 
-import Dashboard from './pages/user/Dashboard';
+import Dashboard from './pages/student/Dashboard';
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -33,15 +35,18 @@ setupIonicReact();
 const App: React.FC = () => (
   <IonApp>
     <AuthProvider>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Route exact path="/register" component={Register} />
-          <Route exact path="/login" component={Login} />
+      <UserProvider>
+        <IonReactRouter>
+          <IonRouterOutlet>
+            <Route exact path="/register" component={Register} />
+            <Route exact path="/login" component={Login} />
+            <Route exact path="/logout" component={Logout} />
 
-          <RoleRoute exact path="/dashboard" component={Dashboard} allowedRoles={['user']} />
-          <Redirect to="login" />
-        </IonRouterOutlet>
-      </IonReactRouter>
+            <RoleRoute exact path="/dashboard" component={Dashboard} allowedRoles={['student']} />
+            <Redirect to="login" />
+          </IonRouterOutlet>
+        </IonReactRouter>
+      </UserProvider>
     </AuthProvider>
   </IonApp>
 ); 

@@ -1,0 +1,20 @@
+import React, { useEffect } from 'react'
+import { useAuth } from '../context/authContext';
+import { useIonRouter } from '@ionic/react';
+
+function Logout() {
+  const { logout } = useAuth();
+  const ionRouter = useIonRouter();
+  
+  useEffect(() => {
+    logout();
+
+    ionRouter.push("login");
+  });
+
+  return (
+    <div>Logout</div>
+  )
+}
+
+export default Logout

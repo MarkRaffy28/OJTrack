@@ -2,14 +2,18 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import { jwtDecode } from 'jwt-decode';
 
+type Role = "student" | "supervisor" | "admin";
+
 interface JwtPayload {
-  role: string;
+  id: number,
+  role: Role;
   exp: number;
 }
 
 interface AuthContextType {
   token: string | null;
-  role: string | null;
+  databaseId: number | null;
+  role: Role | null;
   loading: boolean;
   login: (token: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -19,7 +23,8 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [databaseId, setDatabaseId] = useState<number | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load token on app start
@@ -30,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (value) {
         const decoded: JwtPayload = jwtDecode(value);
         setToken(value);
+        setDatabaseId(decoded.id);
         setRole(decoded.role);
       }
 
@@ -45,17 +51,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const decoded: JwtPayload = jwtDecode(newToken);
 
     setToken(newToken);
+    setDatabaseId(decoded.id);
     setRole(decoded.role);
   };
 
   const logout = async () => {
     await Preferences.remove({ key: 'auth_token' });
     setToken(null);
+    setDatabaseId(null);
     setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ token, role, loading, login, logout }}>
+    <AuthContext.Provider value={{ token, databaseId, role, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

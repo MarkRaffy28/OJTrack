@@ -13,12 +13,12 @@ CREATE TABLE users (
   address VARCHAR(255) NOT NULL,
   contact_number VARCHAR(20) NOT NULL,
   email_address VARCHAR(100) NOT NULL UNIQUE,
-  role ENUM('user','supervisor','admin') NOT NULL,
+  role ENUM('student','supervisor','admin') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE table user_details (
+CREATE table student_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL UNIQUE,
   year INT(1) NOT NULL,
@@ -42,4 +42,29 @@ CREATE TABLE offices (
   contact_email VARCHAR(150), 
   contact_phone VARCHAR(20),  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE student_ojt (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  supervisor_id INT NOT NULL,
+  office_id INT NOT NULL,
+  school_year VARCHAR(20) NOT NULL,
+  term ENUM('1st', '2nd', 'Summer') NOT NULL,
+  required_hours DECIMAL(5,2) NOT NULL,
+  rendered_hours DECIMAL(5,2) DEFAULT 0,
+  status ENUM('pending', 'ongoing', 'completed', 'dropped') DEFAULT 'pending',
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE,
+  INDEX idx_student (student_id),
+  INDEX idx_supervisor (supervisor_id),
+  INDEX idx_office (office_id),
+  INDEX idx_school_year_term (school_year, term),
+  INDEX idx_status (status),
+  INDEX idx_student_year_status (student_id, school_year, status)
 );

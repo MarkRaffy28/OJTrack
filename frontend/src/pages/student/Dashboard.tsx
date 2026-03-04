@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
-import { IonPage, IonContent, IonText, IonIcon } from '@ionic/react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { IonPage, IonContent, IonIcon } from '@ionic/react';
 import { timeOutline, documentTextOutline, cloudUploadOutline, logInOutline, notificationsOutline, settingsOutline } from 'ionicons/icons';
+import { bufferToImageUrl } from '../../utils/bufferToImageUrl';
+import { getGreeting } from '../../utils/getGreeting';
+import { useUser } from '../../context/userContext';
 import BottomNav from '../../components/BottomNav';
 
 const Dashboard = () => {
-  const location = useLocation();
+  const { user, loading } = useUser();
+  console.log(user);
+
   const [requiredHours] = useState<number>(320);
   const [renderedHours] = useState<number>(120);
 
@@ -30,7 +34,7 @@ const Dashboard = () => {
     // Force router to recognize the navigation
     window.dispatchEvent(new PopStateEvent('popstate', { state: { path: route } }));
   };
-
+  
   return (
     <IonPage>
       <IonContent fullscreen className="dashboard-content">
@@ -40,15 +44,17 @@ const Dashboard = () => {
           <div className="dash-hero-bg" />
           <div className="dash-hero-inner">
             <div className="dash-hero-top">
-              <div className="dash-avatar">KG</div>
+              <div className="dash-avatar">
+                <img src={user?.profilePicture} alt="" />
+              </div>
               <div className="dash-header-actions">
                 <button className="dash-icon-btn"><IonIcon icon={notificationsOutline} /></button>
                 <button className="dash-icon-btn"><IonIcon icon={settingsOutline} /></button>
               </div>
             </div>
             <div className="dash-greeting">
-              <p className="dash-greeting-sub">Good Morning 👋</p>
-              <h1 className="dash-greeting-name">Katherine</h1>
+              <p className="dash-greeting-sub">{getGreeting()} 👋</p>
+              <h1 className="dash-greeting-name">{user?.firstName}</h1>
             </div>
           </div>
         </div>
