@@ -36,7 +36,7 @@ exports.createSupervisorUser = async (data) => {
   return internalID;
 }
 
-exports.fetchStudentInformation = async(userId) => {
+exports.fetchStudentInformation = async (userId) => {
   const [rows] = await db.query(
     `SELECT 
       u.id AS databaseId,
@@ -64,7 +64,28 @@ exports.fetchStudentInformation = async(userId) => {
   return rows[0];
 }
 
-exports.findByEmail = async(email) => {
+exports.fetchStudentOjts = async (userId) => {
+  const [rows] = await db.query(
+    `
+      SELECT 
+        so.id,
+        so.academic_year AS academicYear,
+        so.term,
+        so.required_hours AS requiredHours,
+        so.rendered_hours AS renderedHours,
+        so.status,
+        o.name AS officeName
+      FROM student_ojt so
+      JOIN offices o ON so.office_id = o.id
+      WHERE so.student_id = ?
+      ORDER BY so.academic_year DESC
+    `, 
+    [userId]
+  );
+  return rows;
+}
+
+exports.findByEmail = async (email) => {
   const [rows] = await db.query(
     "SELECT * FROM users WHERE email_address = ?",
     [email]
@@ -72,7 +93,7 @@ exports.findByEmail = async(email) => {
   return rows[0];
 }
 
-exports.findByUserId = async(userId) => {
+exports.findByUserId = async (userId) => {
   const [rows] = await db.query(
     "SELECT * FROM users WHERE user_id = ?",
     [userId]

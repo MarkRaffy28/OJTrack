@@ -132,7 +132,7 @@ function Register() {
 
     if (isEmailValid) {
       try {
-        const response = await API.post("/users/exists/email", { email: email });
+        const response = await API.get(`/users/exists/email/${email}`);
         if (response.data.available) {
           setEmailAvailable(true);
           setEmailError("");
@@ -155,7 +155,7 @@ function Register() {
 
     if (studentId.length > 5 || employeeId.length > 3) {
       try {
-        const response = await API.post("/users/exists/user_id", { userId: userId });
+        const response = await API.get(`/users/exists/user_id/${userId}`);
         if (response.data.available) {
           setUserIdAvailable(true);
           setUserIdError("");
@@ -196,7 +196,7 @@ function Register() {
   useEffect(() => {
     async function fetchOffices() {
       try {
-        const res = await API.post("/offices/list");
+        const res = await API.get("/offices/list");
         setOffices(res.data);
       } catch (err) {
         console.error(err);
@@ -231,7 +231,8 @@ function Register() {
     setIsCheckingUsername(true);
 
     try {
-      const response = await API.post("/users/exists/username", { username: username });
+      const response = await API.get(`/users/exists/username/${username}`);
+      console.log(response.data)
       if (response.data.available) {
         setUsernameAvailable(true);
       } else {

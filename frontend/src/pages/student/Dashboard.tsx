@@ -1,20 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IonPage, IonContent, IonIcon } from '@ionic/react';
 import { timeOutline, documentTextOutline, cloudUploadOutline, logInOutline, notificationsOutline, settingsOutline } from 'ionicons/icons';
-import { bufferToImageUrl } from '../../utils/bufferToImageUrl';
 import { getGreeting } from '../../utils/getGreeting';
+import { useOjt } from '../../context/ojtContext';
 import { useUser } from '../../context/userContext';
 import BottomNav from '../../components/BottomNav';
 
 const Dashboard = () => {
+  const { currentOjt } = useOjt();
   const { user, loading } = useUser();
-  console.log(user);
 
-  const [requiredHours] = useState<number>(320);
-  const [renderedHours] = useState<number>(120);
+  const [requiredHours, setRequiredHours] = useState<number>(0);
+  const [renderedHours, setRenderedHours] = useState<number>(0);
 
   const remainingHours = requiredHours - renderedHours;
   const progressPercentage = Math.min((renderedHours / requiredHours) * 100, 100);
+
+  useEffect(() => {
+    setRequiredHours(Math.round(currentOjt?.requiredHours ?? 0));
+    setRenderedHours(Math.round(currentOjt?.renderedHours ?? 0));
+  });
 
   const handleNavigation = (route: string) => {
     // Use history.pushState for SPA navigation

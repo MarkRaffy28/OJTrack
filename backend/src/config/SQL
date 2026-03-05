@@ -49,7 +49,7 @@ CREATE TABLE student_ojt (
   student_id INT NOT NULL,
   supervisor_id INT NOT NULL,
   office_id INT NOT NULL,
-  school_year VARCHAR(20) NOT NULL,
+  academic_year VARCHAR(20) NOT NULL,
   term ENUM('1st', '2nd', 'Summer') NOT NULL,
   required_hours DECIMAL(5,2) NOT NULL,
   rendered_hours DECIMAL(5,2) DEFAULT 0,

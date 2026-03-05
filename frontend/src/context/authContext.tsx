@@ -27,7 +27,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load token on app start
   useEffect(() => {
     async function loadAuth() {
       const { value } = await Preferences.get({ key: 'auth_token' });

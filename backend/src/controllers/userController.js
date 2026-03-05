@@ -1,7 +1,7 @@
 const userModel = require("../models/userModel");
 
 exports.checkUsername = async (req, res) => {
-  const { username } = req.body;
+  const { username } = req.params;
 
   try {
     const existingUser = await userModel.findByUsername(username);
@@ -25,7 +25,7 @@ exports.checkUsername = async (req, res) => {
 }
 
 exports.checkUserId = async (req, res) => {
-  const { userId } = req.body;
+  const { userId } = req.params;
 
   try {
     const existingUser = await userModel.findByUserId(userId);
@@ -49,7 +49,7 @@ exports.checkUserId = async (req, res) => {
 }
 
 exports.checkEmail = async (req, res) => {
-  const { email } = req.body;
+  const { email } = req.params;
 
   try {
     const existingUser = await userModel.findByEmail(email);
@@ -73,7 +73,7 @@ exports.checkEmail = async (req, res) => {
 }
 
 exports.fetchStudentInformation = async (req, res) => {
-  const { databaseId } = req.body;
+  const { databaseId } = req.params;
 
   try {
     const student = await userModel.fetchStudentInformation(databaseId);
@@ -87,6 +87,26 @@ exports.fetchStudentInformation = async (req, res) => {
     return res.status(200).json(student);
 
   } catch(error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+exports.fetchStudentOjts = async (req, res) => {
+  const { databaseId } = req.params;
+
+  try {
+    const studentOjts = await userModel.fetchStudentOjts(databaseId);
+
+    if (!studentOjts) {
+      res.status(404).json({
+        message: "Student not found"
+      })
+    }
+
+    return res.status(200).json(studentOjts);
+    
+  } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }

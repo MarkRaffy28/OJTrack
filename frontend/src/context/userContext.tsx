@@ -60,8 +60,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await API.post(`/users/fetch/${role}`,
-        { databaseId: databaseId },
+      const response = await API.get(`/users/fetch/${role}/${databaseId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

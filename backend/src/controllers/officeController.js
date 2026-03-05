@@ -1,6 +1,6 @@
 const officeModel = require("../models/officeModel");
 
-exports.getOfficesList = async ( res) => {
+exports.getOfficesList = async ( req, res) => {
   try {
     const offices = await officeModel.getOfficesList();
     res.status(200).json(offices);

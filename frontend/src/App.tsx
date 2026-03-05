@@ -18,6 +18,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import { StatusBar, Style } from '@capacitor/status-bar';
 
 import { AuthProvider } from './context/authContext';
+import { OjtProvider } from './context/ojtContext';
 import { UserProvider } from './context/userContext';
 import { RoleRoute } from './components/RoleRoute';
 
@@ -26,6 +27,7 @@ import Login from './pages/Login';
 import Logout from './pages/Logout';
 
 import Dashboard from './pages/student/Dashboard';
+import DTR from './pages/student/DTR';
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -36,16 +38,20 @@ const App: React.FC = () => (
   <IonApp>
     <AuthProvider>
       <UserProvider>
-        <IonReactRouter>
-          <IonRouterOutlet>
-            <Route exact path="/register" component={Register} />
-            <Route exact path="/login" component={Login} />
-            <Route exact path="/logout" component={Logout} />
+        <OjtProvider>
+          <IonReactRouter>
+            <IonRouterOutlet>
+              <Route exact path="/register" component={Register} />
+              <Route exact path="/login" component={Login} />
+              <Route exact path="/logout" component={Logout} />
 
-            <RoleRoute exact path="/dashboard" component={Dashboard} allowedRoles={['student']} />
-            <Redirect to="login" />
-          </IonRouterOutlet>
-        </IonReactRouter>
+              <RoleRoute exact path="/dashboard" component={Dashboard} allowedRoles={['student']} />
+              <RoleRoute exact path="/dtr" component={DTR} allowedRoles={['student']} />
+
+              <Redirect to="login" />
+            </IonRouterOutlet>
+          </IonReactRouter>
+        </OjtProvider>
       </UserProvider>
     </AuthProvider>
   </IonApp>
