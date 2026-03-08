@@ -68,3 +68,15 @@ CREATE TABLE student_ojt (
   INDEX idx_status (status),
   INDEX idx_student_year_status (student_id, school_year, status)
 );
+
+CREATE TABLE attendance (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT NOT NULL,
+  ojt_id INT NOT NULL,
+  date DATE NOT NULL,
+  morning_in TIME,
+  morning_out TIME,
+  afternoon_in TIME,
+  afternoon_out TIME,
+  UNIQUE(student_id, date)
+);

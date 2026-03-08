@@ -32,10 +32,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { value } = await Preferences.get({ key: 'auth_token' });
 
       if (value) {
-        const decoded: JwtPayload = jwtDecode(value);
-        setToken(value);
-        setDatabaseId(decoded.id);
-        setRole(decoded.role);
+        try {
+          const decoded: JwtPayload = jwtDecode(value);
+
+          const now = Math.floor(Date.now() / 1000);
+          if (decoded.exp < now) {
+            console.log("Token expired, removing...");
+            await Preferences.remove({ key: 'auth_token' });
+          } else {
+            setToken(value);
+            setDatabaseId(decoded.id);
+            setRole(decoded.role);
+          }
+        } catch (err) {
+          console.log("Invalid token, removing...", err);
+          await Preferences.remove({ key: 'auth_token' });
+        }
       }
 
       setLoading(false);

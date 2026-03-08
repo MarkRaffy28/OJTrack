@@ -4,7 +4,7 @@ import { useAuth } from './authContext';
 import API from '../api/api';
 
 interface BaseUser {
-  id: number;
+  databaseId: number;
   username: string;
   profilePicture: string;
   firstName: string;

@@ -37,19 +37,17 @@ export const OjtProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [token, databaseId, role]);
 
-  console.log(ojtRecords)
-
   const fetchAllOjts = async () => {
     if (!token || role !== "student") return;
 
     setLoading(true);
 
     try {
-      const res = await API.get(`/users/fetch/student/ojt/${databaseId}`, {
+      const { data } = await API.get(`/users/fetch/student/ojt/${databaseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const records: StudentOjt[] = res.data;
+      const records: StudentOjt[] = data;
 
       setOjtRecords(records);
 

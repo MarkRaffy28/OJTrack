@@ -26,8 +26,11 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Logout from './pages/Logout';
 
+import Qr from './pages/Qr';
+
 import Dashboard from './pages/student/Dashboard';
 import DTR from './pages/student/DTR';
+
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -44,6 +47,7 @@ const App: React.FC = () => (
               <Route exact path="/register" component={Register} />
               <Route exact path="/login" component={Login} />
               <Route exact path="/logout" component={Logout} />
+              <Route exact path="/qr" component={Qr} />
 
               <RoleRoute exact path="/dashboard" component={Dashboard} allowedRoles={['student']} />
               <RoleRoute exact path="/dtr" component={DTR} allowedRoles={['student']} />

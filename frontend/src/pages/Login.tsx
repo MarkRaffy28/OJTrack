@@ -4,7 +4,7 @@ import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkC
 import { useAuth } from '../context/authContext';
 import API from '../api/api';
 
-const Login: React.FC = () => {
+function Login() {
   const ionRouter = useIonRouter();
   const { login, role, loading } = useAuth();
 
