@@ -30,6 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     async function loadAuth() {
       const { value } = await Preferences.get({ key: 'auth_token' });
+      console.log(value);
 
       if (value) {
         try {

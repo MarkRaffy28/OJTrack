@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "./authContext";
-import API from "../api/api";
+import API from "@api/api";
 
 interface StudentOjt {
   id: number;

@@ -1,14 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { IonPage, IonContent, IonText, IonIcon, IonLoading } from "@ionic/react";
 import { useHistory } from "react-router-dom";
-import { mailOutline, lockClosedOutline, personOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowBackOutline, 
+import { IonPage, IonContent, IonText, IonIcon, } from "@ionic/react";
+import { 
+  mailOutline, lockClosedOutline, personOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowBackOutline, 
   arrowForwardOutline, schoolOutline, briefcaseOutline, alertCircleOutline, calendarOutline, documentTextOutline, closeOutline, 
   checkmarkOutline, cameraOutline, imageOutline, trashOutline, callOutline, locationOutline, idCardOutline, statsChartOutline, 
-  maleFemaleOutline, 
-  codeSlashOutline,
-  businessOutline} from "ionicons/icons";
-import "../css/Register.css";
-import API from "../api/api";
+  maleFemaleOutline, codeSlashOutline, businessOutline
+} from "ionicons/icons";
+import API from "@api/api";
+import "@css/Register.css";
 
 type UserRole = "student" | "supervisor" | null;
 type RegistrationStep = "role" | "username" | "form" | "photo";
@@ -373,7 +373,7 @@ function Register() {
   // ── After photo step → open Terms ─────────────────────────────────────────
   const handleProfilePictureSubmit = () => {
     if (formDataRef.current && croppedPhoto) {
-      formDataRef.current.profilePhoto = croppedPhoto;
+      formDataRef.current.profilePicture = croppedPhoto;
     }
     setTermsScrolledToEnd(false);
     setTermsAccepted(false);

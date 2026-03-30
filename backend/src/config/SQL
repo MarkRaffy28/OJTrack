@@ -1,8 +1,10 @@
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
+
   username VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   profile_picture LONGBLOB,
+
   first_name VARCHAR(100) NOT NULL,
   middle_name VARCHAR(50),
   last_name VARCHAR(50) NOT NULL,
@@ -13,42 +15,58 @@ CREATE TABLE users (
   address VARCHAR(255) NOT NULL,
   contact_number VARCHAR(20) NOT NULL,
   email_address VARCHAR(100) NOT NULL UNIQUE,
+
+  email_verified_at TIMESTAMP NULL,
+  email_verification_token VARCHAR(255),
+  email_verification_expires TIMESTAMP NULL,
+
+  password_reset_token VARCHAR(255),
+  password_reset_expires TIMESTAMP NULL,
+
   role ENUM('student','supervisor','admin') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE offices (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+
+  name VARCHAR(150) NOT NULL, 
+  address VARCHAR(255),
+  contact_email VARCHAR(150), 
+  contact_phone VARCHAR(20),  
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE table student_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
+
   user_id INT NOT NULL UNIQUE,
   year INT(1) NOT NULL,
   program VARCHAR(100) NOT NULL,
   major VARCHAR(100) NOT NULL,
+
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE supervisor_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
+
   supervisor_id INT NOT NULL UNIQUE,
   office_id INT NOT NULL,
+
   FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE
 );
 
-CREATE TABLE offices (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL, 
-  address VARCHAR(255),
-  contact_email VARCHAR(150), 
-  contact_phone VARCHAR(20),  
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE student_ojt (
   id INT AUTO_INCREMENT PRIMARY KEY,
+
   student_id INT NOT NULL,
-  supervisor_id INT NOT NULL,
+  supervisor_id INT DEFAULT NULL,
   office_id INT NOT NULL,
+
   academic_year VARCHAR(20) NOT NULL,
   term ENUM('1st', '2nd', 'Summer') NOT NULL,
   required_hours DECIMAL(5,2) NOT NULL,
@@ -56,11 +74,14 @@ CREATE TABLE student_ojt (
   status ENUM('pending', 'ongoing', 'completed', 'dropped') DEFAULT 'pending',
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
   FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE,
+
   INDEX idx_student (student_id),
   INDEX idx_supervisor (supervisor_id),
   INDEX idx_office (office_id),
@@ -71,12 +92,36 @@ CREATE TABLE student_ojt (
 
 CREATE TABLE attendance (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  student_id INT NOT NULL,
-  ojt_id INT NOT NULL,
+
+  student_id INT NOT NULL UNIQUE,
+  ojt_id INT NOT NULL UNIQUE,
+
   date DATE NOT NULL,
   morning_in TIME,
   morning_out TIME,
   afternoon_in TIME,
   afternoon_out TIME,
-  UNIQUE(student_id, date)
+
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (ojt_id) REFERENCES student_ojt(id) ON DELETE CASCADE
+);
+
+CREATE TABLE ojt_reports (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  student_id INT NOT NULL,
+  ojt_id INT NOT NULL,
+
+  type ENUM('daily', 'weekly', 'monthly', 'midterm', 'final', 'incident'),
+  report_date DATE NOT NULL,          
+  title VARCHAR(255) NULL,
+  content TEXT NOT NULL,            
+  attachments JSON NULL,  
+
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  reviewed_by INT NULL,
+  reviewed_at TIMESTAMP NULL,
+  feedback TEXT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

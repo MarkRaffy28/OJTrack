@@ -1,6 +1,6 @@
-const db = require("../config/db");
+import { db } from "../config/db.js"
 
-exports.getTodayAttendance = async (studentId, ojtId, date) => {
+export const getTodayAttendance = async (studentId, ojtId, date) => {
   const [rows] = await db.query(
     `SELECT * FROM attendance WHERE student_id = ? AND ojt_id = ? AND date = ?`,
     [studentId, ojtId, date]
@@ -9,7 +9,7 @@ exports.getTodayAttendance = async (studentId, ojtId, date) => {
   return rows[0];
 }
 
-exports.insertAttendance = async (studentId, ojtId, date, column) => {
+export const insertAttendance = async (studentId, ojtId, date, column) => {
   const [rows] = await db.query(
     `
       INSERT INTO attendance (student_id, ojt_id, date, ${column})
@@ -22,7 +22,7 @@ exports.insertAttendance = async (studentId, ojtId, date, column) => {
   return rows[0];
 }
 
-exports.isStudentInOffice = async (studentId, officeId) => {
+export const isStudentInOffice = async (studentId, officeId) => {
   const [rows] = await db.query(
     `
       SELECT 1

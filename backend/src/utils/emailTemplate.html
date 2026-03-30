@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} – OJTrack</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 40px 16px;
+    }
+
+    .wrapper {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .logo-cluster {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .logo-cluster img {
+      border-radius: 50%;
+      vertical-align: middle;
+      margin: 0 6px;
+    }
+
+    .card {
+      background-color: #f5f0fa;
+      border-radius: 24px;
+      border: solid 1px #5b1a8b;
+      overflow: hidden;
+    }
+
+    .card-top {
+      background-color: #5b1a8b;
+      padding: 28px 40px;
+      text-align: center;
+    }
+
+    .card-top h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.2px;
+    }
+
+    .card-body {
+      padding: 32px 40px;
+    }
+
+    .greeting {
+      font-size: 15px;
+      color: #4a3560;
+      line-height: 1.7;
+      margin: 0 0 6px 0;
+    }
+
+    .greeting strong {
+      color: #2d1f45;
+    }
+
+    .description {
+      font-size: 14px;
+      color: #7a6890;
+      line-height: 1.75;
+      margin: 0 0 24px 0;
+    }
+
+    .otp-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9b7ec0;
+      margin: 0 0 12px 0;
+    }
+
+    .otp-box {
+      background-color: #ffffff;
+      border: 1px solid #ddd5f0;
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .otp-digits {
+      font-size: 0; 
+    }
+
+    .otp-digit {
+      display: inline-block;
+      width: 52px;
+      height: 60px;
+      line-height: 60px;
+      background-color: #f5f0fa;
+      border: 1px solid #ddd5f0;
+      border-radius: 12px;
+      font-size: 34px;
+      font-weight: 800;
+      color: #5b1a8b;
+      text-align: center;
+      margin: 0 4px;
+    }
+
+    .otp-sep {
+      display: inline-block;
+      font-size: 20px;
+      color: #c8b8e0;
+      margin: 0 2px;
+    }
+
+    .expiry-row {
+      background-color: #fff8e6;
+      border: 1px solid #f0d98a;
+      border-radius: 12px;
+      padding: 13px 16px;
+      margin-bottom: 16px;
+    }
+
+    .expiry-row p {
+      margin: 0;
+      font-size: 13px;
+      color: #7a6020;
+      line-height: 1.6;
+    }
+
+    .expiry-row strong {
+      color: #b07d00;
+    }
+
+    .security-note {
+      background-color: #fff0f0;
+      border: 1px solid #f5c0c0;
+      border-radius: 12px;
+      padding: 13px 16px;
+      margin-bottom: 8px;
+    }
+
+    .security-note p {
+      margin: 0;
+      font-size: 13px;
+      color: #7a3030;
+      line-height: 1.6;
+    }
+
+    .security-note strong {
+      display: block;
+      color: #c0392b;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="logo-cluster">
+      <img src="https://dl.dropbox.com/scl/fi/ri2c7h8hi1vyfs2lgkr08/ispsc.png?rlkey=leicrtjalsqtc1av3dfdpb4no&st=7ymehz3v&dl=0"   alt="ISPSC"   width="68" height="68">
+      <img src="https://dl.dropbox.com/scl/fi/peqqj62adfjuc2anbxjri/ojtrack.png?rlkey=8deqdvstnni59i6z526tnsl53&st=ofekki9u&dl=0" alt="OJTrack" width="80" height="80">
+      <img src="https://dl.dropbox.com/scl/fi/bhhj3vmbobn9hr84ijf3p/ccs.png?rlkey=1oz8x26wkpw1dcd53hyfm3aaz&st=pj3x8tsr&dl=0"     alt="CCS"     width="58" height="58">
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <h1>Verify Your Email</h1>
+      </div>
+
+      <div class="card-body">
+        <p class="greeting">
+          Hello, <strong>{{name}}</strong> &#128075;
+        </p>
+        <p class="description">
+          {{description}}
+        </p>
+        <p class="otp-label">
+          {{otp_label}}
+        </p>
+
+        <div class="otp-box">
+          <div class="otp-digits">
+            {{otp_digits}}
+          </div>
+        </div>
+
+        <div class="expiry-row">
+          <p>&#9200; This code expires in <strong>5 minutes</strong>. Request a new one if it expires before you use it.</p>
+        </div>
+
+        <div class="security-note">
+          <p>
+            <strong>&#9888; Never share this code</strong>
+            OJTrack will never ask for your OTP via phone or chat.
+            If you didn't request this, you can safely ignore this email.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

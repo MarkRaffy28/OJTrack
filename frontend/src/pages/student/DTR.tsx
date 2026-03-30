@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonPage, IonContent, IonIcon, IonToast } from '@ionic/react';
-import {
-  calendarOutline, checkmarkCircleOutline,
-  qrCodeOutline, scanOutline, refreshOutline,
-} from 'ionicons/icons';
 import { CapacitorBarcodeScanner, CapacitorBarcodeScannerTypeHint } from '@capacitor/barcode-scanner';
-import { useAuth } from '../../context/authContext';
-import { useOjt } from '../../context/ojtContext';
-import { useUser } from '../../context/userContext';
-import API from '../../api/api';
-import BottomNav from '../../components/BottomNav';
-import '../../css/DTR.css';
+import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, refreshOutline, } from 'ionicons/icons';
+import { useAuth } from '@context/authContext';
+import { useOjt } from '@context/ojtContext';
+import { useUser } from '@context/userContext';
+import { formatDate, formatTime12 } from '@utils/date';
+import BottomNav from '@components/BottomNav';
+import API from '@api/api';
+import '@css/DTR.css';
 
 interface AttendanceRecord {
   morningTimeIn:    string;
@@ -36,17 +34,6 @@ const COLUMN_TO_KEY: Record<ScanResponse['session'], keyof AttendanceRecord> = {
 };
 
 const todayISO = () => new Date().toISOString().split('T')[0];
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
-
-const formatTime12 = (t: string) => {
-  if (!t) return '—';
-  const [h, m] = t.split(':').map(Number);
-  return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
-};
 
 const calcTotalHours = (r: AttendanceRecord) => {
   const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };

@@ -1,7 +1,7 @@
 // UserContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './authContext';
-import API from '../api/api';
+import API from '@api/api';
 
 interface BaseUser {
   databaseId: number;
@@ -11,18 +11,20 @@ interface BaseUser {
   middleName: string;
   lastName: string;
   extensionName: string;
+  fullName: string;
   userId: string;
   birthDate: string;
   gender: 'Male' | 'Female' | 'Other';
   address: string;
   contactNumber: string;
   emailAddress: string;
-  role: 'user' | 'supervisor' | 'admin';
+  isEmailVerified: boolean;
+  role: 'student' | 'supervisor' | 'admin';
 }
 
 interface StudentUser extends BaseUser {
-  role: 'user';
-  yearLevel: number;
+  role: 'student';
+  year: number;
   program: string;
   major: string;
 }
@@ -46,6 +48,10 @@ interface UserContextType {
 }
 
 const UserContext = createContext<UserContextType | null>(null);
+
+export const isStudent = (user: User | null): user is StudentUser => user?.role === 'student';
+export const isSupervisor = (user: User | null): user is SupervisorUser => user?.role === 'supervisor';
+export const isAdmin = (user: User | null): user is AdminUser => user?.role === 'admin';
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { databaseId, token, role } = useAuth();

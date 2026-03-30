@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Redirect, RouteProps } from 'react-router-dom';
-import { useAuth } from '../context/authContext';
+import { useAuth } from '@context/authContext';
 
 interface RoleRouteProps extends RouteProps {
   component: React.ComponentType<any>;

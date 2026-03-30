@@ -1,14 +1,14 @@
-const { z } = require("zod");
+import { z } from "zod";
 
-exports.loginSchema = z.object({
+export const loginSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(1, "Password is required"),
 })
 
-exports.studentRegistrationSchema = z.object({
+export const studentRegistrationSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  profilePhoto: z.string().regex(/^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=]+$/, "Invalid base64 image format").nullable().optional(),
+  profilePicture: z.string().regex(/^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=]+$/, "Invalid base64 image format").nullable().optional(),
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().nullable().optional(),
   lastName: z.string().min(1, "Last name is required"),
@@ -24,10 +24,10 @@ exports.studentRegistrationSchema = z.object({
   major: z.string().min(1, "Major is required"),
 });
 
-exports.supervisorRegistrationSchema = z.object({
+export const supervisorRegistrationSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  profilePhoto: z.string().regex(/^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=]+$/, "Invalid base64 image format").nullable().optional(),
+  profilePicture: z.string().regex(/^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=]+$/, "Invalid base64 image format").nullable().optional(),
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().nullable().optional(),
   lastName: z.string().min(1, "Last name is required"),

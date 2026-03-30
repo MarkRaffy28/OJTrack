@@ -1,6 +1,6 @@
-const db = require("../config/db");
+import { db } from "../config/db.js";
 
-exports.getOfficesList = async () => {
+export const getOfficesList = async () => {
   const [rows] = await db.query(
     "SELECT * FROM offices"
   );

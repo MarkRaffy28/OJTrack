@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
-import { useAuth } from '../context/authContext';
 import { useIonRouter } from '@ionic/react';
+import { useAuth } from '@context/authContext';
 
 function Logout() {
   const { logout } = useAuth();

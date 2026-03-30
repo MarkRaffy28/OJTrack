@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner, useIonRouter } from '@ionic/react';
-import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, personRemove } from 'ionicons/icons';
-import { useAuth } from '../context/authContext';
-import API from '../api/api';
+import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, } from 'ionicons/icons';
+import { useAuth } from '@context/authContext';
+import API from '@api/api';
 
 function Login() {
   const ionRouter = useIonRouter();
@@ -36,12 +36,17 @@ function Login() {
       if (response.data.token) {
         setLoginError("");
         await login(response.data.token);
-      } else {
-        setLoginError("Invalid username and password");
-      }
-    } catch (error) {
+      } 
+
+    } catch (error: any) {
       console.log("Error: ", error);
-      setLoginError("Invalid username and password");
+
+      if (error.response.status === 401) {
+        setLoginError(error.response.data?.message || "Invalid username or password.");
+      } else {
+        setLoginError("Server error. Please try again later.");
+      }
+
     } finally {
       setIsSubmitting(false);
     }

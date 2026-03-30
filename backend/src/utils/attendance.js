@@ -1,8 +1,8 @@
-const crypto = require("crypto");
+import crypto from "crypto";
 
 const SECRET = process.env.QR_SECRET;
 
-exports.verifyQr = (o, t, s) => {
+export const verifyQr = (o, t, s) => {
   const expected = crypto
     .createHmac("sha256", SECRET)
     .update(`${o}|${t}`)
@@ -19,7 +19,7 @@ exports.verifyQr = (o, t, s) => {
   }
 }
 
-exports.determineSession = () => {
+export const determineSession = () => {
   const now = new Date();
   const hour = now.getHours();
   const minute = now.getMinutes();

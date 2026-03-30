@@ -1,18 +1,20 @@
-const attendanceModel = require("../models/attendanceModel");
-const attendanceUtil = require("../utils/attendanceUtil");
-const attendanceValidator = require("../validators/attendanceValidator");
-const { treeifyError } = require("zod");
+import { 
+  getTodayAttendance as _getTodayAttendance, insertAttendance, isStudentInOffice 
+} from "../models/attendance.model.js";
+import { determineSession, verifyQr } from "../utils/attendance.js";
+import { attendanceQuerySchema } from "../validators/attendance.validator.js";
+import { treeifyError } from "zod";
 
-exports.getTodayAttendance = async (req, res) => {
+export const getTodayAttendance = async (req, res) => {
   try {
-    const parsed = attendanceValidator.attendanceQuerySchema.safeParse(req.query);
+    const parsed = attendanceQuerySchema.safeParse(req.query);
 
     if (!parsed.success) {
       return res.status(400).json( treeifyError(parsed.error) );
     }
     const { studentId, ojtId, date } = parsed.data;
 
-    const dbRecord = await attendanceModel.getTodayAttendance(studentId, ojtId, date);
+    const dbRecord = await _getTodayAttendance(studentId, ojtId, date);
     const record = {
       morningTimeIn: dbRecord?.morning_in ?? '',
       morningTimeOut: dbRecord?.morning_out ?? '',
@@ -28,7 +30,7 @@ exports.getTodayAttendance = async (req, res) => {
   }
 }
 
-exports.scanAttendance = async (req, res) => {
+export const scanAttendance = async (req, res) => {
   try {
     const { studentId, ojtId, qrPayLoad } = req.body;
     
@@ -48,26 +50,26 @@ exports.scanAttendance = async (req, res) => {
     }
 
     try {
-      attendanceUtil.verifyQr(qr.o, qr.t, qr.s);
+      verifyQr(qr.o, qr.t, qr.s);
     } catch (error) {
       return res.status(400).json({ message: error.message });
     }
 
-    const assigned = await attendanceModel.isStudentInOffice(studentId, qr.o);
+    const assigned = await isStudentInOffice(studentId, qr.o);
     if (!assigned) {
       return res.status(403).json({ message: "Student not assigned to this office" });
     }
 
     let column;
     try {
-      column = attendanceUtil.determineSession();
+      column = determineSession();
     } catch (error) {
       return res.status(400).json({ message: error.message });
     }
 
     const date = new Date().toISOString().slice(0, 10);
 
-    const record = await attendanceModel.getTodayAttendance(studentId, ojtId, date);
+    const record = await _getTodayAttendance(studentId, ojtId, date);
     if ((column === "morning_out" && (!record || !record["morning_in"])) ||
         (column === "afternoon_out" && (!record || !record["afternoon_in"]))) {
       return res.status(400).json({
@@ -81,7 +83,7 @@ exports.scanAttendance = async (req, res) => {
       });
     }
 
-    await attendanceModel.insertAttendance(studentId, ojtId, date, column);
+    await insertAttendance(studentId, ojtId, date, column);
 
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;

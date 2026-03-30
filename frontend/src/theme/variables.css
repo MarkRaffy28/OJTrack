@@ -80,10 +80,6 @@
 
 }
 
-.no-scroll::-webkit-scrollbar {
-  display: none;
-}
-
 /* Login Page Styles */
 .login-page {
   --background: transparent !important;
@@ -2038,14 +2034,6 @@ body, ion-app, ion-content {
 .acc-role {
   font-size: 14px; color: var(--c-text-secondary);
   margin: 0 0 10px;
-}
-.acc-program-badge {
-  display: inline-block;
-  padding: 5px 14px;
-  background: rgba(95,0,118,0.08);
-  color: var(--c-purple);
-  border-radius: 20px;
-  font-size: 12px; font-weight: 600;
 }
 
 /* Stats */
