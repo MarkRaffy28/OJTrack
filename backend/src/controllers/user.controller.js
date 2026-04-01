@@ -1,11 +1,13 @@
 import bcrypt from "bcrypt";
 import { treeifyError } from "zod";
+import { logActivity } from "./activity.controller.js";
 import { 
-  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, fetchStudentInformation as _fetchStudentInformation, 
+  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, fetchStudentProfile as _fetchStudentProfile, 
   fetchStudentOjts as _fetchStudentOjts, updateStudentUserProfile as _updateStudentUserProfile,
   updateUserPassword as _updateUserPassword,
 } from "../models/user.model.js";
 import { studentUpdateProfileSchema } from "../validators/user.validator.js";
+
 
 export const checkEmail = async (req, res) => {
   try {
@@ -85,14 +87,14 @@ export const checkUsername = async (req, res) => {
   }
 }
 
-export const fetchStudentInformation = async (req, res) => {
+export const fetchStudentProfile = async (req, res) => {
   try {
     const { databaseId } = req.params;
     if (!databaseId) {
       return res.status(400).json({ message: "Invalid request data" });
     }
 
-    const user = await _fetchStudentInformation(databaseId);
+    const user = await _fetchStudentProfile(databaseId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -119,9 +121,7 @@ export const fetchStudentOjts = async (req, res) => {
 
     const studentOjts = await _fetchStudentOjts(databaseId);
     if (!studentOjts) {
-      return res.status(404).json({
-        message: "Student OJTs not found"
-      })
+      return res.status(404).json({ message: "Student OJTs not found" });
     }
 
     return res.status(200).json(studentOjts);
@@ -174,8 +174,16 @@ export const updateStudentUserProfile = async (req, res) => {
 
     await _updateStudentUserProfile(parsed.data, databaseId);
 
+    await logActivity({
+      databaseId: Number(databaseId),
+      action: "UPDATE_PROFILE",
+      targetType: "USER",
+      targetId: Number(databaseId),
+      description: "User profile updated successfully"
+    });
+
     res.status(200).json({ message: "User profile updated successfully" });
-  
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -202,6 +210,14 @@ export const updateUserPassword = async (req, res) => {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
     await _updateUserPassword(hashedNewPassword, databaseId);
+
+    await logActivity({
+      databaseId: Number(databaseId),
+      action: "UPDATE_PASSWORD",
+      targetType: "USER",
+      targetId: Number(databaseId),
+      description: "User password updated successfully"
+    });
 
     res.status(200).json({ message: "Password has been updated successfully" });
 

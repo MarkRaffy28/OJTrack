@@ -106,8 +106,9 @@ CREATE TABLE attendance (
   FOREIGN KEY (ojt_id) REFERENCES student_ojt(id) ON DELETE CASCADE
 );
 
-CREATE TABLE ojt_reports (
+CREATE TABLE reports (
   id INT PRIMARY KEY AUTO_INCREMENT,
+
   student_id INT NOT NULL,
   ojt_id INT NOT NULL,
 
@@ -122,6 +123,31 @@ CREATE TABLE ojt_reports (
   reviewed_at TIMESTAMP NULL,
   feedback TEXT NULL,
 
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (ojt_id) REFERENCES student_ojt(id) ON DELETE CASCADE,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE activity (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+
+  database_id INT NOT NULL,
+  ojt_id INT NULL,
+
+  action VARCHAR(50) NOT NULL, -- LOGIN, CREATE_REPORT, TIME_IN, TIME_OUT, etc.
+  target_type VARCHAR(50) NULL, -- REPORT, PROFILE, DTR
+  target_id INT NULL,
+  description TEXT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (database_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (ojt_id) REFERENCES student_ojt(id) ON DELETE CASCADE,
+
+  INDEX idx_database_id (database_id),
+  INDEX idx_ojt_id (ojt_id),
+  INDEX idx_created_at (created_at),
+  INDEX idx_action (action)
 );

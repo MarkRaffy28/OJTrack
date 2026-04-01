@@ -10,7 +10,7 @@ export const getTodayAttendance = async (studentId, ojtId, date) => {
 }
 
 export const insertAttendance = async (studentId, ojtId, date, column) => {
-  const [rows] = await db.query(
+  const [result] = await db.query(
     `
       INSERT INTO attendance (student_id, ojt_id, date, ${column})
       VALUES (?, ?, ?, NOW())
@@ -19,7 +19,7 @@ export const insertAttendance = async (studentId, ojtId, date, column) => {
     [studentId, ojtId, date]
   );
 
-  return rows[0];
+  return result.insertId;
 }
 
 export const isStudentInOffice = async (studentId, officeId) => {

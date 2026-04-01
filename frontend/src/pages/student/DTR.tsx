@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonPage, IonContent, IonIcon, IonToast } from '@ionic/react';
 import { CapacitorBarcodeScanner, CapacitorBarcodeScannerTypeHint } from '@capacitor/barcode-scanner';
-import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, refreshOutline, } from 'ionicons/icons';
+import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, refreshOutline, closeCircle } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
@@ -259,7 +259,7 @@ function DTR() {
           color={toastType === 'success' ? 'success' : toastType === 'warning' ? 'warning' : 'danger'}
           position="top"
           cssClass={`dtr-toast dtr-toast--${toastType}`}
-          buttons={[{ icon: 'close', role: 'cancel' }]}
+          buttons={[{ icon: closeCircle, role: 'cancel' }]}
         />
 
       </IonContent>

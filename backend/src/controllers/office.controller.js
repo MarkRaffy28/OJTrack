@@ -34,7 +34,7 @@ export const getOfficeQr = async (req, res) => {
       t: timestamp
     };
 
-    return res.json(payload);
+    return res.status(200).json(payload);
 
   } catch (err) {
     console.error(error);

@@ -5,6 +5,10 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 })
 
+export const logoutSchema = z.object({
+  databaseId: z.coerce.number().int().positive(),
+});
+
 export const studentRegistrationSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
   password: z.string().min(6, "Password must be at least 6 characters"),

@@ -1,0 +1,94 @@
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #ffffff;
+  border-top: 1.5px solid #ebebeb;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0;
+  z-index: 100;
+  /* Make room for the protruding center button */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.nav-slot {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* Empty slot to take up space for the center button */
+.nav-slot.center-slot {
+  /* not clickable, just a spacer */
+  pointer-events: none;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  color: #aaaaaa;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-btn ion-icon {
+  font-size: 24px;
+  transition: color 0.2s ease;
+}
+
+.nav-btn.active {
+  color: var(--c-purple);
+}
+
+/* Center (DRT) floating button */
+.center-btn-wrapper {
+  position: absolute;
+  bottom: calc(64px - 28px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 101;
+}
+
+.center-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #333;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.3s ease;
+}
+
+.center-btn.active {
+  background: var(--c-purple);
+  box-shadow: 0 8px 24px var(--c-purple-glow);
+  transform: translateY(-2px);
+}
+
+.center-btn:active {
+  transform: scale(0.93);
+}
+
+.center-btn ion-icon {
+  font-size: 26px;
+  color: #ffffff;
+}

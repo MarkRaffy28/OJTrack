@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IonPage, IonContent, IonIcon, IonBadge } from '@ionic/react';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import {
   personOutline, mailOutline, calendarOutline, shieldCheckmarkOutline, logOutOutline, lockClosedOutline, documentTextOutline,
   createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline,
@@ -17,6 +17,7 @@ import { formatDate } from '@utils/date';
 
 function Account() {
   const history = useHistory();
+  const location = useLocation();
   const { currentOjt } = useOjt();
   const { logout } = useAuth();
   const { user, refreshUser } = useUser();
@@ -28,7 +29,7 @@ function Account() {
 
   useEffect(() => {
     refreshUser();
-  }, []);
+  }, [location.pathname]);
 
   const menuItems = [
     {

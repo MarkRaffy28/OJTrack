@@ -1,4 +1,3 @@
-// UserContext.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './authContext';
 import API from '@api/api';
@@ -66,7 +65,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await API.get(`/users/fetch/${role}/${databaseId}`,
+      const response = await API.get(`/users/fetch/${role}/profile/${databaseId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

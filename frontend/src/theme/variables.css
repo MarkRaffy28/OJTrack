@@ -1005,7 +1005,8 @@ body, ion-app, ion-content {
 }
 
 .dash-avatar {
-  width: 44px; height: 44px;
+  width: 70px; 
+  height: 70px;
   border-radius: 50%;
   background: rgba(255,255,255,0.18);
   backdrop-filter: blur(8px);
@@ -1293,6 +1294,11 @@ body, ion-app, ion-content {
 }
 .badge-success { background: rgba(52,211,153,0.12); color: #059669; }
 .badge-purple  { background: rgba(95,0,118,0.1); color: var(--c-purple); }
+.badge-danger  { background: rgba(248,113,113,0.12); color: #dc2626; }
+.badge-blue    { background: rgba(59,130,246,0.12); color: #2563eb; }
+.badge-pink    { background: rgba(236,72,153,0.12); color: #db2777; }
+.badge-orange  { background: rgba(245,158,11,0.12); color: #d97706; }
+.badge-indigo  { background: rgba(99,102,241,0.12); color: #4f46e5; }
 .badge-gray    { background: var(--c-surface-3); color: var(--c-text-secondary); }
 
 /* ============================================================
@@ -1768,7 +1774,7 @@ body, ion-app, ion-content {
 
 /* FAB */
 .rp-fab-wrap {
-  position: fixed; bottom: 90px; right: 16px; z-index: 50;
+  position: fixed; bottom: 90px; right: 30px; z-index: 50;
 }
 .rp-fab {
   display: flex; align-items: center; gap: 8px;

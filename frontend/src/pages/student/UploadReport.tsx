@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
+import React, { useState, useRef, useEffect } from "react";
+import { useHistory, useLocation } from "react-router-dom";
+import { IonPage, IonContent, IonIcon } from "@ionic/react";
 import {
   arrowBackOutline,
   calendarOutline,
@@ -11,9 +12,32 @@ import {
   checkmarkCircleOutline,
   attachOutline,
   trashOutline,
-} from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
-import '../../css/UploadReport.css';  
+  alertCircleOutline,
+} from "ionicons/icons";
+import API from "@api/api";
+import { useAuth } from "@context/authContext";
+import { useOjt } from "@context/ojtContext";
+import { useReport } from "@context/reportContext";
+import "@css/UploadReport.css";
+
+const MAX_FILES = 10;
+
+type ReportType =
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "midterm"
+  | "final"
+  | "incident";
+
+const REPORT_TYPES: { label: string; value: ReportType }[] = [
+  { label: "Daily", value: "daily" },
+  { label: "Weekly", value: "weekly" },
+  { label: "Monthly", value: "monthly" },
+  { label: "Midterm", value: "midterm" },
+  { label: "Final", value: "final" },
+  { label: "Incident", value: "incident" },
+];
 
 interface UploadedFile {
   id: string;
@@ -21,44 +45,84 @@ interface UploadedFile {
   size: number;
   type: string;
   preview?: string;
+  raw: File;
 }
 
 const UploadReport: React.FC = () => {
   const history = useHistory();
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [reportDate, setReportDate] = useState('');
-  const [reportTitle, setReportTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const { token, databaseId } = useAuth();
+  const { currentOjt } = useOjt();
+  const { fetchReports } = useReport();
+
+  const [reportDate, setReportDate] = useState("");
+  const [reportTitle, setReportTitle] = useState("");
+  const [content, setContent] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<ReportType>("weekly");
 
-  const reportTypes = ['Weekly', 'Monthly', 'Midterm', 'Final', 'Incident'];
-  const [selectedType, setSelectedType] = useState('Weekly');
+  useEffect(() => {
+    setSubmitted(false);
+  }, [location.pathname]);
 
   const formatBytes = (bytes: number) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    const newFiles: UploadedFile[] = Array.from(files).map(file => {
+    setFileError(null);
+
+    const incoming = Array.from(files);
+    const slotsLeft = MAX_FILES - uploadedFiles.length;
+
+    if (slotsLeft <= 0) {
+      setFileError(`You've reached the maximum of ${MAX_FILES} files.`);
+      return;
+    }
+
+    const accepted = incoming.slice(0, slotsLeft);
+    const rejected = incoming.length - accepted.length;
+
+    const newFiles: UploadedFile[] = accepted.map((file) => {
       const id = Math.random().toString(36).slice(2);
-      const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined;
-      return { id, name: file.name, size: file.size, type: file.type, preview };
+      const preview = file.type.startsWith("image/")
+        ? URL.createObjectURL(file)
+        : undefined;
+      return {
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        preview,
+        raw: file,
+      };
     });
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+
+    setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+    if (rejected > 0) {
+      setFileError(
+        `${rejected} file(s) were not added — maximum of ${MAX_FILES} files allowed.`,
+      );
+    }
   };
 
   const removeFile = (id: string) => {
-    setUploadedFiles(prev => {
-      const file = prev.find(f => f.id === id);
+    setFileError(null);
+    setUploadedFiles((prev) => {
+      const file = prev.find((f) => f.id === id);
       if (file?.preview) URL.revokeObjectURL(file.preview);
-      return prev.filter(f => f.id !== id);
+      return prev.filter((f) => f.id !== id);
     });
   };
 
@@ -68,16 +132,50 @@ const UploadReport: React.FC = () => {
     handleFiles(e.dataTransfer.files);
   };
 
-  const isFormValid = reportDate && reportTitle.trim() && description.trim();
+  const isFormValid = reportDate && reportTitle.trim() && content.trim();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!isFormValid) return;
+    if (!databaseId || !currentOjt) {
+      setSubmitError("Missing student or OJT information. Please try again.");
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError(null);
+
+    try {
+      const formData = new FormData();
+      // Append as strings — backend should use z.coerce.number() or parse from body
+      formData.append("studentId", String(databaseId));
+      formData.append("ojtId", String(currentOjt.id));
+      formData.append("type", selectedType); // already lowercase, matches enum
+      formData.append("reportDate", reportDate);
+      formData.append("title", reportTitle.trim());
+      formData.append("content", content.trim());
+
+      uploadedFiles.forEach((file) => {
+        formData.append("attachments", file.raw);
+      });
+
+      await API.post("/reports/create/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      await fetchReports();
       setSubmitted(true);
-      setTimeout(() => history.push('/reports'), 1800);
-    }, 2000);
+      setTimeout(() => history.push("/reports"), 1800);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        "Something went wrong while submitting your report. Please try again.";
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -85,12 +183,13 @@ const UploadReport: React.FC = () => {
       <IonPage>
         <IonContent fullscreen className="ur-content">
           <div className="ur-success-screen">
-            <div className="ur-success-ring" />
             <div className="ur-success-icon">
               <IonIcon icon={checkmarkCircleOutline} />
             </div>
             <h2 className="ur-success-title">Report Submitted!</h2>
-            <p className="ur-success-sub">Your report has been uploaded successfully.</p>
+            <p className="ur-success-sub">
+              Your report has been uploaded successfully.
+            </p>
           </div>
         </IonContent>
       </IonPage>
@@ -100,12 +199,14 @@ const UploadReport: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="ur-content">
-
-        {/* Hero — matches rp-hero style */}
+        {/* Hero */}
         <div className="ur-hero">
           <div className="ur-hero-bg" />
           <div className="ur-hero-inner">
-            <button className="ur-back-btn" onClick={() => history.push('/reports')}>
+            <button
+              className="ur-back-btn"
+              onClick={() => history.push("/reports")}
+            >
               <IonIcon icon={arrowBackOutline} />
             </button>
             <div>
@@ -116,7 +217,6 @@ const UploadReport: React.FC = () => {
         </div>
 
         <div className="ur-container">
-
           {/* Report Type Selector */}
           <div className="ur-section">
             <div className="ur-section-label">
@@ -124,13 +224,13 @@ const UploadReport: React.FC = () => {
               Report Type
             </div>
             <div className="ur-type-row">
-              {reportTypes.map(type => (
+              {REPORT_TYPES.map(({ label, value }) => (
                 <button
-                  key={type}
-                  className={`ur-type-chip ${selectedType === type ? 'ur-type-active' : ''}`}
-                  onClick={() => setSelectedType(type)}
+                  key={value}
+                  className={`ur-type-chip ${selectedType === value ? "ur-type-active" : ""}`}
+                  onClick={() => setSelectedType(value)}
                 >
-                  {type}
+                  {label}
                 </button>
               ))}
             </div>
@@ -148,7 +248,7 @@ const UploadReport: React.FC = () => {
                 type="date"
                 className="ur-input ur-input-date"
                 value={reportDate}
-                onChange={e => setReportDate(e.target.value)}
+                onChange={(e) => setReportDate(e.target.value)}
               />
             </div>
           </div>
@@ -166,33 +266,36 @@ const UploadReport: React.FC = () => {
                 className="ur-input"
                 placeholder="e.g. Weekly Report – Week 5"
                 value={reportTitle}
-                onChange={e => setReportTitle(e.target.value)}
-                maxLength={80}
+                onChange={(e) => setReportTitle(e.target.value)}
+                maxLength={255}
               />
               {reportTitle && (
-                <button className="ur-clear-btn" onClick={() => setReportTitle('')}>
+                <button
+                  className="ur-clear-btn"
+                  onClick={() => setReportTitle("")}
+                >
                   <IonIcon icon={closeCircleOutline} />
                 </button>
               )}
             </div>
-            <span className="ur-char-count">{reportTitle.length}/80</span>
+            <span className="ur-char-count">{reportTitle.length}/255</span>
           </div>
 
-          {/* Description */}
+          {/* Content */}
           <div className="ur-section">
             <div className="ur-section-label">
               <IonIcon icon={documentTextOutline} />
-              Description
+              Content
             </div>
             <textarea
               className="ur-textarea"
               placeholder="Describe your activities, learnings, and observations for this report period…"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               rows={5}
-              maxLength={600}
+              maxLength={2000}
             />
-            <span className="ur-char-count">{description.length}/600</span>
+            <span className="ur-char-count">{content.length}/2000</span>
           </div>
 
           {/* File Upload */}
@@ -200,13 +303,21 @@ const UploadReport: React.FC = () => {
             <div className="ur-section-label">
               <IonIcon icon={imagesOutline} />
               Attachments
-              <span className="ur-label-hint">Images, PDFs, Docs</span>
+              <span className="ur-label-hint">
+                Images, PDFs, Docs ({uploadedFiles.length}/{MAX_FILES})
+              </span>
             </div>
 
             <div
-              className={`ur-dropzone ${isDragging ? 'ur-dropzone--active' : ''}`}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+              className={`ur-dropzone ${isDragging ? "ur-dropzone--active" : ""} ${uploadedFiles.length >= MAX_FILES ? "ur-dropzone--disabled" : ""}`}
+              onClick={() =>
+                uploadedFiles.length < MAX_FILES &&
+                fileInputRef.current?.click()
+              }
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (uploadedFiles.length < MAX_FILES) setIsDragging(true);
+              }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
             >
@@ -214,26 +325,42 @@ const UploadReport: React.FC = () => {
                 <IonIcon icon={cloudUploadOutline} />
               </div>
               <p className="ur-dropzone-title">
-                {isDragging ? 'Drop files here' : 'Tap or drag to upload'}
+                {uploadedFiles.length >= MAX_FILES
+                  ? "Maximum files reached"
+                  : isDragging
+                    ? "Drop files here"
+                    : "Tap or drag to upload"}
               </p>
-              <p className="ur-dropzone-sub">Supports images, PDF, DOCX</p>
+              <p className="ur-dropzone-sub">
+                Supports images, PDF, DOCX · Max {MAX_FILES} files
+              </p>
               <input
                 ref={fileInputRef}
                 type="file"
                 multiple
                 accept="image/*,.pdf,.doc,.docx"
                 className="ur-file-input"
-                onChange={e => handleFiles(e.target.files)}
+                onChange={(e) => handleFiles(e.target.files)}
               />
             </div>
 
-            {/* File List */}
+            {fileError && (
+              <div className="ur-inline-error">
+                <IonIcon icon={alertCircleOutline} />
+                {fileError}
+              </div>
+            )}
+
             {uploadedFiles.length > 0 && (
               <div className="ur-file-list">
-                {uploadedFiles.map(file => (
+                {uploadedFiles.map((file) => (
                   <div key={file.id} className="ur-file-item">
                     {file.preview ? (
-                      <img src={file.preview} alt={file.name} className="ur-file-thumb" />
+                      <img
+                        src={file.preview}
+                        alt={file.name}
+                        className="ur-file-thumb"
+                      />
                     ) : (
                       <div className="ur-file-icon-wrap">
                         <IonIcon icon={attachOutline} />
@@ -241,9 +368,14 @@ const UploadReport: React.FC = () => {
                     )}
                     <div className="ur-file-info">
                       <span className="ur-file-name">{file.name}</span>
-                      <span className="ur-file-size">{formatBytes(file.size)}</span>
+                      <span className="ur-file-size">
+                        {formatBytes(file.size)}
+                      </span>
                     </div>
-                    <button className="ur-file-remove" onClick={() => removeFile(file.id)}>
+                    <button
+                      className="ur-file-remove"
+                      onClick={() => removeFile(file.id)}
+                    >
                       <IonIcon icon={trashOutline} />
                     </button>
                   </div>
@@ -252,9 +384,15 @@ const UploadReport: React.FC = () => {
             )}
           </div>
 
-          {/* Submit */}
+          {submitError && (
+            <div className="ur-inline-error ur-inline-error--submit">
+              <IonIcon icon={alertCircleOutline} />
+              {submitError}
+            </div>
+          )}
+
           <button
-            className={`ur-submit-btn ${isFormValid ? 'ur-submit-ready' : ''} ${isSubmitting ? 'ur-submit-loading' : ''}`}
+            className={`ur-submit-btn ${isFormValid ? "ur-submit-ready" : ""} ${isSubmitting ? "ur-submit-loading" : ""}`}
             onClick={handleSubmit}
             disabled={!isFormValid || isSubmitting}
           >
@@ -273,7 +411,6 @@ const UploadReport: React.FC = () => {
 
           <div className="ur-bottom-space" />
         </div>
-
       </IonContent>
     </IonPage>
   );

@@ -42,7 +42,7 @@ export const createSupervisorUser = async (data) => {
   return internalID;
 }
 
-export const fetchStudentInformation = async (userId) => {
+export const fetchStudentProfile = async (userId) => {
   const [rows] = await db.query(
     `SELECT 
       u.id AS databaseId,

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner, useIonRouter } from '@ionic/react';
+import { useHistory } from 'react-router';
+import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner } from '@ionic/react';
 import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import API from '@api/api';
 
 function Login() {
-  const ionRouter = useIonRouter();
+  const history = useHistory();
   const { login, role, loading } = useAuth();
 
   const [username, setUsername] = useState('');
@@ -22,7 +23,7 @@ function Login() {
     if (loading || !role) return;
 
     if (role === "student") {
-      ionRouter.push("/dashboard", "forward", "replace");
+      history.replace("/dashboard");
     }
   }, [role, loading]);
 
@@ -137,7 +138,7 @@ function Login() {
                 <button
                   type="button"
                   className="forgot-link"
-                  onClick={() => ionRouter.push('/forgot-password')}
+                  onClick={() => history.push('/forgot-password')}
                 >
                   Forgot Password?
                 </button>
@@ -168,7 +169,7 @@ function Login() {
               <div className="register-section">
                 <IonText className="register-text">
                   Don't have an account?{' '}
-                  <span className="register-link" onClick={() => ionRouter.push('/register')}>
+                  <span className="register-link" onClick={() => history.push('/register')}>
                     Sign Up
                   </span>
                 </IonText>

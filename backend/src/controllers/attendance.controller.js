@@ -1,9 +1,11 @@
+import { treeifyError } from "zod";
+import { logActivity } from "./activity.controller.js";
 import { 
   getTodayAttendance as _getTodayAttendance, insertAttendance, isStudentInOffice 
 } from "../models/attendance.model.js";
 import { determineSession, verifyQr } from "../utils/attendance.js";
 import { attendanceQuerySchema } from "../validators/attendance.validator.js";
-import { treeifyError } from "zod";
+
 
 export const getTodayAttendance = async (req, res) => {
   try {
@@ -22,7 +24,7 @@ export const getTodayAttendance = async (req, res) => {
       afternoonTimeOut: dbRecord?.afternoon_out ?? '',
     };
 
-    return res.json(record);
+    return res.status(200).json(record);
 
   } catch (error) {
     console.error(error);
@@ -85,10 +87,22 @@ export const scanAttendance = async (req, res) => {
 
     await insertAttendance(studentId, ojtId, date, column);
 
+    const action = column.endsWith('_in') ? 'TIME_IN' : 'TIME_OUT';
+    const sessionStr = column.replace('_', ' ').charAt(0).toUpperCase() + column.replace('_', ' ').slice(1);
+    
+    await logActivity({
+      databaseId: studentId,
+      ojtId,
+      action,
+      targetType: 'DTR',
+      targetId: studentId,
+      description: `${sessionStr} recorded`
+    });
+
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
-    res.json({
+    res.status(200).json({
       message: "Attendance recorded",
       session: column,
       time

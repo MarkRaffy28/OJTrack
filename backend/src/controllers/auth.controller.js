@@ -1,13 +1,14 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { treeifyError } from "zod";
+import { logActivity } from "./activity.controller.js";
 import { 
-  createStudentUser, createSupervisorUser, findUserByEmail, findUserByUserId, findUserByUsername, markEmailVerified,
+  createStudentUser, createSupervisorUser, findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, markEmailVerified,
   resetUserPassword, saveForgotPasswordOTP, saveVerificationOTP
 } from "../models/user.model.js";
-import { loginSchema, studentRegistrationSchema, supervisorRegistrationSchema } from "../validators/auth.validator.js";
 import { checkOTPCooldown, generateOTP, getOTPExpiry } from "../utils/otp.js";
 import { sendOTPEmail } from "../utils/mail.js";
+import { loginSchema, logoutSchema, studentRegistrationSchema, supervisorRegistrationSchema } from "../validators/auth.validator.js";
 
 export const login = async (req, res) => {
   try {
@@ -28,13 +29,21 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    await logActivity({
+      databaseId: user.id,
+      action: "LOGIN",
+      targetType: "USER",
+      targetId: user.id,
+      description: "User logged in"
+    });
+
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    res.json({
+    res.status(200).json({
       message: "Login successful",
       token,
       user: {
@@ -43,6 +52,36 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+}
+
+export const logout = async (req, res) => {
+  try {
+    const parsed = logoutSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
+    }
+    const { databaseId } = parsed.data;
+
+    const user = await findUserByDatabaseId(databaseId);
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    await logActivity({
+      databaseId,
+      action: "LOGOUT",
+      targetType: "USER",
+      targetId: databaseId,
+      description: "User logged out"
+    });
+
+    res.status(200).json({ message: "Logout successful" });
 
   } catch (error) {
     console.error(error);
@@ -78,6 +117,14 @@ export const registerStudent = async (req, res) => {
     const newUserId = await createStudentUser({
       ...parsed.data,
       password: hashedPassword
+    });
+
+    await logActivity({
+      databaseId: newUserId,
+      action: "REGISTER",
+      targetType: "USER",
+      targetId: newUserId,
+      description: "Student registered successfully"
     });
 
     res.status(201).json({
@@ -121,6 +168,14 @@ export const registerSupervisor = async (req, res) => {
       password: hashedPassword
     });
 
+    await logActivity({
+      databaseId: newUserId,
+      action: "REGISTER",
+      targetType: "USER",
+      targetId: newUserId,
+      description: "Supervisor registered successfully"
+    });
+
     res.status(201).json({
       message: "User registered successfully",
       newUserId
@@ -160,7 +215,15 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     await resetUserPassword(email, hashedPassword);
 
-    res.json({ message: "Password has been reset successfully" });
+    await logActivity({
+      databaseId: user.id,
+      action: "UPDATE_PASSWORD",
+      targetType: "USER",
+      targetId: user.id,
+      description: "User reset password via OTP"
+    });
+
+    res.status(200).json({ message: "Password has been reset successfully" });
 
   } catch (err) {
     console.error(err);
@@ -206,7 +269,7 @@ export const sendEmailVerificationOTP = async (req, res) => {
       name: user.first_name,
     });
 
-    res.json({ message: "Verification OTP sent to email" });
+    res.status(200).json({ message: "Verification OTP sent to email" });
 
   } catch (err) {
     console.error(err);
@@ -252,7 +315,7 @@ export const sendForgotPasswordOTP = async (req, res) => {
       name: user.first_name,
     });
 
-    res.json({ message: "Password reset OTP sent to email" });
+    res.status(200).json({ message: "Password reset OTP sent to email" });
 
   } catch (err) {
     console.error(err);
@@ -291,7 +354,7 @@ export const verifyEmailOTP = async (req, res) => {
 
     await markEmailVerified(email);
 
-    res.json({ message: "Email verified successfully" });
+    res.status(200).json({ message: "Email verified successfully" });
 
   } catch (err) {
     console.error(err);
