@@ -48,7 +48,7 @@ interface UploadedFile {
   raw: File;
 }
 
-const UploadReport: React.FC = () => {
+function UploadReport() {
   const history = useHistory();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,8 +68,20 @@ const UploadReport: React.FC = () => {
   const [fileError, setFileError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<ReportType>("weekly");
 
+  const filesRef = useRef<UploadedFile[]>([]);
+  useEffect(() => {
+    filesRef.current = uploadedFiles;
+  }, [uploadedFiles]);
+
   useEffect(() => {
     setSubmitted(false);
+
+    return () => {
+      // Revoke all previews to prevent memory leaks when leaving the page
+      filesRef.current.forEach((file) => {
+        if (file.preview) URL.revokeObjectURL(file.preview);
+      });
+    };
   }, [location.pathname]);
 
   const formatBytes = (bytes: number) => {
@@ -144,6 +156,19 @@ const UploadReport: React.FC = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    const resetForm = () => {
+      setReportDate("");
+      setReportTitle("");
+      setContent("");
+      uploadedFiles.forEach((file) => {
+        if (file.preview) URL.revokeObjectURL(file.preview);
+      });
+      setUploadedFiles([]);
+      setSelectedType("weekly");
+      setSubmitError(null);
+      setFileError(null);
+    };
+
     try {
       const formData = new FormData();
       // Append as strings — backend should use z.coerce.number() or parse from body
@@ -158,7 +183,7 @@ const UploadReport: React.FC = () => {
         formData.append("attachments", file.raw);
       });
 
-      await API.post("/reports/create/", formData, {
+      await API.post("/reports", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
@@ -166,6 +191,7 @@ const UploadReport: React.FC = () => {
       });
 
       await fetchReports();
+      resetForm();
       setSubmitted(true);
       setTimeout(() => history.push("/reports"), 1800);
     } catch (err: any) {

@@ -32,6 +32,7 @@ interface SupervisorUser extends BaseUser {
   role: 'supervisor';
   officeId: number;
   officeName: string;
+  position: string;
 }
 
 interface AdminUser extends BaseUser {
@@ -65,7 +66,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await API.get(`/users/fetch/${role}/profile/${databaseId}`,
+      const response = await API.get(`/users/${role}/profile/${databaseId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 

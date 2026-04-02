@@ -61,6 +61,7 @@ function Register() {
   const [offices, setOffices] = useState<{ id: number; name: string }[]>([]);
   const [officeName, setOfficeName] = useState("");
   const [officeId, setOfficeId] = useState("");
+  const [position, setPosition] = useState("");
 
   // Validation
   const [isContactNumberValid, setIsContactNumberValid] = useState(true);
@@ -86,6 +87,7 @@ function Register() {
   const [isYearTouched, setIsYearTouched] = useState(false);
   const [isEmployeeIdTouched, setIsEmployeeIdTouched] = useState(false);
   const [isOfficeIdTouched, setIsOfficeIdTouched] = useState(false);
+  const [isPositionTouched, setIsPositionTouched] = useState(false);
 
   // Stop Typing
   const [isEmailStopTyping, setIsEmailStopTyping] = useState(false);
@@ -190,13 +192,14 @@ function Register() {
         major.length > 0
       : employeeId.length >= 3 && 
         userIdError.length === 0 &&
-        officeId.length >= 1);
+        officeId.length >= 1 &&
+        position.length >= 1);
 
 
   useEffect(() => {
     async function fetchOffices() {
       try {
-        const res = await API.get("/offices/list");
+        const res = await API.get("/offices");
         setOffices(res.data);
       } catch (err) {
         console.error(err);
@@ -232,7 +235,6 @@ function Register() {
 
     try {
       const response = await API.get(`/users/exists/username/${username}`);
-      console.log(response.data)
       if (response.data.available) {
         setUsernameAvailable(true);
       } else {
@@ -284,6 +286,7 @@ function Register() {
         address,
         employeeId,
         officeId,
+        position,
       };
     }
 
@@ -1337,6 +1340,41 @@ function Register() {
                 </div>
                 {isOfficeIdTouched && officeId.length === 0 && (
                   <IonText className="error-message">Office is required</IonText>
+                )}
+              </div>
+
+              {/* Position */}
+              <div className="input-group">
+                <label className="floating-label">
+                  <IonIcon icon={briefcaseOutline} className="label-icon" />
+                  Position
+                </label>
+                <div className="input-container">
+                  <input
+                    type="text"
+                    value={position}
+                    maxLength={255}
+                    onChange={(e) => setPosition(e.target.value)}
+                    onFocus={() => setIsPositionTouched(true)}
+                    onBlur={() => setIsPositionTouched(true)}
+                    className={`styled-input ${isPositionTouched && position.length === 0 ? "input-invalid" : position.length >= 1 ? "input-valid" : ""}`}
+                    placeholder="Enter your position"
+                  />
+                  {position && position.length >= 1 && (
+                    <IonIcon
+                      icon={checkmarkCircleOutline}
+                      className="validation-icon success"
+                    />
+                  )}
+                  {isPositionTouched && position.length === 0 && (
+                    <IonIcon
+                      icon={alertCircleOutline}
+                      className="validation-icon error"
+                    />
+                  )}
+                </div>
+                {isPositionTouched && position.length === 0 && (
+                  <IonText className="error-message">Position is required</IonText>
                 )}
               </div>
             </>

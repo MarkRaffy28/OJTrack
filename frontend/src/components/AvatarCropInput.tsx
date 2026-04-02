@@ -15,7 +15,7 @@ interface AvatarCropInputProps {
   onChange: (photo: string | null) => void;
 }
 
-const AvatarCropInput: React.FC<AvatarCropInputProps> = ({ value, onChange }) => {
+function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [isCropping,  setIsCropping]  = useState(false);
   const [cropState,   setCropState]   = useState<CropState>({ x: 0, y: 0, scale: 1 });

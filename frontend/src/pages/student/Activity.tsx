@@ -6,7 +6,7 @@ import { useActivity } from '@context/activityContext';
 import { formatRelativeDate, formatTime12 } from '@utils/date';
 import BottomNav from '@components/BottomNav';
 
-const Activity: React.FC = () => {
+function Activity() {
   const { activities, loadingActivities, getLatestActivities, fetchActivities } = useActivity();
   const location = useLocation();
   const [searchText, setSearchText] = useState('');

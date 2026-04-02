@@ -7,7 +7,7 @@ export const getTodayAttendance = async (studentId, ojtId, date) => {
   );
 
   return rows[0];
-}
+};
 
 export const insertAttendance = async (studentId, ojtId, date, column) => {
   const [result] = await db.query(
@@ -20,7 +20,7 @@ export const insertAttendance = async (studentId, ojtId, date, column) => {
   );
 
   return result.insertId;
-}
+};
 
 export const isStudentInOffice = async (studentId, officeId) => {
   const [rows] = await db.query(
@@ -35,4 +35,4 @@ export const isStudentInOffice = async (studentId, officeId) => {
   );
 
   return rows.length > 0;
-}
+};

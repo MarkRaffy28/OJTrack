@@ -48,7 +48,7 @@ type EditAccountForm = z.infer<typeof schema>;
 type AvailStatus = 'idle' | 'checking' | 'available' | 'taken';
 
 // ── Component ─────────────────────────────────────────────────────────────────
-const EditAccount: React.FC = () => {
+function EditAccount() {
   const history = useHistory();
   const location = useLocation();
   const { user, refreshUser } = useUser();
@@ -159,7 +159,7 @@ const EditAccount: React.FC = () => {
     if (usernameStatus === 'taken' || emailStatus === 'taken') return;
     setServerError('');
     try {
-      await API.patch(`/users/update/profile/${databaseId}`,
+      await API.patch(`/users/profile/${databaseId}`,
         {
           username:      data.username.trim(),
           firstName:     data.firstName.trim(),

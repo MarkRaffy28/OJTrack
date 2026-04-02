@@ -7,11 +7,7 @@ interface RoleRouteProps extends RouteProps {
   allowedRoles: string[];
 }
 
-export const RoleRoute: React.FC<RoleRouteProps> = ({
-  component: Component,
-  allowedRoles,
-  ...rest
-}) => {
+function RoleRoute({component: Component, allowedRoles, ...rest}: RoleRouteProps) {
   const { role, loading } = useAuth();
 
   return (
@@ -28,4 +24,6 @@ export const RoleRoute: React.FC<RoleRouteProps> = ({
       }}
     />
   );
-};
+}
+
+export default RoleRoute;

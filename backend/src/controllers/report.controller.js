@@ -1,11 +1,11 @@
 import { treeifyError } from "zod";
-import { logActivity } from "./activity.controller.js";
-import { reportStorage, deleteFiles } from "../utils/storage.util.js";
-import { createReportSchema, updateReportSchema } from "../validators/report.validator.js";
-import { createReport as _createReport, fetchReports as _fetchReports, updateReport as _updateReport, deleteReport as _deleteReport, getReportById as _getReportById } from "../models/report.model.js";
+import { logActivityController } from "./activity.controller.js";
+import { deleteFiles } from "../utils/storage.util.js";
+import { createReportSchema, deleteReportSchema, fetchReportsSchema, updateReportSchema } from "../validators/report.validator.js";
+import { createReport, fetchReports, updateReport, deleteReport, getReportById } from "../models/report.model.js";
 
 
-export const createReport = async (req, res) => {
+export const createReportController = async (req, res) => {
   try {
     const files = req.files ? req.files.map(f => ({
       filename: f.filename,
@@ -20,9 +20,9 @@ export const createReport = async (req, res) => {
       return res.status(400).json(treeifyError(parsed.error));
     }
 
-    const insertId = await _createReport(parsed.data);
+    const insertId = await createReport(parsed.data);
 
-    await logActivity({
+    await logActivityController({
       databaseId: parsed.data.studentId,
       ojtId: parsed.data.ojtId,
       action: "CREATE_REPORT",
@@ -43,15 +43,16 @@ export const createReport = async (req, res) => {
   }
 };
 
-export const deleteReport = async (req, res) => {
+export const deleteReportController = async (req, res) => {
   try {
-    const { reportId } = req.params;
+    const parsed = deleteReportSchema.safeParse(req.params);
 
-    if (!reportId) {
-      return res.status(400).json({ message: "Invalid request data" });
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
     }
+    const { reportId } = parsed.data;
 
-    const report = await _getReportById(reportId);
+    const report = await getReportById(reportId);
     if (!report) {
       return res.status(404).json({ message: "Report not found" });
     }
@@ -59,9 +60,9 @@ export const deleteReport = async (req, res) => {
       return res.status(403).json({ message: "Cannot delete an approved report" });
     }
 
-    await _deleteReport(reportId);
+    await deleteReport(reportId);
 
-    await logActivity({
+    await logActivityController({
       databaseId: report.student_id,
       ojtId: report.ojt_id,
       action: "DELETE_REPORT",
@@ -82,15 +83,16 @@ export const deleteReport = async (req, res) => {
   }
 };
 
-export const fetchReports = async (req, res) => {
+export const fetchReportsController = async (req, res) => {
   try {
-    const { ojtId } = req.params;
+    const parsed = fetchReportsSchema.safeParse(req.params);
 
-    if (!ojtId) {
-      return res.status(400).json({ message: "Invalid request data" });
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
     }
+    const { ojtId } = parsed.data;
 
-    const reports = await _fetchReports(ojtId);
+    const reports = await fetchReports(ojtId);
 
     res.status(200).json({
       message: "OJT reports fetched successfully",
@@ -103,22 +105,8 @@ export const fetchReports = async (req, res) => {
   }
 };
 
-export const updateReport = async (req, res) => {
+export const updateReportController = async (req, res) => {
   try {
-    const { reportId } = req.params;
-
-    if (!reportId) {
-      return res.status(400).json({ message: "Invalid request data" });
-    }
-
-    const existing = await _getReportById(reportId);
-    if (!existing) {
-      return res.status(404).json({ message: "Report not found" });
-    }
-    if (existing.status === 'approved') {
-      return res.status(403).json({ message: "Cannot edit an approved report" });
-    }
-
     const newFiles = req.files ? req.files.map(f => ({
       filename: f.filename,
       path: f.path,
@@ -138,15 +126,24 @@ export const updateReport = async (req, res) => {
     const mergedAttachments = [...keptAttachments, ...newFiles];
     const finalAttachments = mergedAttachments.length > 0 ? mergedAttachments : null;
 
-    const parsed = updateReportSchema.safeParse({ ...req.body, attachments: finalAttachments });
+    const parsed = updateReportSchema.safeParse({ ...req.body, ...req.params, attachments: finalAttachments });
 
     if (!parsed.success) {
       return res.status(400).json(treeifyError(parsed.error));
     }
+    const { reportId } = parsed.data;
 
-    await _updateReport(reportId, parsed.data);
+    const existing = await getReportById(reportId);
+    if (!existing) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+    if (existing.status === 'approved') {
+      return res.status(403).json({ message: "Cannot edit an approved report" });
+    }
 
-    await logActivity({
+    await updateReport(reportId, parsed.data);
+
+    await logActivityController({
       databaseId: existing.student_id,
       ojtId: existing.ojt_id,
       action: "UPDATE_REPORT",
@@ -159,7 +156,9 @@ export const updateReport = async (req, res) => {
       old => !keptAttachments.some(kept => kept.filename === old.filename)
     ) || [];
 
-    await deleteFiles(removedAttachments);
+    if (removedAttachments.length > 0) {
+      await deleteFiles(removedAttachments);
+    }
 
     res.status(200).json({
       message: "OJT report updated successfully",

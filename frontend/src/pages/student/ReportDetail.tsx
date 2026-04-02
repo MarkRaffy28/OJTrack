@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { IonPage, IonContent, IonIcon } from '@ionic/react';
 import {
@@ -6,10 +6,10 @@ import {
   informationCircleOutline, attachOutline, closeCircleOutline, printOutline, createOutline, trashOutline, alertCircleOutline, 
   saveOutline, banOutline, personOutline, chatbubbleOutline, cloudUploadOutline,
 } from 'ionicons/icons';
-import { printReport } from '@components/PrintReport';
 import { useReport, Report, ReportAttachment } from '@context/reportContext';
 import { formatDate, formatDateTime, formatDateForInput } from '@utils/date';
 import { capitalize } from '@utils/string';
+import printReport from '@components/PrintReport';
 import '@css/ReportDetail.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -40,7 +40,7 @@ interface EditState {
   newFilePreviews: { file: File; preview?: string }[];
 }
 
-const ReportDetail: React.FC = () => {
+function ReportDetail() {
   const history = useHistory();
   const location = useLocation<{ report: Report }>();
   const { updateReport, deleteReport } = useReport();
@@ -57,6 +57,17 @@ const ReportDetail: React.FC = () => {
   const [showDelete, setShowDelete] = useState(false);
 
   const report = location.state?.report;
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (editState) {
+        editState.newFilePreviews.forEach((item) => {
+          if (item.preview) URL.revokeObjectURL(item.preview);
+        });
+      }
+    };
+  }, [editState]);
 
   if (!report) {
     return (
@@ -169,6 +180,15 @@ const ReportDetail: React.FC = () => {
     });
   };
 
+  const closeEdit = () => {
+    if (editState) {
+      editState.newFilePreviews.forEach((item) => {
+        if (item.preview) URL.revokeObjectURL(item.preview);
+      });
+    }
+    setEditState(null);
+  };
+
   const handleSaveEdit = async () => {
     if (!editState || !report) return;
     setIsSaving(true);
@@ -181,7 +201,7 @@ const ReportDetail: React.FC = () => {
       files: editState.newFiles.length > 0 ? editState.newFiles : undefined,
     });
     setIsSaving(false);
-    setEditState(null);
+    closeEdit();
     history.push('/reports');
   };
 
@@ -382,14 +402,14 @@ const ReportDetail: React.FC = () => {
 
       {/* ── EDIT MODAL ────────────────────────────────────────────────── */}
       {editState && (
-        <div className="rp-modal-overlay" onClick={() => setEditState(null)}>
+        <div className="rp-modal-overlay" onClick={closeEdit}>
           <div className="rp-modal" onClick={e => e.stopPropagation()}>
             <div className="rp-modal-header">
               <div className="rp-modal-title-row">
                 <IonIcon icon={createOutline} className="rp-modal-icon" />
                 <h2 className="rp-modal-title">Edit Report</h2>
               </div>
-              <button className="rp-modal-close" onClick={() => setEditState(null)}>
+              <button className="rp-modal-close" onClick={closeEdit}>
                 <IonIcon icon={closeCircleOutline} />
               </button>
             </div>
@@ -497,7 +517,7 @@ const ReportDetail: React.FC = () => {
               </div>
             </div>
             <div className="rp-modal-footer">
-              <button className="rp-modal-btn rp-modal-cancel" onClick={() => setEditState(null)}>
+              <button className="rp-modal-btn rp-modal-cancel" onClick={closeEdit}>
                 Cancel
               </button>
               <button

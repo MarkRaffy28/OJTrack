@@ -10,13 +10,7 @@ interface LogoutModalProps {
   onComplete?: () => void;
 }
 
-function LogoutModal({
-  isOpen,
-  onConfirm,
-  onCancel,
-  isLoading = false,
-  onComplete,
-}: LogoutModalProps) {
+function LogoutModal({ isOpen, onConfirm, onCancel, isLoading = false, onComplete }: LogoutModalProps) {
   const history = useHistory();
   const [navigateToLogin, setNavigateToLogin] = useState(false);
   const modalRef         = useRef<HTMLDivElement>(null);

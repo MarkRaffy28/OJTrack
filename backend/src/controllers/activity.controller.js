@@ -1,11 +1,13 @@
 import { treeifyError } from "zod";
-import { fetchStudentActivities as _fetchStudentActivities, logActivity as _logActivity } from "../models/activity.model.js";
-import { fetchStudentOjts as _fetchStudentOjts, findUserByDatabaseId } from "../models/user.model.js";
+import { fetchStudentActivities, logActivity } from "../models/activity.model.js";
+import { fetchStudentOjts } from "../models/ojt.model.js";
+import { findUserByDatabaseId } from "../models/user.model.js";
 import { logActivitySchema, fetchStudentActivitiesSchema } from "../validators/activity.validator.js";
 
-export const fetchStudentActivities = async (req, res) => {
+
+export const fetchStudentActivitiesController = async (req, res) => {
   try {
-    const parsed = fetchStudentActivitiesSchema.safeParse(req.body);
+    const parsed = fetchStudentActivitiesSchema.safeParse(req.query);
     
     if (!parsed.success) {
       return res.status(400).json( treeifyError(parsed.error) );
@@ -17,12 +19,12 @@ export const fetchStudentActivities = async (req, res) => {
       return res.status(404).json({  message: "User not found" });
     }
 
-    const studentOjts = await _fetchStudentOjts(databaseId);
+    const studentOjts = await fetchStudentOjts(databaseId);
     if (!studentOjts) {
       return res.status(404).json({ message: "Student's OJTs not found" })
     }
 
-    const activities = await _fetchStudentActivities(databaseId);
+    const activities = await fetchStudentActivities(databaseId);
     if (!activities) {
       return res.status(404).json({ message: "Activities not found" })
     }
@@ -40,7 +42,7 @@ export const fetchStudentActivities = async (req, res) => {
   }
 }
 
-export const logActivity = async (data) => {
+export const logActivityController = async (data) => {
   try {
     const parsed = logActivitySchema.safeParse(data);
 
@@ -50,10 +52,10 @@ export const logActivity = async (data) => {
     }
     const { databaseId, ojtId, action, targetType, targetId, description } = parsed.data;
 
-    return await _logActivity(databaseId, ojtId, action, targetType, targetId, description);
+    return await logActivity(databaseId, ojtId, action, targetType, targetId, description);
 
   } catch (err) {
-    console.error("Error in logActivity helper:", err);
+    console.error("Error in logActivityController helper:", err);
     return null;
   }
 };

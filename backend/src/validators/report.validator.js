@@ -15,7 +15,17 @@ export const createReportSchema = z.object({
   })).nullable().optional(),
 });
 
+export const deleteReportSchema = z.object({
+  reportId: z.coerce.number().int().positive(),
+});
+
+export const fetchReportsSchema = z.object({
+  ojtId: z.coerce.number().int().positive(),
+});
+
 export const updateReportSchema = z.object({
+  reportId: z.coerce.number().int().positive(),
+  ojtId: z.coerce.number().int().positive(),
   type: z.enum(['daily', 'weekly', 'monthly', 'midterm', 'final', 'incident']),
   reportDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format YYYY-MM-DD"),
   title: z.string().max(255).nullable().optional(),

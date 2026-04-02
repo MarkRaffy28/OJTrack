@@ -9,7 +9,7 @@ import { useOjtProgress } from '@hooks/useOJtProgress';
 import { getGreeting, formatRelativeDate, formatTime12 } from '@utils/date';
 import BottomNav from '@components/BottomNav';
 
-const Dashboard = () => {
+function Dashboard() {
   const history = useHistory();
   const location = useLocation();
   const { ojtRecords, currentOjt, selectedSchoolYear, selectSchoolYear } = useOjt();

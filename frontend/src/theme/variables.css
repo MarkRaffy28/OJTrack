@@ -343,7 +343,7 @@ select.styled-input {
   font-size: 0.75rem;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  padding-left: 5%;
+  padding-left: 15px;
   background: rgba(239, 68, 68, 0.1);
   border-radius: 8px;
 }
@@ -370,30 +370,6 @@ select.styled-input {
 
 .forgot-link:hover {
   color: #764ba2;
-}
-
-.login-button {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: 12px;
-  background: rgb(106, 121, 220);
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.login-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
 }
 
 .login-button:active:not(:disabled) {
@@ -2651,4 +2627,39 @@ body, ion-app, ion-content {
   .stat-divider {
     display: none;
   }
+}
+
+/* ── Email Verification Status ── */
+.acc-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.acc-verified-badge ion-icon {
+  font-size: 1rem;
+}
+
+.acc-verify-btn {
+  background: #f87171;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.2);
+}
+
+.acc-verify-btn:hover {
+  background: #ef4444;
+  transform: translateY(-1px);
 }

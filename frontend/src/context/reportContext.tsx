@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './authContext';
 import { useOjt } from './ojtContext';
 import API from '@api/api';
@@ -60,12 +60,12 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [reports, setReports] = useState<Report[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     if (!currentOjt?.id || !token) return;
 
     setLoadingReports(true);
     try {
-      const res = await API.get(`/reports/fetch/${currentOjt?.id}`, {
+      const res = await API.get(`/reports/${currentOjt?.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -77,7 +77,7 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } finally {
       setLoadingReports(false);
     }
-  };
+  }, [currentOjt?.id, token]);
 
   // Auto-fetch when OJT context changes
   useEffect(() => {
@@ -86,7 +86,7 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [currentOjt?.id, token]);
 
-  const updateReport = async (id: number, payload: UpdateReportPayload) => {
+  const updateReport = useCallback(async (id: number, payload: UpdateReportPayload) => {
     try {
       const formData = new FormData();
       formData.append('type', payload.type);
@@ -105,7 +105,7 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         });
       }
 
-      await API.patch(`/reports/update/${id}`, formData, {
+      await API.patch(`/reports/${id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
@@ -119,11 +119,11 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error("Update error:", error);
       throw error;
     }
-  };
+  }, [token, fetchReports]);
 
-  const deleteReport = async (id: number) => {
+  const deleteReport = useCallback(async (id: number) => {
     try {
-      await API.delete(`/reports/delete/${id}`, {
+      await API.delete(`/reports/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -133,7 +133,7 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.error("Delete error:", error);
       throw error;
     }
-  };
+  }, [token]);
 
   return (
     <ReportContext.Provider

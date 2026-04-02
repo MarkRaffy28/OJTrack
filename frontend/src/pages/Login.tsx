@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
 import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner } from '@ionic/react';
-import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, } from 'ionicons/icons';
+import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, alertCircleOutline, } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import API from '@api/api';
 
@@ -24,7 +24,12 @@ function Login() {
 
     if (role === "student") {
       history.replace("/dashboard");
+    } else if (role === "supervisor") {
+      history.replace("/supervisor-dashboard");
     }
+
+    setUsername('');
+    setPassword('');
   }, [role, loading]);
 
   const handleLogin = async () => {
@@ -129,7 +134,8 @@ function Login() {
               </div>
 
               {loginError && (
-                <IonText className="error-message" style={{ marginTop: 8, display: 'block' }}>
+                <IonText className="error-message">
+                  <IonIcon icon={alertCircleOutline} className="icon-error" />
                   {loginError}
                 </IonText>
               )}

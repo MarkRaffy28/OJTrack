@@ -1,11 +1,13 @@
 import crypto from "crypto";
-import { getOfficesList as _getOfficesList } from "../models/office.model.js";
+import { getOfficesList } from "../models/office.model.js";
+import { getOfficeQrSchema } from "../validators/office.validator.js";
 
 const SECRET = process.env.QR_SECRET;
 
-export const getOfficesList = async ( req, res) => {
+
+export const getOfficesListController = async ( req, res) => {
   try {
-    const offices = await _getOfficesList();
+    const offices = await getOfficesList();
     res.status(200).json(offices);
 
   } catch (error) {
@@ -14,12 +16,14 @@ export const getOfficesList = async ( req, res) => {
   }
 }
 
-export const getOfficeQr = async (req, res) => {
+export const getOfficeQrController = async (req, res) => {
   try {
-    const { officeId } = req.params;
-    if (!officeId) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = getOfficeQrSchema.safeParse(req.params);
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
     }
+    const { officeId } = parsed.data;
 
     const timestamp = Date.now();
 

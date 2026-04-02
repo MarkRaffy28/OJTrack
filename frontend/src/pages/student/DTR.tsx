@@ -86,7 +86,7 @@ function DTR() {
     } finally {
       setLoadingFetch(false);
     }
-  }, [token, user, currentOjt, showToast]);
+  }, [token, user?.databaseId, currentOjt?.id, showToast]);
 
   useEffect(() => {
     fetchAttendance();

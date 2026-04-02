@@ -42,12 +42,12 @@ CREATE TABLE offices (
 CREATE table student_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
-  user_id INT NOT NULL UNIQUE,
+  student_id INT NOT NULL UNIQUE,
   year INT(1) NOT NULL,
   program VARCHAR(100) NOT NULL,
   major VARCHAR(100) NOT NULL,
 
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE supervisor_details (
@@ -55,6 +55,7 @@ CREATE TABLE supervisor_details (
 
   supervisor_id INT NOT NULL UNIQUE,
   office_id INT NOT NULL,
+  position VARCHAR(255) NOT NULL,
 
   FOREIGN KEY (supervisor_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE

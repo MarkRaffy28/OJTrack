@@ -1,13 +1,11 @@
 import { treeifyError } from "zod";
-import { logActivity } from "./activity.controller.js";
-import { 
-  getTodayAttendance as _getTodayAttendance, insertAttendance, isStudentInOffice 
-} from "../models/attendance.model.js";
+import { logActivityController } from "./activity.controller.js";
+import { getTodayAttendance, insertAttendance, isStudentInOffice } from "../models/attendance.model.js";
 import { determineSession, verifyQr } from "../utils/attendance.js";
-import { attendanceQuerySchema } from "../validators/attendance.validator.js";
+import { attendanceQuerySchema, scanAttendanceSchema } from "../validators/attendance.validator.js";
 
 
-export const getTodayAttendance = async (req, res) => {
+export const getTodayAttendanceController = async (req, res) => {
   try {
     const parsed = attendanceQuerySchema.safeParse(req.query);
 
@@ -16,7 +14,7 @@ export const getTodayAttendance = async (req, res) => {
     }
     const { studentId, ojtId, date } = parsed.data;
 
-    const dbRecord = await _getTodayAttendance(studentId, ojtId, date);
+    const dbRecord = await getTodayAttendance(studentId, ojtId, date);
     const record = {
       morningTimeIn: dbRecord?.morning_in ?? '',
       morningTimeOut: dbRecord?.morning_out ?? '',
@@ -32,32 +30,22 @@ export const getTodayAttendance = async (req, res) => {
   }
 }
 
-export const scanAttendance = async (req, res) => {
+export const scanAttendanceController = async (req, res) => {
   try {
-    const { studentId, ojtId, qrPayLoad } = req.body;
-    
-    if (!studentId || !ojtId || !qrPayLoad) {
-      return res.status(400).json({  message: "Invalid request data" });
-    }
+    const parsed = scanAttendanceSchema.safeParse(req.body);
 
-    let qr;
-    try {
-      qr = typeof qrPayLoad === "string" ? JSON.parse(qrPayLoad) : qrPayLoad;
-    } catch {
-      return res.status(400).json({ message: "Invalid QR payload format" });
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
     }
-
-    if (!qr.o || !qr.t || !qr.s) {
-      return res.status(400).json({ message: "Invalid QR payload" });
-    }
+    const { studentId, ojtId, qrPayLoad } = parsed.data;
 
     try {
-      verifyQr(qr.o, qr.t, qr.s);
+      verifyQr(qrPayLoad.o, qrPayLoad.t, qrPayLoad.s);
     } catch (error) {
       return res.status(400).json({ message: error.message });
     }
 
-    const assigned = await isStudentInOffice(studentId, qr.o);
+    const assigned = await isStudentInOffice(studentId, qrPayLoad.o);
     if (!assigned) {
       return res.status(403).json({ message: "Student not assigned to this office" });
     }
@@ -69,47 +57,47 @@ export const scanAttendance = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
 
-    const date = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
 
-    const record = await _getTodayAttendance(studentId, ojtId, date);
+    const record = await getTodayAttendance(studentId, ojtId, date);
+
     if ((column === "morning_out" && (!record || !record["morning_in"])) ||
         (column === "afternoon_out" && (!record || !record["afternoon_in"]))) {
+      const session = column.includes("morning") ? "Morning" : "Afternoon";
       return res.status(400).json({
-        message: `Cannot log ${column.includes("morning") ? "Morning Time Out" : "Afternoon Time Out"} without logging ${column.includes("morning") ? "Morning Time In" : "Afternoon Time In"}`
+        message: `Cannot log ${session} Time Out without logging ${session} Time In`
       });
     }
 
     if (record && record[column]) {
-      return res.status(400).json({
-        message: "Session already recorded"
-      });
+      return res.status(400).json({ message: "Session already recorded" });
     }
 
     await insertAttendance(studentId, ojtId, date, column);
 
-    const action = column.endsWith('_in') ? 'TIME_IN' : 'TIME_OUT';
-    const sessionStr = column.replace('_', ' ').charAt(0).toUpperCase() + column.replace('_', ' ').slice(1);
-    
-    await logActivity({
+    const action = column.endsWith("_in") ? "TIME_IN" : "TIME_OUT";
+    const sessionStr = column.replaceAll("_", " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+    await logActivityController({
       databaseId: studentId,
       ojtId,
       action,
-      targetType: 'DTR',
+      targetType: "DTR",
       targetId: studentId,
-      description: `${sessionStr} recorded`
+      description: `${sessionStr} recorded`,
     });
 
-    const now = new Date();
     const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Attendance recorded",
       session: column,
-      time
+      time,
     });
 
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
-}
+};

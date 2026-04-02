@@ -1,10 +1,10 @@
 import express from "express";
-import { getTodayAttendance, scanAttendance } from "../controllers/attendance.controller.js";
+import { getTodayAttendanceController, scanAttendanceController } from "../controllers/attendance.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/today", verifyToken, getTodayAttendance);
-router.post("/scan", verifyToken, scanAttendance);
+router.get("/today", verifyToken, getTodayAttendanceController);
+router.post("/scan", verifyToken, scanAttendanceController);
 
 export default router;

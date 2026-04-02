@@ -1,16 +1,20 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { treeifyError } from "zod";
-import { logActivity } from "./activity.controller.js";
+import { logActivityController } from "./activity.controller.js";
 import { 
-  createStudentUser, createSupervisorUser, findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, markEmailVerified,
-  resetUserPassword, saveForgotPasswordOTP, saveVerificationOTP
-} from "../models/user.model.js";
+  createStudentUser, createSupervisorUser, markEmailVerified, resetUserPassword, saveForgotPasswordOTP, saveVerificationOTP
+} from "../models/auth.model.js";
+import { findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername } from "../models/user.model.js";
 import { checkOTPCooldown, generateOTP, getOTPExpiry } from "../utils/otp.js";
 import { sendOTPEmail } from "../utils/mail.js";
-import { loginSchema, logoutSchema, studentRegistrationSchema, supervisorRegistrationSchema } from "../validators/auth.validator.js";
+import { 
+  loginSchema, logoutSchema, resetPasswordSchema, sendEmailVerificationOTPSchema, sendForgotPasswordOTPSchema, studentRegistrationSchema, 
+  supervisorRegistrationSchema, verifyEmailOTPSchema 
+} from "../validators/auth.validator.js";
 
-export const login = async (req, res) => {
+
+export const loginController = async (req, res) => {
   try {
     const parsed = loginSchema.safeParse(req.body);
 
@@ -29,7 +33,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    await logActivity({
+    await logActivityController({
       databaseId: user.id,
       action: "LOGIN",
       targetType: "USER",
@@ -59,7 +63,7 @@ export const login = async (req, res) => {
   }
 }
 
-export const logout = async (req, res) => {
+export const logoutController = async (req, res) => {
   try {
     const parsed = logoutSchema.safeParse(req.body);
 
@@ -73,7 +77,7 @@ export const logout = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    await logActivity({
+    await logActivityController({
       databaseId,
       action: "LOGOUT",
       targetType: "USER",
@@ -89,7 +93,7 @@ export const logout = async (req, res) => {
   }
 }
 
-export const registerStudent = async (req, res) => {
+export const registerStudentController = async (req, res) => {
   try {
     const parsed = studentRegistrationSchema.safeParse(req.body);
 
@@ -119,7 +123,7 @@ export const registerStudent = async (req, res) => {
       password: hashedPassword
     });
 
-    await logActivity({
+    await logActivityController({
       databaseId: newUserId,
       action: "REGISTER",
       targetType: "USER",
@@ -138,7 +142,7 @@ export const registerStudent = async (req, res) => {
   }
 }
 
-export const registerSupervisor = async (req, res) => {
+export const registerSupervisorController = async (req, res) => {
   const parsed = supervisorRegistrationSchema.safeParse(req.body);
 
   if (!parsed.success) {
@@ -168,7 +172,7 @@ export const registerSupervisor = async (req, res) => {
       password: hashedPassword
     });
 
-    await logActivity({
+    await logActivityController({
       databaseId: newUserId,
       action: "REGISTER",
       targetType: "USER",
@@ -187,12 +191,14 @@ export const registerSupervisor = async (req, res) => {
   }
 }
 
-export const resetPassword = async (req, res) => {
+export const resetPasswordController = async (req, res) => {
   try {
-    const { email, otp, newPassword } = req.body;
-    if (!email || !otp || !newPassword) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = resetPasswordSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
     }
+    const { email, otp, newPassword } = parsed.data;
 
     const user = await findUserByEmail(email);
     if (!user) {
@@ -215,7 +221,7 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     await resetUserPassword(email, hashedPassword);
 
-    await logActivity({
+    await logActivityController({
       databaseId: user.id,
       action: "UPDATE_PASSWORD",
       targetType: "USER",
@@ -231,12 +237,14 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-export const sendEmailVerificationOTP = async (req, res) => {
+export const sendEmailVerificationOTPController = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = sendEmailVerificationOTPSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
     }
+    const { email } = parsed.data;
 
     const user = await findUserByEmail(email);
     if (!user) {
@@ -277,12 +285,14 @@ export const sendEmailVerificationOTP = async (req, res) => {
   }
 };
 
-export const sendForgotPasswordOTP = async (req, res) => {
+export const sendForgotPasswordOTPController = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = sendForgotPasswordOTPSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
     }
+    const { email } = parsed.data;
 
     const user = await findUserByEmail(email);
     if (!user) {
@@ -323,12 +333,14 @@ export const sendForgotPasswordOTP = async (req, res) => {
   }
 };
 
-export const verifyEmailOTP = async (req, res) => {
+export const verifyEmailOTPController = async (req, res) => {
   try {
-    const { email, otp } = req.body;
-    if (!email || !otp) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = verifyEmailOTPSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
     }
+    const { email, otp } = parsed.data;
 
     const user = await findUserByEmail(email);
     if (!user) {

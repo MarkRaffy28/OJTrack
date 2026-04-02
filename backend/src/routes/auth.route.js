@@ -1,18 +1,18 @@
 import express from "express";
 import { 
-  login, logout, registerStudent, registerSupervisor, resetPassword, sendEmailVerificationOTP, sendForgotPasswordOTP,
-  verifyEmailOTP
+  loginController, logoutController, registerStudentController, registerSupervisorController, resetPasswordController, sendEmailVerificationOTPController, 
+  sendForgotPasswordOTPController, verifyEmailOTPController
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
-router.post("/login", login);
-router.post("/logout", logout)
-router.post("/forgot-password-otp", sendForgotPasswordOTP);
-router.post("/register/student", registerStudent);
-router.post("/register/supervisor", registerSupervisor);
-router.post("/reset-password", resetPassword);
-router.post("/send-email-otp", sendEmailVerificationOTP);
-router.post("/verify-email-otp", verifyEmailOTP);
+router.post("/login", loginController);
+router.post("/logout", logoutController)
+router.post("/forgot-password-otp", sendForgotPasswordOTPController);
+router.post("/register/student", registerStudentController);
+router.post("/register/supervisor", registerSupervisorController);
+router.post("/reset-password", resetPasswordController);
+router.post("/send-email-otp", sendEmailVerificationOTPController);
+router.post("/verify-email-otp", verifyEmailOTPController);
 
 export default router;

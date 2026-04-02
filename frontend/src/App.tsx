@@ -22,7 +22,7 @@ import { AuthProvider } from "@context/authContext";
 import { OjtProvider } from "@context/ojtContext";
 import { ReportProvider } from "@context/reportContext";
 import { UserProvider } from "@context/userContext";
-import { RoleRoute } from "@components/RoleRoute";
+import RoleRoute from "@components/RoleRoute";
 
 import Register from "@pages/Register";
 import Login from "@pages/Login";
@@ -38,6 +38,8 @@ import EditAccount from "@pages/student/EditAccount";
 import ReportDetail from "@pages/student/ReportDetail";
 import Reports from "@pages/student/Reports";
 import UploadReport from "@pages/student/UploadReport";
+
+import SupervisorDashboard from "@pages/supervisor/SupervisorDashboard";
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -66,8 +68,9 @@ const App: React.FC = () => (
                 <RoleRoute exact path="/reports"       component={Reports}       allowedRoles={["student"]} />
                 <RoleRoute exact path="/report-detail" component={ReportDetail}  allowedRoles={["student"]} />
                 <RoleRoute exact path="/upload-report" component={UploadReport}  allowedRoles={["student"]} />
+                
+                <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard} allowedRoles={["supervisor"]} />
 
-                {/* <Redirect to="login" /> */}
                 <Redirect to="/login" />
               </IonRouterOutlet>
             </IonReactRouter>

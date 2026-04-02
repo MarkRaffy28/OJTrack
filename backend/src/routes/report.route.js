@@ -1,13 +1,13 @@
 import express from "express";
-import { createReport, deleteReport, fetchReports, updateReport } from "../controllers/report.controller.js";
+import { createReportController, deleteReportController, fetchReportsController, updateReportController } from "../controllers/report.controller.js";
 import { uploadReportFiles } from "../middlewares/upload.middleware.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/create", verifyToken, uploadReportFiles, createReport);
-router.delete("/delete/:reportId", verifyToken, deleteReport);
-router.get("/fetch/:ojtId", verifyToken, fetchReports);
-router.patch("/update/:reportId", verifyToken, uploadReportFiles, updateReport);
+router.post("/", verifyToken, uploadReportFiles, createReportController);
+router.delete("/:reportId", verifyToken, deleteReportController);
+router.get("/:ojtId", verifyToken, fetchReportsController);
+router.patch("/:reportId", verifyToken, uploadReportFiles, updateReportController);
 
 export default router;

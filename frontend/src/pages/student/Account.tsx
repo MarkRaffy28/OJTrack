@@ -3,17 +3,18 @@ import { IonPage, IonContent, IonIcon, IonBadge } from '@ionic/react';
 import { useHistory, useLocation } from 'react-router-dom';
 import {
   personOutline, mailOutline, calendarOutline, shieldCheckmarkOutline, logOutOutline, lockClosedOutline, documentTextOutline,
-  createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline,
+  createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline, checkmarkCircleOutline
 } from 'ionicons/icons';
 import { useUser, isStudent } from '@context/userContext';
 import { useOjt } from '@context/ojtContext';
 import { useOjtProgress } from '@hooks/useOJtProgress';
 import { useAuth } from '@context/authContext';
+import { formatDate } from '@utils/date';
 import BottomNav from '@components/BottomNav';
 import ChangePasswordModal from '@components/ChangePasswordModal';
 import LogoutModal from '@components/LogoutModal';
 import TermsModal from '@components/TermsModal';
-import { formatDate } from '@utils/date';
+import VerifyEmailModal from '@components/VerifyEmailModal';
 
 function Account() {
   const history = useHistory();
@@ -26,6 +27,7 @@ function Account() {
   const [isLoggingOut, setIsLoggingOut]             = useState(false);
   const [showTermsModal, setShowTermsModal]         = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showVerifyModal, setShowVerifyModal]       = useState(false);
 
   useEffect(() => {
     refreshUser();
@@ -56,7 +58,18 @@ function Account() {
     { icon: calendarOutline,        label: 'Birthday',         value: formatDate(user?.birthDate || '') },
     { icon: transgenderOutline,     label: 'Gender',           value: user?.gender                   || '—' },
     { icon: locationOutline,        label: 'Address',          value: user?.address                  || '—' },
-    { icon: mailOutline,            label: 'Email Address',    value: user?.emailAddress             || '—' },
+    { 
+      icon: mailOutline,            
+      label: 'Email Address',    
+      value: user?.emailAddress || '—',
+      extra: user?.emailAddress ? (
+        user.isEmailVerified ? (
+          <span className="acc-verified-badge"><IonIcon icon={checkmarkCircleOutline} /> Verified</span>
+        ) : (
+          <button className="acc-verify-btn" onClick={() => setShowVerifyModal(true)}>Verify</button>
+        )
+      ) : null
+    },
   ];
 
   return (
@@ -124,9 +137,12 @@ function Account() {
               {details.map((d, i) => (
                 <div key={i} className="acc-detail-item">
                   <div className="acc-detail-icon"><IonIcon icon={d.icon} /></div>
-                  <div className="acc-detail-text">
-                    <p className="acc-detail-lbl">{d.label}</p>
-                    <p className="acc-detail-val">{d.value}</p>
+                  <div className="acc-detail-text" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <div>
+                      <p className="acc-detail-lbl">{d.label}</p>
+                      <p className="acc-detail-val">{d.value}</p>
+                    </div>
+                    {d.extra && d.extra}
                   </div>
                 </div>
               ))}
@@ -183,6 +199,11 @@ function Account() {
           onClose={() => setShowTermsModal(false)}
         />
       )}
+
+      <VerifyEmailModal
+        isOpen={showVerifyModal}
+        onClose={() => setShowVerifyModal(false)}
+      />
     </IonPage>
   );
 };

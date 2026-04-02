@@ -8,9 +8,9 @@ import {
 } from "ionicons/icons";
 import BottomNav from "@components/BottomNav";
 import { useReport, Report, ReportAttachment } from "@context/reportContext";
-import { printReport } from "@components/PrintReport";
 import { formatDate, formatDateForInput } from "@utils/date";
 import { capitalize } from "@utils/string";
+import printReport from "@components/PrintReport";
 import "@css/ReportsModal.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -37,7 +37,7 @@ const REPORT_TYPES: { label: string; value: Report["type"] }[] = [
   { label: "Incident", value: "incident" },
 ];
 
-const Reports: React.FC = () => {
+function Reports() {
   const history = useHistory();
   const location = useLocation();
   const { reports, deleteReport, fetchReports, updateReport, loadingReports } = useReport();
@@ -200,6 +200,15 @@ const Reports: React.FC = () => {
     });
   };
 
+  const closeEdit = () => {
+    if (editState) {
+      editState.newFilePreviews.forEach((item) => {
+        if (item.preview) URL.revokeObjectURL(item.preview);
+      });
+    }
+    setEditState(null);
+  };
+
   const handleSaveEdit = async () => {
     if (!editState) return;
     setIsSaving(true);
@@ -212,8 +221,19 @@ const Reports: React.FC = () => {
       files: editState.newFiles.length > 0 ? editState.newFiles : undefined,
     });
     setIsSaving(false);
-    setEditState(null);
+    closeEdit();
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (editState) {
+        editState.newFilePreviews.forEach((item) => {
+          if (item.preview) URL.revokeObjectURL(item.preview);
+        });
+      }
+    };
+  }, [editState]);
 
   /* ── Delete handlers ──────────────────────────────────────────────────── */
   const confirmDelete = (report: Report) => {
@@ -425,7 +445,7 @@ const Reports: React.FC = () => {
 
       {/* ── EDIT MODAL ──────────────────────────────────────────────────── */}
       {editState && (
-        <div className="rp-modal-overlay" onClick={() => setEditState(null)}>
+        <div className="rp-modal-overlay" onClick={closeEdit}>
           <div className="rp-modal" onClick={(e) => e.stopPropagation()}>
             <div className="rp-modal-header">
               <div className="rp-modal-title-row">
@@ -434,7 +454,7 @@ const Reports: React.FC = () => {
               </div>
               <button
                 className="rp-modal-close"
-                onClick={() => setEditState(null)}
+                onClick={closeEdit}
               >
                 <IonIcon icon={closeCircleOutline} />
               </button>
@@ -600,7 +620,7 @@ const Reports: React.FC = () => {
             <div className="rp-modal-footer">
               <button
                 className="rp-modal-btn rp-modal-cancel"
-                onClick={() => setEditState(null)}
+                onClick={closeEdit}
               >
                 Cancel
               </button>

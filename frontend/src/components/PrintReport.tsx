@@ -7,7 +7,7 @@ const IMAGE_EXTS = /\.(jpe?g|png|gif|webp|bmp|svg)$/i;
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export const printReport = (report: Report) => {
+function printReport (report: Report) {
   const printedOn = new Date().toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -498,3 +498,5 @@ export const printReport = (report: Report) => {
     }
   };
 };
+
+export default printReport;

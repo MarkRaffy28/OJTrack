@@ -29,20 +29,20 @@ export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loadingActivities, setLoadingActivities] = useState(false);
 
   useEffect(() => {
-    if (token && databaseId && currentOjt) {
+    if (token && databaseId && currentOjt?.id) {
       fetchActivities();
     }
-  }, [token, databaseId, currentOjt]);
+  }, [token, databaseId, currentOjt?.id]);
 
   const fetchActivities = async () => {
     if (!token || !databaseId || !currentOjt) return;
 
     setLoadingActivities(true);
     try {
-      const { data } = await API.post("/users/fetch/student/activities", 
-        { databaseId, ojtId: currentOjt.id }, 
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
+      const { data } = await API.get("/users/fetch/student/activities", { 
+        params: { databaseId, ojtId: currentOjt.id },
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       setActivities(data);
     } catch (err) {

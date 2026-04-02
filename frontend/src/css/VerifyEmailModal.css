@@ -1,0 +1,87 @@
+.vem-otp-input {
+  width: 42px;
+  height: 52px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  border: 1.5px solid #e4dcea;
+  border-radius: 10px;
+  background: #f7f5f9;
+  color: #1a1a2e;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.vem-otp-input:focus {
+  border-color: #5f0076;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(95, 0, 118, 0.1);
+}
+
+.vem-email-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.vem-email-display {
+  margin: 0;
+  font-size: 14px;
+  color: #1a1a2e;
+  background: #f7f5f9;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid #e4dcea;
+}
+
+.vem-otp-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.vem-otp-separator {
+  color: #9e92ab;
+  font-weight: bold;
+}
+
+.vem-error-icon {
+  margin-right: 4px;
+  vertical-align: middle;
+  font-size: 16px;
+  color: #ef4444;
+}
+
+.vem-success-icon {
+  margin-right: 4px;
+  vertical-align: middle;
+  font-size: 16px;
+}
+
+.vem-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vem-resend-container {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.vem-btn-resend {
+  background: none;
+  border: none;
+  color: #5f0076;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vem-btn-resend:disabled {
+  color: #9e92ab;
+  cursor: not-allowed;
+}

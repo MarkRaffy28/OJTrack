@@ -1,20 +1,24 @@
 import bcrypt from "bcrypt";
 import { treeifyError } from "zod";
-import { logActivity } from "./activity.controller.js";
+import { logActivityController } from "./activity.controller.js";
 import { 
-  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, fetchStudentProfile as _fetchStudentProfile, 
-  fetchStudentOjts as _fetchStudentOjts, updateStudentUserProfile as _updateStudentUserProfile,
-  updateUserPassword as _updateUserPassword,
+  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, fetchStudentProfile, fetchSupervisorProfile, updateStudentUserProfile,
+  updateUserPassword
 } from "../models/user.model.js";
-import { studentUpdateProfileSchema } from "../validators/user.validator.js";
+import { 
+  checkEmailSchema, checkUserIdSchema, checkUsernameSchema, fetchStudentProfileSchema, fetchSupervisorProfileSchema, studentUpdateProfileSchema,
+  updateUserPasswordSchema 
+} from "../validators/user.validator.js";
 
 
-export const checkEmail = async (req, res) => {
+export const checkEmailController = async (req, res) => {
   try {
-    const { email } = req.params;
-    if (!email) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = checkEmailSchema.safeParse(req.params);
+
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
     }
+    const { email } = parsed.data;
 
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
@@ -35,12 +39,14 @@ export const checkEmail = async (req, res) => {
   }
 }
 
-export const checkUserId = async (req, res) => {
+export const checkUserIdController = async (req, res) => {
   try {
-    const { userId } = req.params;
-    if (!userId) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = checkUserIdSchema.safeParse(req.params);
+
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
     }
+    const { userId } = parsed.data;
 
     const existingUser = await findUserByUserId(userId);
     if (existingUser) {
@@ -61,12 +67,14 @@ export const checkUserId = async (req, res) => {
   }
 }
 
-export const checkUsername = async (req, res) => {
+export const checkUsernameController = async (req, res) => {
   try {
-    const { username } = req.params;
-    if (!username) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = checkUsernameSchema.safeParse(req.params);
+
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
     }
+    const { username } = parsed.data;
 
     const existingUser = await findUserByUsername(username);
     if (existingUser) {
@@ -87,14 +95,16 @@ export const checkUsername = async (req, res) => {
   }
 }
 
-export const fetchStudentProfile = async (req, res) => {
+export const fetchStudentProfileController = async (req, res) => {
   try {
-    const { databaseId } = req.params;
-    if (!databaseId) {
-      return res.status(400).json({ message: "Invalid request data" });
-    }
+    const parsed = fetchStudentProfileSchema.safeParse(req.params);
 
-    const user = await _fetchStudentProfile(databaseId);
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
+    }
+    const { databaseId } = parsed.data;
+
+    const user = await fetchStudentProfile(databaseId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -107,44 +117,36 @@ export const fetchStudentProfile = async (req, res) => {
   }
 }
 
-export const fetchStudentOjts = async (req, res) => {
+export const fetchSupervisorProfileController = async (req, res) => {
   try {
-    const { databaseId } = req.params;
-    if (!databaseId) {
-      return res.status(400).json({ message: "Invalid request data" });
-    }
+    const parsed = fetchSupervisorProfileSchema.safeParse(req.params);
 
-    const user = await findUserByDatabaseId(databaseId);
+    if (!parsed.success) {
+      return res.status(400).json(treeifyError(parsed.error));
+    }
+    const { databaseId } = parsed.data;
+
+    const user = await fetchSupervisorProfile(databaseId);
     if (!user) {
-      return res.status(404).json({  message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const studentOjts = await _fetchStudentOjts(databaseId);
-    if (!studentOjts) {
-      return res.status(404).json({ message: "Student OJTs not found" });
-    }
+    return res.status(200).json(user);
 
-    return res.status(200).json(studentOjts);
-    
-  } catch (error) {
+  } catch(error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 }
 
-export const updateStudentUserProfile = async (req, res) => {
+export const updateStudentUserProfileController = async (req, res) => {
   try {
-    const parsed = studentUpdateProfileSchema.safeParse(req.body);
-
-    const { databaseId } = req.params;
-    if (!databaseId) {
-      return res.status(400).json({ message: "Invalid request data" });
-    }
+    const parsed = studentUpdateProfileSchema.safeParse({ ...req.params, ...req.body });
 
     if (!parsed.success) {
       return res.status(400).json( treeifyError(parsed.error) );
     }
-    const { username, userId, email } = parsed.data;
+    const { databaseId, username, userId, email } = parsed.data;
 
     const user = await findUserByDatabaseId(databaseId);
     if (!user) {
@@ -172,9 +174,9 @@ export const updateStudentUserProfile = async (req, res) => {
       }
     }
 
-    await _updateStudentUserProfile(parsed.data, databaseId);
+    await updateStudentUserProfile(parsed.data, databaseId);
 
-    await logActivity({
+    await logActivityController({
       databaseId: Number(databaseId),
       action: "UPDATE_PROFILE",
       targetType: "USER",
@@ -190,13 +192,14 @@ export const updateStudentUserProfile = async (req, res) => {
   }
 }
 
-export const updateUserPassword = async (req, res) => {
+export const updateUserPasswordController = async (req, res) => {
   try {
-    const { databaseId } = req.params;
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword || !databaseId) {
-      return res.status(400).json({ message: "Invalid request data" });
+    const parsed = updateUserPasswordSchema.safeParse({ ...req.params, ...req.body });
+
+    if (!parsed.success) {
+      return res.status(400).json( treeifyError(parsed.error) );
     }
+    const { databaseId, currentPassword, newPassword } = parsed.data;
 
     const user = await findUserByDatabaseId(databaseId);
     if (!user) {
@@ -209,9 +212,9 @@ export const updateUserPassword = async (req, res) => {
     }
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-    await _updateUserPassword(hashedNewPassword, databaseId);
+    await updateUserPassword(hashedNewPassword, databaseId);
 
-    await logActivity({
+    await logActivityController({
       databaseId: Number(databaseId),
       action: "UPDATE_PASSWORD",
       targetType: "USER",

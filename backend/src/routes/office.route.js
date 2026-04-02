@@ -1,9 +1,9 @@
 import express from "express";
-import { getOfficesList, getOfficeQr } from "../controllers/office.controller.js";
+import { getOfficesListController, getOfficeQrController } from "../controllers/office.controller.js";
 
 const router = express.Router();
 
-router.get("/list", getOfficesList);
-router.get("/qr/:officeId", getOfficeQr);
+router.get("/", getOfficesListController);
+router.get("/qr/:officeId", getOfficeQrController);
 
 export default router;

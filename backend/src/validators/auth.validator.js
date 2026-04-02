@@ -9,6 +9,20 @@ export const logoutSchema = z.object({
   databaseId: z.coerce.number().int().positive(),
 });
 
+export const resetPasswordSchema = z.object({
+  email: z.email("Invalid email address"),
+  otp: z.string().regex(/^[0-9]+$/, "OTP must contain only digits").min(6, "OTP must be at least 6 digits"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const sendEmailVerificationOTPSchema = z.object({
+  email: z.email("Invalid email address"),
+});
+
+export const sendForgotPasswordOTPSchema = z.object({
+  email: z.email("Invalid email address"),
+});
+
 export const studentRegistrationSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -42,5 +56,11 @@ export const supervisorRegistrationSchema = z.object({
   contactNumber: z.string().regex(/^[0-9]+$/, "Contact number must contain only digits").min(10, "Contact number must be at least 10 digits"),
   email: z.email("Invalid email address"),
   employeeId: z.string().min(1, "Employee ID is required"),
-  officeId: z.string().min(1, "Office ID is required"),
+  officeId: z.coerce.number().int().positive(),
+  position: z.string().min(1, "Position is required"),
+});
+
+export const verifyEmailOTPSchema = z.object({
+  email: z.email("Invalid email address"),
+  otp: z.string().regex(/^[0-9]+$/, "OTP must contain only digits").min(6, "OTP must be at least 6 digits"),
 });

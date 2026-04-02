@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { IonIcon, IonSpinner } from "@ionic/react";
-import { eyeOffOutline, eyeOutline, lockClosedOutline } from "ionicons/icons";
+import { alertCircleOutline, checkmarkCircleOutline, eyeOffOutline, eyeOutline, lockClosedOutline } from "ionicons/icons";
 import { useAuth } from "@context/authContext";
 import API from "@api/api";
 
@@ -59,7 +59,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
         return setError('New password must be different from current password.');
       }
 
-      await API.patch(`/users/update/password/${databaseId}`,
+      await API.patch(`/users/password/${databaseId}`,
         { currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -123,8 +123,8 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
           </div>
         ))}
 
-        {error   && <div className="cp-alert-error">  <p>{error}</p></div>}
-        {success && <div className="cp-alert-success"><p>✓ Password updated successfully!</p></div>}
+        {error   && <div className="cp-alert-error">  <p><IonIcon icon={alertCircleOutline} className="icon-error"/> {error}</p></div>}
+        {success && <div className="cp-alert-success"><p><IonIcon icon={checkmarkCircleOutline} className="icon-success" /> Password updated successfully!</p></div>}
 
         <div className="cp-actions">
           <button className="cp-btn-cancel" onClick={onClose}>Cancel</button>
