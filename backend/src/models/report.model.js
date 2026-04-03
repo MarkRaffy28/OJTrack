@@ -55,7 +55,7 @@ export const fetchReports = async (ojtId) => {
   return rows.map(row => ({
     ...row,
     attachments: row.attachments ? JSON.parse(row.attachments) : null
-  }));
+  })) || null;
 };
 
 export const getReportById = async (reportId) => {
@@ -68,7 +68,7 @@ export const getReportById = async (reportId) => {
     rows[0].attachments = JSON.parse(rows[0].attachments);
   }
 
-  return rows[0];
+  return rows[0] || null;
 };
 
 export const updateReport = async (reportId, data) => {

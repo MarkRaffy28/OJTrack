@@ -11,7 +11,7 @@ function Qr() {
   useEffect(() => {
     const generateQr = async () => {
       try {
-        const response = await API.get("/offices/qr/1");
+        const response = await API.get("/offices/1/qr");
         const qrValue = JSON.stringify(response.data);
         const url = await QRCode.toDataURL(qrValue, {
           width: 280,

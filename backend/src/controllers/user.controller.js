@@ -1,231 +1,146 @@
 import bcrypt from "bcrypt";
-import { treeifyError } from "zod";
+import { fetchOrFail } from "../helpers/resource.helper.js";
+import { ensureUniqueField, ensureUserExists } from "../helpers/user.helper.js";
+import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { 
   findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, fetchStudentProfile, fetchSupervisorProfile, updateStudentUserProfile,
   updateUserPassword
 } from "../models/user.model.js";
 import { 
-  checkEmailSchema, checkUserIdSchema, checkUsernameSchema, fetchStudentProfileSchema, fetchSupervisorProfileSchema, studentUpdateProfileSchema,
+  checkEmailSchema, checkExistenceSchema, checkUserIdSchema, checkUsernameSchema, fetchProfileSchema, updateProfileSchema, updateStudentProfileSchema,
   updateUserPasswordSchema 
 } from "../validators/user.validator.js";
 
 
-export const checkEmailController = async (req, res) => {
-  try {
-    const parsed = checkEmailSchema.safeParse(req.params);
+export const checkExistenceController = async (req, res) => {
+  const data = validate(res, checkExistenceSchema, req.params);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { email } = parsed.data;
+  const { field, value } = data;
 
-    const existingUser = await findUserByEmail(email);
-    if (existingUser) {
-      return res.status(200).json({
-        available: false,
-        message: "Email is already taken"
-      });
-    }
+  if (field === "email") {
+    const data = validate(res, checkEmailSchema, { email: value });
+    if (!data) return;
 
-    return res.status(200).json({
-      available: true,
-      message: "Email is available"
-    })
+    const existingUser = await findUserByEmail(value);
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-export const checkUserIdController = async (req, res) => {
-  try {
-    const parsed = checkUserIdSchema.safeParse(req.params);
-
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { userId } = parsed.data;
-
-    const existingUser = await findUserByUserId(userId);
-    if (existingUser) {
-      return res.status(200).json({
-        available: false,
-        message: "User ID is already taken"
-      });
-    }
-
-    return res.status(200).json({
-      available: true,
-      message: "User ID is available"
-    })
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-export const checkUsernameController = async (req, res) => {
-  try {
-    const parsed = checkUsernameSchema.safeParse(req.params);
-
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { username } = parsed.data;
-
-    const existingUser = await findUserByUsername(username);
-    if (existingUser) {
-      return res.status(200).json({
-        available: false,
-        message: "Username is already taken"
-      });
-    }
-
-    return res.status(200).json({
-      available: true,
-      message: "Username is available"
-    })
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-export const fetchStudentProfileController = async (req, res) => {
-  try {
-    const parsed = fetchStudentProfileSchema.safeParse(req.params);
-
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { databaseId } = parsed.data;
-
-    const user = await fetchStudentProfile(databaseId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    return res.status(200).json(user);
-
-  } catch(error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-export const fetchSupervisorProfileController = async (req, res) => {
-  try {
-    const parsed = fetchSupervisorProfileSchema.safeParse(req.params);
-
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { databaseId } = parsed.data;
-
-    const user = await fetchSupervisorProfile(databaseId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    return res.status(200).json(user);
-
-  } catch(error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-export const updateStudentUserProfileController = async (req, res) => {
-  try {
-    const parsed = studentUpdateProfileSchema.safeParse({ ...req.params, ...req.body });
-
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { databaseId, username, userId, email } = parsed.data;
-
-    const user = await findUserByDatabaseId(databaseId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (user.username !== username) {
-      const existingUsername = await findUserByUsername(username);
-      if (existingUsername && existingUsername.id !== user.id) {
-        return res.status(409).json({ message: "Username already exists" });
-      }
-    }
-
-    if (user.email_address !== email) {
-      const existingEmail = await findUserByEmail(email);
-      if (existingEmail && existingEmail !== user.id) {
-        return res.status(409).json({ message: "Email already exists" });
-      }
-    }
-
-    if (user.userId !== userId) {
-      const existingUserId = await findUserByUserId(userId);
-      if (existingUserId && existingUserId !== user.id) {
-        return res.status(409).json({ message: "User ID already exists" });
-      }
-    }
-
-    await updateStudentUserProfile(parsed.data, databaseId);
-
-    await logActivityController({
-      databaseId: Number(databaseId),
-      action: "UPDATE_PROFILE",
-      targetType: "USER",
-      targetId: Number(databaseId),
-      description: "User profile updated successfully"
+    return res.status(200).json({ 
+      available: !existingUser, 
+      message: existingUser ? "Email is already taken" : "Email is available" 
     });
+  };
 
-    res.status(200).json({ message: "User profile updated successfully" });
+  if (field === "userId") {
+    const data = validate(res, checkUserIdSchema, { userId: value });
+    if (!data) return;
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+    const existingUser = await findUserByUserId(value);
+
+    return res.status(200).json({
+      available: !existingUser, 
+      message: existingUser ? "User ID is already taken" : "User ID is available" 
+    });
+  };
+
+  if (field === "username") {
+    const data = validate(res, checkUsernameSchema, { username: value });
+    if (!data) return;
+
+    const existingUser = await findUserByUsername(value);
+
+    return res.status(200).json({ 
+      available: !existingUser, 
+      message: existingUser ? "Username is already taken" : "Username is available" 
+    });
+  };
+
+  return res.status(400).json({ message: "Provide email, userId or username" });
+};
+
+export const fetchProfileController = async (req, res) => {
+  const data = validate(res, fetchProfileSchema, req.params);
+  if (!data) return;
+
+  const { role, databaseId } = data;
+
+  if (role === "student") {
+    const user = await fetchOrFail(res, fetchStudentProfile, [databaseId], "User not found");
+    if (!user) return;
+
+    return res.status(200).json(user);
+  } else if (role === "supervisor") {
+    const user = await fetchOrFail(res, fetchSupervisorProfile, [databaseId], "User not found");
+    if (!user) return;
+
+    return res.status(200).json(user);
   }
-}
+
+  return res.status(400).json({ message: "Provide role and databaseId" });
+};
+
+export const updateUserProfileController = async (req, res) => {
+  const baseData = validate(res, updateProfileSchema, req.params);
+  if (!baseData) return;
+
+  const { role, databaseId } = baseData;
+
+  let data;
+  if (role === "student") {
+    data = validate(res, updateStudentProfileSchema, req.body);
+    if (!data) return;
+  } else if (role === "supervisor") {
+    // TODO
+  } else {
+    return res.status(400).json({ message: "Invalid role" });
+  }
+
+  const { username, email, userId } = data;
+
+  const user = await fetchOrFail(res, findUserByDatabaseId, [databaseId], "User not found");
+  if (!user) return;
+
+  if (!(await ensureUniqueField(res, findUserByUsername, username, user.username, user.id, "Username"))) return;
+  if (!(await ensureUniqueField(res, findUserByEmail, email, user.email_address, user.id, "Email"))) return;
+  if (!(await ensureUniqueField(res, findUserByUserId, userId, user.userId, user.id, "User ID"))) return;
+
+  await updateStudentUserProfile(data, databaseId);
+
+  await logActivityController({
+    databaseId: Number(databaseId),
+    action: "UPDATE_PROFILE",
+    targetType: "USER",
+    targetId: Number(databaseId),
+    description: `${role.charAt(0).toUpperCase() + role.slice(1)} profile updated successfully`
+  });
+
+  res.status(200).json({ message: "User profile updated successfully" });
+};
 
 export const updateUserPasswordController = async (req, res) => {
-  try {
-    const parsed = updateUserPasswordSchema.safeParse({ ...req.params, ...req.body });
+  const data = validate(res, updateUserPasswordSchema, { ...req.params, ...req.body });
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { databaseId, currentPassword, newPassword } = parsed.data;
+  const { databaseId, currentPassword, newPassword } = data;
 
-    const user = await findUserByDatabaseId(databaseId);
-    if (!user) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+  const user = await ensureUserExists(res, findUserByDatabaseId, databaseId);
+  if (!user) return;
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Current password is incorrect." });
-    }
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: "Current password is incorrect." });
+  };
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
-    await updateUserPassword(hashedNewPassword, databaseId);
+  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+  await updateUserPassword(hashedNewPassword, databaseId);
 
-    await logActivityController({
-      databaseId: Number(databaseId),
-      action: "UPDATE_PASSWORD",
-      targetType: "USER",
-      targetId: Number(databaseId),
-      description: "User password updated successfully"
-    });
+  await logActivityController({
+    databaseId: Number(databaseId),
+    action: "UPDATE_PASSWORD",
+    targetType: "USER",
+    targetId: Number(databaseId),
+    description: "User password updated successfully"
+  });
 
-    res.status(200).json({ message: "Password has been updated successfully" });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
+  res.status(200).json({ message: "Password has been updated successfully" });
+};

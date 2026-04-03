@@ -1,18 +1,18 @@
 import express from "express";
 import { 
-  loginController, logoutController, registerStudentController, registerSupervisorController, resetPasswordController, sendEmailVerificationOTPController, 
-  sendForgotPasswordOTPController, verifyEmailOTPController
+  loginController, logoutController, registerController, resetPasswordController, sendEmailVerificationOTPController, sendForgotPasswordOTPController, 
+  verifyEmailOTPController
 } from "../controllers/auth.controller.js";
+import { asyncHandler } from "../middlewares/asyncHandler.middleware.js";
 
 const router = express.Router();
 
-router.post("/login", loginController);
-router.post("/logout", logoutController)
-router.post("/forgot-password-otp", sendForgotPasswordOTPController);
-router.post("/register/student", registerStudentController);
-router.post("/register/supervisor", registerSupervisorController);
-router.post("/reset-password", resetPasswordController);
-router.post("/send-email-otp", sendEmailVerificationOTPController);
-router.post("/verify-email-otp", verifyEmailOTPController);
+router.post("/login", asyncHandler(loginController));
+router.post("/logout", asyncHandler(logoutController))
+router.post("/forgot-password-otp", asyncHandler(sendForgotPasswordOTPController));
+router.post("/register/:role", asyncHandler(registerController));
+router.post("/reset-password", asyncHandler(resetPasswordController));
+router.post("/send-email-otp", asyncHandler(sendEmailVerificationOTPController));
+router.post("/verify-email-otp", asyncHandler(verifyEmailOTPController));
 
 export default router;

@@ -19,7 +19,7 @@ export const fetchStudentOjts = async (databaseId) => {
     [databaseId]
   );
 
-  return rows;
+  return rows || null;
 };
 
 export const fetchSupervisorStudentsOjts = async (databaseId) => {
@@ -45,5 +45,5 @@ export const fetchSupervisorStudentsOjts = async (databaseId) => {
     [databaseId]
   );
 
-  return rows;
+  return rows || null;
 };

@@ -5,5 +5,5 @@ export const getOfficesList = async () => {
     "SELECT * FROM offices"
   );
 
-  return rows;
+  return rows || null;
 };

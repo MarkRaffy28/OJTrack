@@ -18,7 +18,7 @@ export const fetchStudentActivities = async (databaseId) => {
     [databaseId]
   );
 
-  return rows;
+  return rows || null;
 };
 
 export const logActivity = async (databaseId, ojtId, action, targetType, targetId, description) => {

@@ -59,7 +59,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
         return setError('New password must be different from current password.');
       }
 
-      await API.patch(`/users/password/${databaseId}`,
+      await API.patch(`/users/${databaseId}/password`,
         { currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );

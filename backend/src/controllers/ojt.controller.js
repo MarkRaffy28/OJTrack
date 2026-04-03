@@ -1,31 +1,30 @@
-import { treeifyError } from "zod";
-import { fetchStudentOjts } from "../models/ojt.model.js";
+import { fetchOrFail } from "../helpers/resource.helper.js";
+import { ensureUserExists } from "../helpers/user.helper.js";
+import { validate } from "../helpers/validate.helper.js";
+import { fetchStudentOjts, fetchSupervisorStudentsOjts } from "../models/ojt.model.js";
 import { findUserByDatabaseId } from "../models/user.model.js";
-import { fetchStudentOjtsSchema } from "../validators/ojt.validator.js";
+import { fetchOjtsSchema } from "../validators/ojt.validator.js";
 
-export const fetchStudentOjtsController = async (req, res) => {
-  try {
-    const parsed = fetchStudentOjtsSchema.safeParse(req.params);
+export const fetchOjtsController = async (req, res) => {
+  const data = validate(res, fetchOjtsSchema, req.params);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { databaseId } = parsed.data;
+  const { role, databaseId } = data;
 
-    const user = await findUserByDatabaseId(databaseId);
-    if (!user) {
-      return res.status(404).json({  message: "User not found" });
-    }
+  if (!await ensureUserExists(res, findUserByDatabaseId, databaseId)) return;
 
-    const studentOjts = await fetchStudentOjts(databaseId);
-    if (!studentOjts) {
-      return res.status(404).json({ message: "Student OJTs not found" });
-    }
+  if (role === "student") {
+    const studentOjts = await fetchOrFail(res, fetchStudentOjts, [databaseId], "Student OJTs not found");
+    if (!studentOjts) return;
 
     return res.status(200).json(studentOjts);
     
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+  } else if (role === "supervisor") {
+    const supervisorStudentsOjts = await fetchOrFail(res, fetchSupervisorStudentsOjts, [databaseId], "Supervisor students OJTs not found");
+    if (!supervisorStudentsOjts) return;
+
+    return res.status(200).json(supervisorStudentsOjts);
   }
-}
+
+  return res.status(400).json({ message: "Provide role and databaseId" });
+};

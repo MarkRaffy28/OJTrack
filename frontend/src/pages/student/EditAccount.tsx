@@ -159,7 +159,7 @@ function EditAccount() {
     if (usernameStatus === 'taken' || emailStatus === 'taken') return;
     setServerError('');
     try {
-      await API.patch(`/users/profile/${databaseId}`,
+      await API.patch(`/users/${databaseId}/profile`,
         {
           username:      data.username.trim(),
           firstName:     data.firstName.trim(),

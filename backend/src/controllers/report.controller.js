@@ -1,173 +1,147 @@
-import { treeifyError } from "zod";
+import { fetchOrFail } from "../helpers/resource.helper.js";
+import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { deleteFiles } from "../utils/storage.util.js";
-import { createReportSchema, deleteReportSchema, fetchReportsSchema, updateReportSchema } from "../validators/report.validator.js";
+import { fetchStudentOjts } from "../models/ojt.model.js";
 import { createReport, fetchReports, updateReport, deleteReport, getReportById } from "../models/report.model.js";
+import { createReportSchema, deleteReportSchema, fetchReportsSchema, updateReportSchema } from "../validators/report.validator.js";
 
 
 export const createReportController = async (req, res) => {
-  try {
-    const files = req.files ? req.files.map(f => ({
-      filename: f.filename,
-      path: f.path,
-      originalName: f.originalname,
-      size: f.size
-    })) : null;
+  const files = req.files ? req.files.map(f => ({
+    filename: f.filename,
+    path: f.path,
+    originalName: f.originalname,
+    size: f.size
+  })) : null;
 
-    const parsed = createReportSchema.safeParse({ ...req.body, attachments: files });
+  const data = validate(res, createReportSchema, { ...req.body, attachments: files });
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
+  const {studentId, ojtId, type, title } = data;
 
-    const insertId = await createReport(parsed.data);
+  if (!await fetchOrFail(res, fetchStudentOjts, [studentId], "Student's OJTs not found")) return;
 
-    await logActivityController({
-      databaseId: parsed.data.studentId,
-      ojtId: parsed.data.ojtId,
-      action: "CREATE_REPORT",
-      targetType: "REPORT",
-      targetId: insertId,
-      description: `Created ${parsed.data.type} report: ${parsed.data.title || "No title"}`
-    });
+  const insertId = await createReport(data);
 
-    res.status(201).json({
-      message: "OJT report created successfully",
-      reportId: insertId,
-      attachments: files
-    });
+  await logActivityController({
+    databaseId: studentId,
+    ojtId: ojtId,
+    action: "CREATE_REPORT",
+    targetType: "REPORT",
+    targetId: insertId,
+    description: `Created ${type} report: ${title || "No title"}`
+  });
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(201).json({
+    message: "OJT report created successfully",
+    reportId: insertId,
+    attachments: files
+  });
 };
 
 export const deleteReportController = async (req, res) => {
-  try {
-    const parsed = deleteReportSchema.safeParse(req.params);
+  const data = validate(res, deleteReportSchema, req.params);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { reportId } = parsed.data;
+  const { reportId } = data;
 
-    const report = await getReportById(reportId);
-    if (!report) {
-      return res.status(404).json({ message: "Report not found" });
-    }
-    if (report.status === 'approved') {
-      return res.status(403).json({ message: "Cannot delete an approved report" });
-    }
+  const report = await fetchOrFail(res, getReportById, [reportId], "Report not found");
+  if (!report) return;
 
-    await deleteReport(reportId);
+  if (report.status === 'approved') {
+    return res.status(403).json({ message: "Cannot delete an approved report" });
+  };
 
-    await logActivityController({
-      databaseId: report.student_id,
-      ojtId: report.ojt_id,
-      action: "DELETE_REPORT",
-      targetType: "REPORT",
-      targetId: reportId,
-      description: `Deleted ${report.type} report: ${report.title || "No title"}`
-    });
+  await deleteReport(reportId);
 
-    if (report.attachments) {
-      await deleteFiles(report.attachments);
-    }
+  await logActivityController({
+    databaseId: report.student_id,
+    ojtId: report.ojt_id,
+    action: "DELETE_REPORT",
+    targetType: "REPORT",
+    targetId: reportId,
+    description: `Deleted ${report.type} report: ${report.title || "No title"}`
+  });
 
-    res.status(200).json({ message: "OJT report deleted successfully" });
+  if (report.attachments) {
+    await deleteFiles(report.attachments);
+  };
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({ message: "OJT report deleted successfully" });
 };
 
 export const fetchReportsController = async (req, res) => {
-  try {
-    const parsed = fetchReportsSchema.safeParse(req.params);
+  const data = validate(res, fetchReportsSchema, req.params);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { ojtId } = parsed.data;
+  const { ojtId } = data;
 
-    const reports = await fetchReports(ojtId);
+  if (!await fetchOrFail(res, fetchStudentOjts, [studentId], "Student's OJTs not found")) return;
 
-    res.status(200).json({
-      message: "OJT reports fetched successfully",
-      data: reports
-    });
+  const reports = await fetchReports(ojtId);
+  if (!reports) return;
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({
+    message: "OJT reports fetched successfully",
+    data: reports
+  });
 };
 
 export const updateReportController = async (req, res) => {
-  try {
-    const newFiles = req.files ? req.files.map(f => ({
-      filename: f.filename,
-      path: f.path,
-      originalName: f.originalname,
-      size: f.size
-    })) : [];
+  const newFiles = req.files ? req.files.map(f => ({
+    filename: f.filename,
+    path: f.path,
+    originalName: f.originalname,
+    size: f.size
+  })) : [];
 
-    let keptAttachments = [];
-    if (req.body.existingAttachments) {
-      try {
-        keptAttachments = JSON.parse(req.body.existingAttachments);
-      } catch {
-        keptAttachments = [];
-      }
-    }
+  let keptAttachments = [];
+  if (req.body.existingAttachments) {
+    try {
+      keptAttachments = JSON.parse(req.body.existingAttachments);
+    } catch {
+      keptAttachments = [];
+    };
+  };
 
-    const mergedAttachments = [...keptAttachments, ...newFiles];
-    const finalAttachments = mergedAttachments.length > 0 ? mergedAttachments : null;
+  const mergedAttachments = [...keptAttachments, ...newFiles];
+  const finalAttachments = mergedAttachments.length > 0 ? mergedAttachments : null;
 
-    const parsed = updateReportSchema.safeParse({ ...req.body, ...req.params, attachments: finalAttachments });
+  const data = validate(res, updateReportSchema, { ...req.body, ...req.params, attachments: finalAttachments });
+  if (!data) return;
+  
+  const { reportId } = data;
 
-    if (!parsed.success) {
-      return res.status(400).json(treeifyError(parsed.error));
-    }
-    const { reportId } = parsed.data;
+  const report = await fetchOrFail(res, getReportById, [reportId], "Report not found");
+  if (!report) return;
 
-    const existing = await getReportById(reportId);
-    if (!existing) {
-      return res.status(404).json({ message: "Report not found" });
-    }
-    if (existing.status === 'approved') {
-      return res.status(403).json({ message: "Cannot edit an approved report" });
-    }
+  if (report.status === 'approved') {
+    return res.status(403).json({ message: "Cannot edit an approved report" });
+  };
 
-    await updateReport(reportId, parsed.data);
+  await updateReport(reportId, data);
 
-    await logActivityController({
-      databaseId: existing.student_id,
-      ojtId: existing.ojt_id,
-      action: "UPDATE_REPORT",
-      targetType: "REPORT",
-      targetId: reportId,
-      description: `Updated ${parsed.data.type} report: ${parsed.data.title || "No title"}`
-    });
+  await logActivityController({
+    databaseId: report.student_id,
+    ojtId: report.ojt_id,
+    action: "UPDATE_REPORT",
+    targetType: "REPORT",
+    targetId: reportId,
+    description: `Updated ${report.type} report: ${report.title || "No title"}`
+  });
 
-    const removedAttachments = existing.attachments?.filter(
-      old => !keptAttachments.some(kept => kept.filename === old.filename)
-    ) || [];
+  const removedAttachments = report.attachments?.filter(
+    old => !keptAttachments.some(kept => kept.filename === old.filename)
+  ) || [];
 
-    if (removedAttachments.length > 0) {
-      await deleteFiles(removedAttachments);
-    }
+  if (removedAttachments.length > 0) {
+    await deleteFiles(removedAttachments);
+  };
 
-    res.status(200).json({
-      message: "OJT report updated successfully",
-      reportId,
-      attachments: finalAttachments
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({
+    message: "OJT report updated successfully",
+    reportId,
+    attachments: finalAttachments
+  });
 };

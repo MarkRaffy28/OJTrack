@@ -39,7 +39,7 @@ export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     setLoadingActivities(true);
     try {
-      const { data } = await API.get("/users/fetch/student/activities", { 
+      const { data } = await API.get("/activities/student", { 
         params: { databaseId, ojtId: currentOjt.id },
         headers: { Authorization: `Bearer ${token}` }
       });

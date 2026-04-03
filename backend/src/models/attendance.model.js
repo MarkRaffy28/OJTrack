@@ -6,7 +6,7 @@ export const getTodayAttendance = async (studentId, ojtId, date) => {
     [studentId, ojtId, date]
   );
 
-  return rows[0];
+  return rows[0] || null;
 };
 
 export const insertAttendance = async (studentId, ojtId, date, column) => {

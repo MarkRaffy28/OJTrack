@@ -35,7 +35,7 @@ export const fetchStudentProfile = async (databaseId) => {
   return {
     ...user,
     isEmailVerified: Boolean(user.isEmailVerified)
-  };
+  } || null;
 };
 
 export const fetchSupervisorProfile = async (databaseId) => {
@@ -74,7 +74,7 @@ export const fetchSupervisorProfile = async (databaseId) => {
   return {
     ...user,
     isEmailVerified: Boolean(user.isEmailVerified)
-  };
+  } || null;
 };
 
 export const findUserByDatabaseId = async (databaseId) => {
@@ -83,7 +83,7 @@ export const findUserByDatabaseId = async (databaseId) => {
     [databaseId]
   );
 
-  return rows[0];
+  return rows[0] || null;
 };
 
 export const findUserByEmail = async (email) => {
@@ -92,7 +92,7 @@ export const findUserByEmail = async (email) => {
     [email]
   );
 
-  return rows[0];
+  return rows[0] || null;
 };
 
 export const findUserByUserId = async (userId) => {
@@ -101,7 +101,7 @@ export const findUserByUserId = async (userId) => {
     [userId]
   );
 
-  return rows[0];
+  return rows[0] || null;
 };
 
 export const findUserByUsername = async (username) => {
@@ -110,7 +110,7 @@ export const findUserByUsername = async (username) => {
     [username]
   );
 
-  return rows[0];
+  return rows[0] || null;
 };
 
 export const updateStudentUserProfile = async (data, databaseId) => {

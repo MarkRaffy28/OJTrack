@@ -1,26 +1,15 @@
 import express from "express";
-import { fetchStudentActivitiesController } from "../controllers/activity.controller.js";
-import { fetchStudentOjtsController } from "../controllers/ojt.controller.js";
-import { 
-  checkEmailController, checkUserIdController, checkUsernameController, fetchStudentProfileController, fetchSupervisorProfileController, 
-  updateStudentUserProfileController, updateUserPasswordController 
-} from "../controllers/user.controller.js";
+import {  checkExistenceController, fetchProfileController, updateUserProfileController, updateUserPasswordController } from "../controllers/user.controller.js";
+import { asyncHandler } from "../middlewares/asyncHandler.middleware.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/exists/email/:email", checkEmailController);
-router.get("/exists/user_id/:userId", checkUserIdController);
-router.get("/exists/username/:username", checkUsernameController);
+router.get("/exists/:field/:value", asyncHandler(checkExistenceController));
 
-router.get("/student/profile/:databaseId", verifyToken, fetchStudentProfileController);
-router.get("/supervisor/profile/:databaseId", verifyToken, fetchSupervisorProfileController);
+router.get("/:role/:databaseId/profile", verifyToken, asyncHandler(fetchProfileController));
 
-router.patch("/password/:databaseId", verifyToken, updateUserPasswordController);
-router.patch("/profile/:databaseId", verifyToken, updateStudentUserProfileController);
-
-// TODO: Refactor
-router.get("/fetch/student/activities", verifyToken, fetchStudentActivitiesController);
-router.get("/fetch/student/ojt/:databaseId", verifyToken, fetchStudentOjtsController);
+router.patch("/:role/:databaseId/profile", verifyToken, asyncHandler(updateUserProfileController));
+router.patch("/:databaseId/password", verifyToken, asyncHandler(updateUserPasswordController));
 
 export default router;

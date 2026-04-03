@@ -1,81 +1,63 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { treeifyError } from "zod";
+import { createSaveSendOTP, verifyOTP } from "../helpers/otp.helper.js";
+import { ensureUnique, ensureUserExists } from "../helpers/user.helper.js";
+import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
-import { 
-  createStudentUser, createSupervisorUser, markEmailVerified, resetUserPassword, saveForgotPasswordOTP, saveVerificationOTP
-} from "../models/auth.model.js";
+import { createStudentUser, createSupervisorUser, markEmailVerified, resetUserPassword } from "../models/auth.model.js";
 import { findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername } from "../models/user.model.js";
-import { checkOTPCooldown, generateOTP, getOTPExpiry } from "../utils/otp.js";
-import { sendOTPEmail } from "../utils/mail.js";
 import { 
-  loginSchema, logoutSchema, resetPasswordSchema, sendEmailVerificationOTPSchema, sendForgotPasswordOTPSchema, studentRegistrationSchema, 
-  supervisorRegistrationSchema, verifyEmailOTPSchema 
+  loginSchema, logoutSchema, registrationSchema, resetPasswordSchema, sendEmailVerificationOTPSchema, sendForgotPasswordOTPSchema, 
+  studentRegistrationSchema, supervisorRegistrationSchema, verifyEmailOTPSchema 
 } from "../validators/auth.validator.js";
 
 
 export const loginController = async (req, res) => {
-  try {
-    const parsed = loginSchema.safeParse(req.body);
+  const data = validate(res, loginSchema, req.body);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { username, password } = parsed.data;
+  const { username, password } = data;
 
-    const user = await findUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+  const user = await ensureUserExists(res, findUserByUsername, username, "Invalid credentials");
+  if (!user) return;
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  };
 
-    await logActivityController({
-      databaseId: user.id,
-      action: "LOGIN",
-      targetType: "USER",
-      targetId: user.id,
-      description: "User logged in"
-    });
+  await logActivityController({
+    databaseId: user.id,
+    action: "LOGIN",
+    targetType: "USER",
+    targetId: user.id,
+    description: "User logged in"
+  });
 
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+  const token = jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
 
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-      },
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
+  res.status(200).json({
+    message: "Login successful",
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    },
+  });
+};
 
 export const logoutController = async (req, res) => {
-  try {
-    const parsed = logoutSchema.safeParse(req.body);
+    const data = validate(res, logoutSchema, req.body);
+    if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { databaseId } = parsed.data;
+    const { databaseId } = data;
 
-    const user = await findUserByDatabaseId(databaseId);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!await ensureUserExists(res, findUserByDatabaseId, databaseId, "Invalid credentials")) return;
 
     await logActivityController({
       databaseId,
@@ -86,290 +68,124 @@ export const logoutController = async (req, res) => {
     });
 
     res.status(200).json({ message: "Logout successful" });
+};
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
+export const registerController = async (req, res) => {
+  const baseData = validate(res, registrationSchema, req.params);
+  if (!baseData) return;
+
+  const { role } = baseData;
+
+  let data;
+  if (role === "student") {
+    data = validate(res, studentRegistrationSchema, req.body);
+    if (!data) return;
+  } else if (role === "supervisor") {
+    data = validate(res, supervisorRegistrationSchema, req.body);
+    if (!data) return;
+  } else {
+    return res.status(400).json({ message: "Invalid role" });
   }
-}
 
-export const registerStudentController = async (req, res) => {
-  try {
-    const parsed = studentRegistrationSchema.safeParse(req.body);
+  const { username, email, userId, password } = data;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { username, password, userId, email } = parsed.data;
+  if (!await ensureUnique(res, findUserByUsername, username, "Username")) return;
+  if (!await ensureUnique(res, findUserByEmail, email, "Email")) return;
+  if (!await ensureUnique(res, findUserByUserId, userId, "User ID")) return;
 
-    const existingUsername = await findUserByUsername(username);
-    if (existingUsername) {
-      return res.status(409).json({ message: "Username already exists" });
-    }
+  const hashedPassword = await bcrypt.hash(password, 12);
 
-    const existingEmail = await findUserByEmail(email);
-    if (existingEmail) {
-      return res.status(409).json({ message: "Email already exists" });
-    }
+  const createFn = role === "student" ? createStudentUser : createSupervisorUser;
+  const newUserId = await createFn({ ...data, password: hashedPassword });
 
-    const existingUserId = await findUserByUserId(userId);
-    if (existingUserId) {
-      return res.status(409).json({ message: "User ID already exists" });
-    }
+  await logActivityController({
+    databaseId: newUserId,
+    action: "REGISTER",
+    targetType: "USER",
+    targetId: newUserId,
+    description: `${role.charAt(0).toUpperCase() + role.slice(1)} registered successfully`
+  });
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const newUserId = await createStudentUser({
-      ...parsed.data,
-      password: hashedPassword
-    });
-
-    await logActivityController({
-      databaseId: newUserId,
-      action: "REGISTER",
-      targetType: "USER",
-      targetId: newUserId,
-      description: "Student registered successfully"
-    });
-
-    res.status(201).json({
-      message: "User registered successfully",
-      newUserId
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
-
-export const registerSupervisorController = async (req, res) => {
-  const parsed = supervisorRegistrationSchema.safeParse(req.body);
-
-  if (!parsed.success) {
-    return res.status(400).json( treeifyError(parsed.error) );
-  }
-  const { username, password, userId, email } = parsed.data;
-
-  try {
-    const existingUsername = await findUserByUsername(username);
-    if (existingUsername) {
-      return res.status(409).json({ message: "Username already exists" });
-    }
-    
-    const existingEmail = await findUserByEmail(email);
-    if (existingEmail) {
-      return res.status(409).json({ message: "Email already exists" });
-    }
-
-    const existingUserId = await findUserByUserId(userId);
-    if (existingUserId) {
-      return res.status(409).json({ message: "User ID already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const newUserId = await createSupervisorUser({
-      ...parsed.data,
-      password: hashedPassword
-    });
-
-    await logActivityController({
-      databaseId: newUserId,
-      action: "REGISTER",
-      targetType: "USER",
-      targetId: newUserId,
-      description: "Supervisor registered successfully"
-    });
-
-    res.status(201).json({
-      message: "User registered successfully",
-      newUserId
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-}
+  res.status(201).json({
+    message: "User registered successfully",
+    newUserId,
+  });
+};
 
 export const resetPasswordController = async (req, res) => {
-  try {
-    const parsed = resetPasswordSchema.safeParse(req.body);
+  const data = validate(res, resetPasswordSchema, req.body);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { email, otp, newPassword } = parsed.data;
+  const { email, otp, newPassword } = data;
 
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" })
-    };
+  const user = await ensureUserExists(res, findUserByEmail, email, "User not found");
+  if (!user) return;
 
-    if (!user.password_reset_token) {
-      return res.status(400).json({ message: "No OTP found. Request a new one." });
-    }
+  if (!await verifyOTP(res, otp, user.password_reset_token, user.password_reset_expires)) return;
 
-    if (new Date() > new Date(user.password_reset_expires)) {
-      return res.status(400).json({ message: "OTP expired. Request a new one." });
-    }
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  await resetUserPassword(email, hashedPassword);
 
-    const isMatch = await bcrypt.compare(otp, user.password_reset_token);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid OTP" })
-    };
+  await logActivityController({
+    databaseId: user.id,
+    action: "UPDATE_PASSWORD",
+    targetType: "USER",
+    targetId: user.id,
+    description: "User reset password via OTP"
+  });
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-    await resetUserPassword(email, hashedPassword);
-
-    await logActivityController({
-      databaseId: user.id,
-      action: "UPDATE_PASSWORD",
-      targetType: "USER",
-      targetId: user.id,
-      description: "User reset password via OTP"
-    });
-
-    res.status(200).json({ message: "Password has been reset successfully" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({ message: "Password has been reset successfully" });
 };
 
 export const sendEmailVerificationOTPController = async (req, res) => {
-  try {
-    const parsed = sendEmailVerificationOTPSchema.safeParse(req.body);
+  const data = validate(res, sendEmailVerificationOTPSchema, req.body);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { email } = parsed.data;
+  const { email } = data;
 
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  const user = await ensureUserExists(res, findUserByEmail, email);
+  if (!user) return;
 
-    if (user.email_verified_at) {
-      return res.status(400).json({ message: "Email is already verified" });
-    }
+  if (user.email_verified_at) {
+    return res.status(400).json({ message: "Email is already verified" });
+  };
+  
+  if (!await createSaveSendOTP(res, email, user, "verify")) return;
 
-    const timeLeft = checkOTPCooldown(user.email_verification_expires);
-
-    if (timeLeft !== null) {
-      return res.status(400).json({
-        message: "Please wait before resending OTP",
-        timeLeftSeconds: timeLeft,
-      });
-    }
-
-    const otp = generateOTP();
-    const hashedOTP = await bcrypt.hash(otp, 12);
-    const expires = getOTPExpiry();
-
-    await saveVerificationOTP(email, hashedOTP, expires);
-
-    await sendOTPEmail({
-      email,
-      otp,
-      type: "verify",
-      name: user.first_name,
-    });
-
-    res.status(200).json({ message: "Verification OTP sent to email" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({ message: "Verification OTP sent to email" });
 };
 
 export const sendForgotPasswordOTPController = async (req, res) => {
-  try {
-    const parsed = sendForgotPasswordOTPSchema.safeParse(req.body);
+  const data = validate(res, sendForgotPasswordOTPSchema, req.body);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { email } = parsed.data;
+  const { email } = data;
 
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  const user = await ensureUserExists(res, findUserByEmail, email);
+  if (!user) return;
 
-    if (!user.email_verified_at) {
-      return res.status(400).json({ message: "Email must be verified first" });
-    }
+  if (!user.email_verified_at) {
+    return res.status(400).json({ message: "Email must be verified first" });
+  };
 
-    const timeLeft = checkOTPCooldown(user.password_reset_expires);
+  const otp = await createSaveSendOTP(res, email, user, "forgot");
+  if (!otp) return;
 
-    if (timeLeft !== null) {
-      return res.status(400).json({
-        message: "Please wait before resending OTP",
-        timeLeftSeconds: timeLeft,
-      });
-    }
-
-    const otp = generateOTP();
-    const hashedOTP = await bcrypt.hash(otp, 12);
-    const expires = getOTPExpiry();
-
-    await saveForgotPasswordOTP(email, hashedOTP, expires);
-
-    await sendOTPEmail({
-      email,
-      otp,
-      type: "forgot",
-      name: user.first_name,
-    });
-
-    res.status(200).json({ message: "Password reset OTP sent to email" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({ message: "Password reset OTP sent to email" });
 };
 
 export const verifyEmailOTPController = async (req, res) => {
-  try {
-    const parsed = verifyEmailOTPSchema.safeParse(req.body);
+  const data = validate(res, verifyEmailOTPSchema, req.body);
+  if (!data) return;
 
-    if (!parsed.success) {
-      return res.status(400).json( treeifyError(parsed.error) );
-    }
-    const { email, otp } = parsed.data;
+  const { email, otp } = data;
 
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+  const user = await ensureUserExists(res, findUserByEmail, email);
+  if (!user) return;
 
-    if (user.email_verified_at) {
-      return res.status(400).json({ message: "Email already verified" });
-    }
+  if (!await verifyOTP(res, otp, user.email_verification_token, user.email_verification_expires)) return;
 
-    if (!user.email_verification_token || !user.email_verification_expires) {
-      return res.status(400).json({ message: "No OTP found. Request a new one." });
-    }
+  await markEmailVerified(email);
 
-    if (new Date() > new Date(user.email_verification_expires)) {
-      return res.status(400).json({ message: "OTP expired" });
-    }
-
-    const isMatch = await bcrypt.compare(otp, user.email_verification_token);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    await markEmailVerified(email);
-
-    res.status(200).json({ message: "Email verified successfully" });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  res.status(200).json({ message: "Email verified successfully" });
 };

@@ -43,7 +43,7 @@ export const OjtProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLoading(true);
 
     try {
-      const { data } = await API.get(`/users/fetch/student/ojt/${databaseId}`, {
+      const { data } = await API.get(`/ojts/student/${databaseId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

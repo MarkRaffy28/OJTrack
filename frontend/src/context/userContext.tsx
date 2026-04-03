@@ -66,7 +66,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await API.get(`/users/${role}/profile/${databaseId}`,
+      const response = await API.get(`/users/${role}/${databaseId}/profile`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
