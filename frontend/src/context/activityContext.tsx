@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useAuth } from "./authContext";
 import { useOjt } from "./ojtContext";
 import API from "@api/api";
 
-export interface StudentActivity {
+export interface UserActivity {
   id: number;
+  fullName?: string;
   ojtId: number;
   action: string;
   targetType: string;
@@ -14,8 +15,8 @@ export interface StudentActivity {
 }
 
 interface ActivityContextType {
-  activities: StudentActivity[];
-  getLatestActivities: (n: number) => StudentActivity[];
+  activities: UserActivity[];
+  getLatestActivities: (n: number) => UserActivity[];
   loadingActivities: boolean;
   fetchActivities: () => Promise<void>;
 }
@@ -23,24 +24,30 @@ interface ActivityContextType {
 const ActivityContext = createContext<ActivityContextType | null>(null);
 
 export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, databaseId } = useAuth();
+  const { token, databaseId, role } = useAuth();
   const { currentOjt } = useOjt();
-  const [activities, setActivities] = useState<StudentActivity[]>([]);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
 
   useEffect(() => {
-    if (token && databaseId && currentOjt?.id) {
+    if (token && databaseId) {
+      if (role === 'student' && !currentOjt?.id) return;
       fetchActivities();
     }
-  }, [token, databaseId, currentOjt?.id]);
+  }, [token, databaseId, currentOjt?.id, role]);
 
-  const fetchActivities = async () => {
-    if (!token || !databaseId || !currentOjt) return;
+  const fetchActivities = useCallback(async () => {
+    if (!token || !databaseId) return;
 
     setLoadingActivities(true);
     try {
-      const { data } = await API.get("/activities/student", { 
-        params: { databaseId, ojtId: currentOjt.id },
+      const params: any = { databaseId };
+      if (role === 'student' && currentOjt?.id) {
+        params.ojtId = currentOjt.id;
+      }
+
+      const { data } = await API.get("/activities", { 
+        params,
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -50,7 +57,7 @@ export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } finally {
       setLoadingActivities(false);
     }
-  };
+  }, [token, databaseId, role, currentOjt?.id]);
 
   const getLatestActivities = (n: number) => {
     return activities.slice(0, n);

@@ -46,6 +46,7 @@ CREATE table student_details (
   year INT(1) NOT NULL,
   program VARCHAR(100) NOT NULL,
   major VARCHAR(100) NOT NULL,
+  section VARCHAR(50) NOT NULL,
 
   FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 );

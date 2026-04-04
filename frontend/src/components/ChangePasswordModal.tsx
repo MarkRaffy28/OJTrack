@@ -77,7 +77,7 @@ function ChangePasswordModal({ isOpen, onClose }: ChangePasswordModalProps) {
           setError(error.response.data?.message || "Failed to update password.");
         }
       } else {
-        setError("Server error. Please try again later.");
+        setError(error.message);
       }
 
     } finally {

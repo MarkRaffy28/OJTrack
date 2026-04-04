@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { IonIcon } from '@ionic/react';
 import {
   documentTextOutline, closeOutline, checkmarkCircleOutline,
@@ -26,13 +26,38 @@ interface TermsModalProps {
 }
 
 function TermsModal({ onClose, mode = 'view', onAccept }: TermsModalProps) {
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [accepted, setAccepted]           = useState(false);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) setScrolledToEnd(true);
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 45) setScrolledToEnd(true);
   };
+
+  // Check if content is already at bottom or fits within container
+  useEffect(() => {
+    if (mode !== 'register' || !bodyRef.current) return;
+    
+    const checkScroll = () => {
+      const el = bodyRef.current;
+      if (el) {
+        // If content height is less than container height, it's already "read"
+        if (el.scrollHeight <= el.clientHeight + 5) {
+          setScrolledToEnd(true);
+        }
+      }
+    };
+
+    // Delay slightly to ensure content is fully rendered and layout finished
+    const timer = setTimeout(checkScroll, 100);
+    window.addEventListener('resize', checkScroll);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [mode]);
 
   return (
     <div className="tc-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -65,7 +90,9 @@ function TermsModal({ onClose, mode = 'view', onAccept }: TermsModalProps) {
         )}
 
         {/* Body */}
-        <div className="tc-body no-scroll" onScroll={mode === 'register' ? handleScroll : undefined}>
+        <div className="tc-body" 
+             ref={bodyRef}
+             onScroll={mode === 'register' ? handleScroll : undefined}>
           {TERMS_SECTIONS.map(([title, body], i) => (
             <div key={i} className="tc-section">
               <div className="tc-section-title">{title}</div>

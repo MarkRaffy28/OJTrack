@@ -2,8 +2,8 @@ import React from 'react';
 import { IonIcon } from '@ionic/react';
 import { useLocation, useHistory } from 'react-router-dom';
 import {
-  home, homeOutline, people, peopleOutline, documentText, documentTextOutline,
-  person, personOutline,
+  calendar, calendarOutline, home, homeOutline, people, peopleOutline, documentText, documentTextOutline,
+  person, personOutline, statsChart, statsChartOutline, 
 } from 'ionicons/icons';
 import "@css/BottomNav.css";
 
@@ -20,8 +20,10 @@ function SupervisorBottomNav({ activeTab }: BottomNavProps) {
     const path = location.pathname;
     if (path === '/supervisor-dashboard') return 'home';
     if (path === '/supervisor-trainees') return 'trainees';
+    if (path === '/attendance') return 'attendance';
     if (path === '/pending-reports') return 'reports';
-    if (path === '/supervisor-account') return 'account';
+    if (path === '/activity') return 'activity';
+    if (path === '/account') return 'account';
     return 'home';
   };
 
@@ -32,10 +34,12 @@ function SupervisorBottomNav({ activeTab }: BottomNavProps) {
   };
 
   const navItems = [
-    { key: 'home',     route: '/supervisor-dashboard',       iconActive: home,         iconInactive: homeOutline         },
-    { key: 'trainees', route: '/supervisor-trainees',        iconActive: people,       iconInactive: peopleOutline       },
-    { key: 'reports',  route: '/supervisor-pending-reports', iconActive: documentText, iconInactive: documentTextOutline },
-    { key: 'account',  route: '/supervisor-account',         iconActive: person,       iconInactive: personOutline       },
+    { key: 'home',       route: '/supervisor-dashboard',       iconActive: home,         iconInactive: homeOutline         },
+    { key: 'trainees',   route: '/supervisor-trainees',        iconActive: people,       iconInactive: peopleOutline       },
+    { key: 'attendance', route: '/attendance',                 iconActive: calendar,     iconInactive: calendarOutline     },
+    { key: 'reports',    route: '/supervisor-pending-reports', iconActive: documentText, iconInactive: documentTextOutline },
+    { key: 'activity',   route: '/activity',                   iconActive: statsChart,   iconInactive: statsChartOutline   },
+    { key: 'account',    route: '/account',                    iconActive: person,       iconInactive: personOutline       },
   ];
 
   return (

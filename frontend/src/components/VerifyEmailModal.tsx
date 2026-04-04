@@ -57,7 +57,7 @@ function VerifyEmailModal({ isOpen, onClose }: VerifyEmailModalProps) {
         setStep('verify');
         setError("Please wait before requesting another OTP.");
       } else {
-        setError(err.response?.data?.message || "Failed to send OTP.");
+        setError(err.response?.data?.message || err.message);
       }
     } finally {
       setIsLoading(false);
@@ -80,7 +80,7 @@ function VerifyEmailModal({ isOpen, onClose }: VerifyEmailModalProps) {
       refreshUser(); // Intentionally fire background refresh
       setTimeout(() => { onClose(); }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to verify OTP.");
+      setError(err.response?.data?.message || err.message);
     } finally {
       setIsLoading(false);
     }

@@ -1,24 +1,19 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import { IonPage, IonContent, IonText, IonIcon, } from "@ionic/react";
 import { 
   mailOutline, lockClosedOutline, personOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowBackOutline, 
   arrowForwardOutline, schoolOutline, briefcaseOutline, alertCircleOutline, calendarOutline, documentTextOutline, closeOutline, 
-  checkmarkOutline, cameraOutline, imageOutline, trashOutline, callOutline, locationOutline, idCardOutline, statsChartOutline, 
+  checkmarkOutline, callOutline, locationOutline, idCardOutline, statsChartOutline, 
   maleFemaleOutline, codeSlashOutline, businessOutline
 } from "ionicons/icons";
 import API from "@api/api";
+import AvatarCropInput from "@components/AvatarCropInput";
+import TermsModal from "@components/TermsModal";
 import "@css/Register.css";
 
 type UserRole = "student" | "supervisor" | null;
 type RegistrationStep = "role" | "username" | "form" | "photo";
-
-// ─── Crop state ──────────────────────────────────────────────────────────────
-interface CropState {
-  x: number;
-  y: number;
-  scale: number;
-}
 
 function Register() {
   const history = useHistory();
@@ -56,6 +51,7 @@ function Register() {
   const [year, setYear] = useState("");
   const [program, setProgram] = useState("");
   const [major, setMajor] = useState("");
+  const [section, setSection] = useState("");
 
   const [employeeId, setEmployeeId] = useState("");
   const [offices, setOffices] = useState<{ id: number; name: string }[]>([]);
@@ -84,6 +80,7 @@ function Register() {
   const [isStudentIdTouched, setIsStudentIdTouched] = useState(false);
   const [isProgramTouched, setIsProgramTouched] = useState(false);
   const [isMajorTouched, setIsMajorTouched] = useState(false);
+  const [isSectionTouched, setIsSectionTouched] = useState(false);
   const [isYearTouched, setIsYearTouched] = useState(false);
   const [isEmployeeIdTouched, setIsEmployeeIdTouched] = useState(false);
   const [isOfficeIdTouched, setIsOfficeIdTouched] = useState(false);
@@ -96,26 +93,13 @@ function Register() {
 
   // Terms & Conditions
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [termsScrolledToEnd, setTermsScrolledToEnd] = useState(false);
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Loading/redirect
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [redirectMessage, setRedirectMessage] = useState("");
 
-  // ── Photo + Crop state ────────────────────────────────────────────────────
-  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null); 
+  // ── Photo state ───────────────────────────────────────────────────────────
   const [croppedPhoto, setCroppedPhoto] = useState<string | null>(null);
-  const [isCropping, setIsCropping] = useState(false);
-  const [cropState, setCropState] = useState<CropState>({ x: 0, y: 0, scale: 1 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStart = useRef<{ mx: number; my: number; cx: number; cy: number } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
-  const cropImgRef = useRef<HTMLImageElement>(null);
-
-  const CROP_SIZE = 280;
-
   const [registrationError, setRegistrationError] = useState("");
   
   //  ── Form data ───────────────────────────────────────────────────────
@@ -128,6 +112,32 @@ function Register() {
   const validateContactNumber = (v: string) => /^09\d{9}$/.test(v);
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const validatePassword = (v: string) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/.test(v);
+
+
+ const handleUsernameCheck = async () => {
+    setUsernameError("");
+    setIsCheckingUsername(true);
+
+    try {
+      const response = await API.get(`/users/exists/username/${username}`);
+      if (response.data.available) {
+        setUsernameAvailable(true);
+      } else {
+        setUsernameError("Username is already taken");
+      }
+    } catch (error: any) {
+      console.log("Error: ", error);
+      
+      if (error.response) {
+        setUsernameError("Username is already taken");
+      } else {
+        setUsernameError(error.message);
+      }
+      setUsernameAvailable(false);
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
 
   const checkEmail = async () => {
     setEmailError("");
@@ -142,9 +152,13 @@ function Register() {
           setEmailAvailable(false);
           setEmailError("Email is already taken");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log("Error: ", error);
-        setEmailError("Email is already taken");
+        if (error.response) {
+          setEmailError("Email is already taken");
+        } else {
+          setEmailError(error.message);
+        }
         setEmailAvailable(false);
       }
     }
@@ -157,7 +171,7 @@ function Register() {
 
     if (studentId.length > 5 || employeeId.length > 3) {
       try {
-        const response = await API.get(`/users/exists/user_id/${userId}`);
+        const response = await API.get(`/users/exists/userId/${userId}`);
         if (response.data.available) {
           setUserIdAvailable(true);
           setUserIdError("");
@@ -165,10 +179,14 @@ function Register() {
           setUserIdAvailable(false);
           setUserIdError("User ID is already taken");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log("Error: ", error);
         setUserIdAvailable(false);
-        setUserIdError("User ID is already taken");
+        if (error.response) {
+          setUserIdError("User ID is already taken");
+        } else {
+          setUserIdError(error.message);
+        }
       }
     }
   }
@@ -189,7 +207,8 @@ function Register() {
         userIdError.length === 0 &&
         year.length > 0 && 
         program.length > 0 && 
-        major.length > 0
+        major.length > 0 &&
+        section.length > 0
       : employeeId.length >= 3 && 
         userIdError.length === 0 &&
         officeId.length >= 1 &&
@@ -201,7 +220,7 @@ function Register() {
       try {
         const res = await API.get("/offices");
         setOffices(res.data);
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
       }
     }
@@ -229,26 +248,6 @@ function Register() {
     else history.push("/login");
   };
 
-  const handleUsernameCheck = async () => {
-    setUsernameError("");
-    setIsCheckingUsername(true);
-
-    try {
-      const response = await API.get(`/users/exists/username/${username}`);
-      if (response.data.available) {
-        setUsernameAvailable(true);
-      } else {
-        setUsernameError("Username is already taken");
-      }
-    } catch (error) {
-      console.log("Error: ", error);
-      setUsernameError("Username is already taken");
-      setUsernameAvailable(false);
-    } finally {
-      setIsCheckingUsername(false);
-    }
-  };
-
   // ── Handle form submit ────────────────────────────────────────────────────
   const onRegisterSubmit = () => {
     if (!formReady) return;
@@ -270,6 +269,7 @@ function Register() {
         year,
         program,
         major,
+        section,
       };
     } else if (selectedRole === "supervisor") {
       formDataRef.current = {
@@ -293,101 +293,14 @@ function Register() {
     setRegistrationStep("photo");
   };
 
-  // ── Photo upload handler ──────────────────────────────────────────────────
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setRawImageSrc(ev.target?.result as string);
-      setCropState({ x: 0, y: 0, scale: 1 });
-      setIsCropping(true);
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
-
-  // ── Crop drag handlers ────────────────────────────────────────────────────
-  const onDragStart = useCallback(
-    (clientX: number, clientY: number) => {
-      setIsDragging(true);
-      dragStart.current = {
-        mx: clientX,
-        my: clientY,
-        cx: cropState.x,
-        cy: cropState.y,
-      };
-    },
-    [cropState],
-  );
-
-  const onDragMove = useCallback(
-    (clientX: number, clientY: number) => {
-      if (!isDragging || !dragStart.current) return;
-      const dx = clientX - dragStart.current.mx;
-      const dy = clientY - dragStart.current.my;
-      setCropState((prev) => ({
-        ...prev,
-        x: dragStart.current!.cx + dx,
-        y: dragStart.current!.cy + dy,
-      }));
-    },
-    [isDragging],
-  );
-
-  const onDragEnd = useCallback(() => {
-    setIsDragging(false);
-    dragStart.current = null;
-  }, []);
-
-  // ── Apply crop — draw onto canvas, export as dataURL ─────────────────────
-  const applyCrop = useCallback(() => {
-    const img = cropImgRef.current;
-    if (!img || !rawImageSrc) return;
-
-    const canvas = document.createElement("canvas");
-    const OUTPUT = 400;
-    canvas.width = OUTPUT;
-    canvas.height = OUTPUT;
-    const ctx = canvas.getContext("2d")!;
-
-    // Clip to circle
-    ctx.beginPath();
-    ctx.arc(OUTPUT / 2, OUTPUT / 2, OUTPUT / 2, 0, Math.PI * 2);
-    ctx.clip();
-
-    // The crop window is CROP_SIZE px wide on screen.
-    // Image is rendered at its natural size * scale, offset by (x, y).
-    const displayRatio = (CROP_SIZE * cropState.scale) / img.naturalWidth;
-    // Pixel coords of the top-left of the crop circle in the image coordinate space
-    const srcX = -cropState.x / displayRatio;
-    const srcY = -cropState.y / displayRatio;
-    const srcW = CROP_SIZE / displayRatio;
-    const srcH = CROP_SIZE / displayRatio;
-
-    ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUTPUT, OUTPUT);
-
-    const result = canvas.toDataURL("image/jpeg", 0.92);
-    setCroppedPhoto(result);
-    setIsCropping(false);
-    setRawImageSrc(null);
-  }, [rawImageSrc, cropState]);
-
   // ── After photo step → open Terms ─────────────────────────────────────────
   const handleProfilePictureSubmit = () => {
     if (formDataRef.current && croppedPhoto) {
       formDataRef.current.profilePicture = croppedPhoto;
     }
-    setTermsScrolledToEnd(false);
-    setTermsAccepted(false);
     setShowTermsModal(true);
   };
 
-  const handleTermsScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 40)
-      setTermsScrolledToEnd(true);
-  };
 
   const handleDeclineTerms = () => {
     formDataRef.current = null;
@@ -401,7 +314,10 @@ function Register() {
   };
 
   const handleRegister = async () => {
-    if (!termsAccepted || !formDataRef.current) return;
+    if (!formDataRef.current) return;
+    setRegistrationError('');
+    setRedirectMessage("Creating your account...");
+    setIsRedirecting(true);
 
     try {
       const response = await API.post(`/auth/register/${selectedRole}`, formDataRef.current);
@@ -409,21 +325,23 @@ function Register() {
       if (response.data.newUserId) {
         formDataRef.current = null;
         setRedirectMessage("Account created! Redirecting to login...");
-        setIsRedirecting(true);
-        setTimeout(() => history.push("/login"), 2200);
+        setTimeout(() => {
+          setIsRedirecting(false);
+          setShowTermsModal(false);
+          history.push("/login");
+        }, 2200);
       } else {
+        setIsRedirecting(false);
         setRegistrationError("Registration failed. Please try again later.")
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("Error: ", error);
-      setRegistrationError("Registration failed. Please try again later.");
-    } finally {
-      setShowTermsModal(false);
-      setTimeout(() => {
-        setRegistrationStep("role");
-        setRedirectMessage("");
-        setIsRedirecting(false);
-      }, 3000)
+      setIsRedirecting(false);
+      if (error.response) {
+        setRegistrationError("Registration failed. Please try again later.");
+      } else {
+        setRegistrationError(error.message);
+      }
     }
   };
 
@@ -436,7 +354,7 @@ function Register() {
       <div className="role-header">
         <div className="logo-wrapper">
           <div className="logo-circle">
-            <span className="logo-icon">📊</span>
+            <img src="/logo.svg" alt="OJTrack Logo" style={{ width: 100, height: 100 }} />
           </div>
         </div>
         <IonText className="header-text">
@@ -755,13 +673,7 @@ function Register() {
             <label className="floating-label">
               <IonIcon icon={personOutline} className="label-icon" />
               Middle Name{" "}
-              <span
-                style={{
-                  fontWeight: "normal",
-                  opacity: 0.6,
-                  fontSize: "0.85em",
-                }}
-              >
+              <span className="optional-label">
                 (optional)
               </span>
             </label>
@@ -830,13 +742,7 @@ function Register() {
             <label className="floating-label">
               <IonIcon icon={personOutline} className="label-icon" />
               Extension Name
-              <span
-                style={{
-                  fontWeight: "normal",
-                  opacity: 0.6,
-                  fontSize: "0.85em",
-                }}
-              >
+              <span className="optional-label">
                 (optional)
               </span>
             </label>
@@ -936,6 +842,11 @@ function Register() {
             {isBirthdayTouched && !birthDate && (
               <IonText className="error-message">
                 Please select your birthDate
+              </IonText>
+            )}
+            {isBirthdayTouched && birthDate && (birthDate < minBirthdayDate || birthDate > maxBirthdayDate) && (
+              <IonText className="error-message">
+                Student must be 17-80 years old
               </IonText>
             )}
           </div>
@@ -1245,6 +1156,41 @@ function Register() {
                   </IonText>
                 )}
               </div>
+
+              {/* Section */}
+              <div className="input-group">
+                <label className="floating-label">
+                  <IonIcon icon={businessOutline} className="label-icon" />
+                  Section
+                </label>
+                <div className="input-container">
+                  <input
+                    type="text"
+                    value={section}
+                    maxLength={50}
+                    onChange={(e) => setSection(e.target.value)}
+                    onFocus={() => setIsSectionTouched(true)}
+                    onBlur={() => setIsSectionTouched(true)}
+                    className={`styled-input ${isSectionTouched && section.length === 0 ? "input-invalid" : section.length >= 1 ? "input-valid" : ""}`}
+                    placeholder="Enter your section (e.g. A, B)"
+                  />
+                  {section && section.length >= 1 && (
+                    <IonIcon
+                      icon={checkmarkCircleOutline}
+                      className="validation-icon success"
+                    />
+                  )}
+                  {isSectionTouched && section.length === 0 && (
+                    <IonIcon
+                      icon={alertCircleOutline}
+                      className="validation-icon error"
+                    />
+                  )}
+                </div>
+                {isSectionTouched && section.length === 0 && (
+                  <IonText className="error-message">Section is required</IonText>
+                )}
+              </div>
             </>
           )}
 
@@ -1383,8 +1329,8 @@ function Register() {
           {/* Submit */}
           <button
             type="submit"
-            className={`register-button ${formReady ? "button-ready" : ""}`}
-            disabled={!formReady}
+            className={`register-button ${formReady && (birthDate >= minBirthdayDate && birthDate <= maxBirthdayDate) ? "button-ready" : ""}`}
+            disabled={!formReady || (birthDate < minBirthdayDate || birthDate > maxBirthdayDate)}
           >
             <span>Continue</span>
             <IonIcon icon={arrowForwardOutline} className="button-icon" />
@@ -1394,31 +1340,19 @@ function Register() {
     );
   };
 
-  // ── PHOTO UPLOAD + CROP STEP ──────────────────────────────────────────────
+  // ── PHOTO UPLOAD STEP ─────────────────────────────────────────────────────
   const renderPhotoStep = () => (
     <div className="photo-step-container">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
-
       <button className="back-button" onClick={handleBack}>
         <IonIcon icon={arrowBackOutline} />
       </button>
 
       <div className="register-header" style={{ marginBottom: 8 }}>
         <IonText className="header-text">
-          <h1 className="title" style={{ color: "black" }}>
-            Profile Photo
-          </h1>
+          <h1 className="title" style={{ color: "black" }}>Profile Photo</h1>
           <p className="subtitle" style={{ color: "black" }}>
             Upload a photo so others can recognise you
           </p>
-          <br />
         </IonText>
       </div>
 
@@ -1440,73 +1374,34 @@ function Register() {
         </div>
       </div>
 
-      {/* Preview / upload zone */}
       <div className="photo-upload-card">
-        {croppedPhoto ? (
-          /* Already has a cropped photo — show preview */
-          <div className="photo-preview-wrap">
-            <div className="photo-preview-ring">
-              <img
-                src={croppedPhoto}
-                alt="Profile"
-                className="photo-preview-img"
-              />
-              <div className="photo-preview-check">
-                <IonIcon icon={checkmarkCircleOutline} />
-              </div>
-            </div>
+        <AvatarCropInput 
+          value={croppedPhoto} 
+          onChange={(newVal) => setCroppedPhoto(newVal)} 
+        />
+        
+        {croppedPhoto && (
+          <div style={{ marginTop: 16, textAlign: 'center' }}>
             <p className="photo-preview-name">
               {firstName} {lastName}
             </p>
             <p className="photo-preview-role">
               {selectedRole === "student" ? `${program} · ${year}` : officeName ?? ""}
             </p>
-            <div className="photo-action-row">
-              <button
-                className="photo-action-btn secondary"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <IonIcon icon={imageOutline} /> Change Photo
-              </button>
-              <button
-                className="photo-action-btn danger"
-                onClick={() => setCroppedPhoto(null)}
-              >
-                <IonIcon icon={trashOutline} /> Remove
-              </button>
-            </div>
-            {registrationError && (
-              <IonText className="error-message">
-                {registrationError}
-              </IonText>
-            )}
           </div>
-        ) : (
-          /* No photo yet */
-          <div
-            className="photo-empty-zone"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <div className="photo-empty-circle">
-              <div className="photo-empty-initials">
-                {firstName?.[0]}
-                {lastName?.[0]}
-              </div>
-              <div className="photo-empty-overlay">
-                <IonIcon icon={cameraOutline} />
-                <span>Upload</span>
-              </div>
-            </div>
-            <p className="photo-empty-label">Tap to upload a profile photo</p>
-            <p className="photo-empty-sub">JPG or PNG · Max 10 MB</p>
-          </div>
+        )}
+
+        {registrationError && (
+          <IonText className="error-message" style={{ marginTop: 12, display: 'block', textAlign: 'center' }}>
+            {registrationError}
+          </IonText>
         )}
       </div>
 
       {/* CTA buttons */}
       <div className="photo-cta-row">
         <button
-          className={`register-button button-ready photo-proceed-btn`}
+          className="register-button button-ready photo-proceed-btn"
           onClick={handleProfilePictureSubmit}
         >
           <span>
@@ -1515,515 +1410,26 @@ function Register() {
           <IonIcon icon={arrowForwardOutline} className="button-icon" />
         </button>
       </div>
-
-      {/* ── Cropper overlay ── */}
-      {isCropping && rawImageSrc && (
-        <div className="cropper-overlay">
-          <div className="cropper-modal">
-            <div className="cropper-header">
-              <div className="cropper-title-group">
-                <div className="cropper-icon-badge">
-                  <IonIcon icon={cameraOutline} />
-                </div>
-                <div>
-                  <div className="cropper-title">Adjust your photo</div>
-                  <div className="cropper-subtitle">
-                    Drag to reposition · Pinch or scroll to zoom
-                  </div>
-                </div>
-              </div>
-              <button
-                className="cropper-close"
-                onClick={() => {
-                  setIsCropping(false);
-                  setRawImageSrc(null);
-                }}
-              >
-                <IonIcon icon={closeOutline} />
-              </button>
-            </div>
-
-            {/* Crop viewport */}
-            <div className="cropper-viewport-wrap">
-              <div
-                className="cropper-viewport"
-                style={{ width: CROP_SIZE, height: CROP_SIZE }}
-                onMouseDown={(e) => onDragStart(e.clientX, e.clientY)}
-                onMouseMove={(e) => {
-                  if (isDragging) onDragMove(e.clientX, e.clientY);
-                }}
-                onMouseUp={onDragEnd}
-                onMouseLeave={onDragEnd}
-                onTouchStart={(e) => {
-                  const t = e.touches[0];
-                  onDragStart(t.clientX, t.clientY);
-                }}
-                onTouchMove={(e) => {
-                  const t = e.touches[0];
-                  onDragMove(t.clientX, t.clientY);
-                }}
-                onTouchEnd={onDragEnd}
-                onWheel={(e) => {
-                  e.preventDefault();
-                  setCropState((prev) => ({
-                    ...prev,
-                    scale: Math.max(
-                      0.5,
-                      Math.min(4, prev.scale - e.deltaY * 0.001),
-                    ),
-                  }));
-                }}
-              >
-                {/* The actual image being dragged */}
-                <img
-                  ref={cropImgRef}
-                  src={rawImageSrc}
-                  alt="crop"
-                  draggable={false}
-                  style={{
-                    position: "absolute",
-                    transformOrigin: "center center",
-                    transform: `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.scale})`,
-                    maxWidth: "none",
-                    userSelect: "none",
-                    pointerEvents: "none",
-                    width: CROP_SIZE,
-                    height: CROP_SIZE,
-                    objectFit: "cover",
-                    cursor: isDragging ? "grabbing" : "grab",
-                  }}
-                />
-                {/* Circular mask overlay */}
-                <div
-                  className="cropper-mask"
-                  style={{ width: CROP_SIZE, height: CROP_SIZE }}
-                />
-                {/* Circle border */}
-                <div
-                  className="cropper-circle-border"
-                  style={{ width: CROP_SIZE, height: CROP_SIZE }}
-                />
-              </div>
-            </div>
-
-            {/* Zoom slider */}
-            <div className="cropper-zoom-row">
-              <span className="cropper-zoom-label">–</span>
-              <input
-                type="range"
-                min="0.5"
-                max="4"
-                step="0.01"
-                value={cropState.scale}
-                onChange={(e) =>
-                  setCropState((prev) => ({
-                    ...prev,
-                    scale: parseFloat(e.target.value),
-                  }))
-                }
-                className="cropper-zoom-slider"
-              />
-              <span className="cropper-zoom-label">+</span>
-            </div>
-
-            <div className="cropper-actions">
-              <button
-                className="cropper-btn secondary"
-                onClick={() => {
-                  setIsCropping(false);
-                  setRawImageSrc(null);
-                }}
-              >
-                Cancel
-              </button>
-              <button className="cropper-btn primary" onClick={applyCrop}>
-                <IonIcon icon={checkmarkOutline} /> Apply Crop
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 
   // ── Terms Modal ───────────────────────────────────────────────────────────
-  const renderTermsModal = () => (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.55)",
-        backdropFilter: "blur(4px)",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) handleDeclineTerms();
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 540,
-          background: "#fff",
-          borderRadius: "20px 20px 0 0",
-          maxHeight: "88vh",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 -8px 40px rgba(0,0,0,0.2)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "18px 20px 0",
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 9,
-                background: "#F3E6F8",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <IonIcon
-                icon={documentTextOutline}
-                style={{ fontSize: 18, color: "#5f0076" }}
-              />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
-                Terms &amp; Conditions
-              </div>
-              <div style={{ fontSize: 11.5, color: "#9CA3AF" }}>
-                Read carefully before creating your account
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleDeclineTerms}
-            style={{
-              background: "none",
-              border: "none",
-              fontSize: 22,
-              color: "#6B7280",
-              cursor: "pointer",
-              display: "flex",
-              padding: 4,
-            }}
-          >
-            <IonIcon icon={closeOutline} />
-          </button>
-        </div>
-        <div
-          style={{
-            margin: "12px 20px 0",
-            padding: "8px 14px",
-            borderRadius: 8,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 12,
-            transition: "all 0.3s",
-            background: termsScrolledToEnd
-              ? "rgba(34,197,94,0.08)"
-              : "rgba(95,0,118,0.07)",
-            border: `1px solid ${termsScrolledToEnd ? "rgba(34,197,94,0.25)" : "rgba(95,0,118,0.2)"}`,
-            color: termsScrolledToEnd ? "#16A34A" : "#5f0076",
-          }}
-        >
-          <IonIcon
-            icon={
-              termsScrolledToEnd ? checkmarkCircleOutline : arrowForwardOutline
-            }
-            style={{
-              fontSize: 14,
-              transform: termsScrolledToEnd ? "none" : "rotate(90deg)",
-              transition: "transform 0.3s",
-            }}
-          />
-          {termsScrolledToEnd
-            ? "You've finished reading — you may now accept below"
-            : "Scroll to the bottom to unlock the agreement checkbox"}
-        </div>
-        <div
-          style={{ overflowY: "auto", flex: 1, padding: "14px 20px 8px" }}
-          onScroll={handleTermsScroll}
-        >
-          {[
-            [
-              "1. Acceptance of Terms",
-              "By creating an account on OJTrack, you agree to be bound by these Terms and Conditions. If you do not agree to any part of these terms, you may not use our service.",
-            ],
-            [
-              "2. User Accounts",
-              "You are responsible for maintaining the confidentiality of your account credentials. You agree to provide accurate, current, and complete information during registration.\n\nYou must not share your login credentials with any third party. OJTrack reserves the right to suspend or terminate accounts that violate these terms.",
-            ],
-            [
-              "3. Use of the Platform",
-              "OJTrack is intended solely for on-the-job training (OJT) management. Prohibited activities include submitting false attendance records, impersonating another user, or attempting unauthorised access.",
-            ],
-            [
-              "4. Privacy & Data Collection",
-              "We collect personal information such as your name, email, student/employee ID, and profile photo for the purpose of operating OJTrack. Your data will not be sold to third parties.\n\nBy registering, you consent to data collection per our Privacy Policy.",
-            ],
-            [
-              "5. Student Responsibilities",
-              "Students must accurately log their OJT hours and submit timely reports. Falsification of records may result in permanent account suspension.",
-            ],
-            [
-              "6. Supervisor Responsibilities",
-              "Supervisors must review and validate student submissions honestly and fairly.",
-            ],
-            [
-              "7. Intellectual Property",
-              "All content and features of OJTrack are the exclusive property of OJTrack and protected by applicable intellectual property laws.",
-            ],
-            [
-              "8. Limitation of Liability",
-              "OJTrack shall not be liable for any indirect, incidental, or consequential damages arising from your use of the service.",
-            ],
-            [
-              "9. Modifications to Terms",
-              "OJTrack may modify these Terms at any time. Continued use after changes constitutes acceptance of the revised terms.",
-            ],
-            [
-              "10. Contact",
-              "Questions? Contact the OJTrack system administrator at your institution.",
-            ],
-          ].map(([title, body], i, arr) => (
-            <div
-              key={i}
-              style={{
-                paddingBottom: 16,
-                marginBottom: 16,
-                borderBottom: i < arr.length - 1 ? "1px solid #F3F4F6" : "none",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#5f0076",
-                  letterSpacing: "0.07em",
-                  textTransform: "uppercase",
-                  marginBottom: 7,
-                }}
-              >
-                {title}
-              </div>
-              {(body as string).split("\n\n").map((para, j) => (
-                <p
-                  key={j}
-                  style={{
-                    fontSize: 13,
-                    color: "#4B5563",
-                    lineHeight: 1.75,
-                    marginBottom:
-                      j < (body as string).split("\n\n").length - 1 ? 8 : 0,
-                  }}
-                >
-                  {para}
-                </p>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div
-          style={{
-            padding: "12px 20px 24px",
-            borderTop: "1px solid #F3F4F6",
-            flexShrink: 0,
-          }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 11,
-              marginBottom: 14,
-              cursor: termsScrolledToEnd ? "pointer" : "default",
-              opacity: termsScrolledToEnd ? 1 : 0.38,
-              pointerEvents: termsScrolledToEnd ? "auto" : "none",
-              transition: "opacity 0.25s",
-            }}
-          >
-            <div
-              onClick={() => termsScrolledToEnd && setTermsAccepted((v) => !v)}
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 5,
-                flexShrink: 0,
-                marginTop: 1,
-                border: `2px solid ${termsAccepted ? "#5f0076" : "#D1D5DB"}`,
-                background: termsAccepted ? "#5f0076" : "transparent",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.15s",
-              }}
-            >
-              {termsAccepted && (
-                <IonIcon
-                  icon={checkmarkOutline}
-                  style={{ color: "#fff", fontSize: 13 }}
-                />
-              )}
-            </div>
-            <span style={{ fontSize: 13, color: "#374151", lineHeight: 1.55 }}>
-              I have read and agree to the{" "}
-              <strong style={{ color: "#111827" }}>Terms and Conditions</strong>
-            </span>
-          </label>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              onClick={handleDeclineTerms}
-              style={{
-                flex: 1,
-                padding: "12px",
-                background: "#F9FAFB",
-                border: "1.5px solid #E5E7EB",
-                borderRadius: 10,
-                color: "#6B7280",
-                fontFamily: "inherit",
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Decline
-            </button>
-            <button
-              onClick={handleRegister}
-              disabled={!termsAccepted}
-              style={{
-                flex: 2,
-                padding: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 7,
-                background: termsAccepted ? "#5f0076" : "#E5E7EB",
-                border: "none",
-                borderRadius: 10,
-                color: termsAccepted ? "#fff" : "#9CA3AF",
-                fontFamily: "inherit",
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: termsAccepted ? "pointer" : "default",
-                transition: "background 0.2s, color 0.2s",
-              }}
-            >
-              <IonIcon icon={checkmarkCircleOutline} /> I Agree &amp; Create
-              Account
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  // Handled by TermsModal component now
 
   // ── Loading overlay ───────────────────────────────────────────────────────
   const renderLoadingOverlay = () => (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(255,255,255,0.96)",
-        backdropFilter: "blur(10px)",
-        zIndex: 99999,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 28,
-        animation: "fadeIn 0.25s ease",
-      }}
-    >
-      <style>{`
-        @keyframes fadeIn   { from{opacity:0}to{opacity:1} }
-        @keyframes spin     { from{transform:rotate(0deg)}to{transform:rotate(360deg)} }
-        @keyframes pulse    { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:.75} }
-        @keyframes dotBounce{ 0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1} }
-      `}</style>
-      <div
-        style={{
-          position: "relative",
-          width: 88,
-          height: 88,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            border: "4px solid #F3E6F8",
-            borderTop: "4px solid #5f0076",
-            animation: "spin 0.85s linear infinite",
-          }}
-        />
-        <div
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg,#5f0076,#7a1896)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 6px 24px rgba(95,0,118,0.4)",
-            animation: "pulse 1.8s ease-in-out infinite",
-          }}
-        >
-          <span style={{ fontSize: 26 }}>📊</span>
+    <div className="loading-overlay">
+      <div className="lo-spinner-wrap">
+        <div className="lo-spinner-outer" />
+        <div className="lo-spinner-inner">
+          <img src="/logo.svg" alt="OJTrack" style={{ width: 34, height: 34 }} />
         </div>
       </div>
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: 17,
-            fontWeight: 700,
-            color: "#111827",
-            marginBottom: 10,
-          }}
-        >
-          {redirectMessage}
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 7,
-          }}
-        >
+      <div className="lo-text-wrap">
+        <div className="lo-message">{redirectMessage}</div>
+        <div className="lo-dots">
           {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "#5f0076",
-                animation: `dotBounce 1.3s ease-in-out ${i * 0.18}s infinite`,
-              }}
-            />
+            <div key={i} className="lo-dot" />
           ))}
         </div>
       </div>
@@ -2032,12 +1438,18 @@ function Register() {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="register-page">
+      <IonContent fullscreen className={`register-page ${showTermsModal ? "no-scroll" : ""}`}>
         {registrationStep === "role" && renderRoleSelection()}
         {registrationStep === "username" && renderUsernameCheck()}
         {registrationStep === "form" && renderForm()}
         {registrationStep === "photo" && renderPhotoStep()}
-        {showTermsModal && renderTermsModal()}
+        {showTermsModal && (
+          <TermsModal 
+            mode="register"
+            onClose={handleDeclineTerms}
+            onAccept={handleRegister}
+          />
+        )}
         {isRedirecting && renderLoadingOverlay()}
       </IonContent>
     </IonPage>
@@ -2045,3 +1457,4 @@ function Register() {
 }
 
 export default Register;
+

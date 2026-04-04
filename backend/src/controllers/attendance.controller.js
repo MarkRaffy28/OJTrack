@@ -1,8 +1,9 @@
+import { fetchOrFail } from "../helpers/resource.helper.js";
 import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
-import { getTodayAttendance, insertAttendance, isStudentInOffice } from "../models/attendance.model.js";
+import { getTodayAttendance, insertAttendance, isStudentInOffice, getSupervisorAttendanceRows } from "../models/attendance.model.js";
 import { determineSession, verifyQr } from "../utils/attendance.util.js";
-import { attendanceQuerySchema, scanAttendanceSchema } from "../validators/attendance.validator.js";
+import { attendanceQuerySchema, scanAttendanceSchema, supervisorAttendanceSchema } from "../validators/attendance.validator.js";
 
 
 export const getTodayAttendanceController = async (req, res) => {
@@ -11,7 +12,7 @@ export const getTodayAttendanceController = async (req, res) => {
 
   const { studentId, ojtId, date } = data;
 
-  const dbRecord = await getTodayAttendance(studentId, ojtId, date);
+  const dbRecord = await fetchOrFail(res, getTodayAttendance, [studentId, ojtId, date], "No attendance record found");
   const record = {
     morningTimeIn: dbRecord?.morning_in ?? '',
     morningTimeOut: dbRecord?.morning_out ?? '',
@@ -34,10 +35,7 @@ export const scanAttendanceController = async (req, res) => {
     return res.status(400).json({ message: error.message });
   };
 
-  const assigned = await isStudentInOffice(studentId, qrPayLoad.o);
-  if (!assigned) {
-    return res.status(403).json({ message: "Student not assigned to this office" });
-  };
+  if (!await fetchOrFail(res, isStudentInOffice, [studentId, qrPayLoad.o], "Student not assigned to this office")) return;
 
   let column;
   try {
@@ -85,3 +83,41 @@ export const scanAttendanceController = async (req, res) => {
     time,
   });
 };
+
+export const getSupervisorAttendanceController = async (req, res) => {
+  const data = validate(res, supervisorAttendanceSchema, req.params);
+  if (!data) return;
+
+  const { supervisorId } = data;
+
+  const rows = await fetchOrFail(res, getSupervisorAttendanceRows, [supervisorId], "No attendance records found");
+  if (!rows) return;
+
+  const result = [];
+  let currentStudentId = null;
+  let currentStudent = null;
+
+  for (const row of rows) {
+    if (row.studentId !== currentStudentId) {
+      if (currentStudent) result.push(currentStudent);
+      currentStudentId = row.studentId;
+      currentStudent = {
+        id: row.studentId,
+        studentName: row.studentName.replace(/\s+/g, ' ').trim(),
+        dtr: []
+      };
+    }
+    currentStudent.dtr.push({
+      id: row.attendanceId,
+      date: row.date,
+      morningIn: row.morningIn,
+      morningOut: row.morningOut,
+      afternoonIn: row.afternoonIn,
+      afternoonOut: row.afternoonOut,
+      hours: Number(row.totalHours) || 0,
+    });
+  }
+  if (currentStudent) result.push(currentStudent);
+
+  res.status(200).json(result);
+};

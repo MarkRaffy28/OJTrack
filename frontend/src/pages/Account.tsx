@@ -5,14 +5,16 @@ import {
   personOutline, mailOutline, calendarOutline, shieldCheckmarkOutline, logOutOutline, lockClosedOutline, documentTextOutline,
   createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline, checkmarkCircleOutline
 } from 'ionicons/icons';
-import { useUser, isStudent } from '@context/userContext';
-import { useOjt } from '@context/ojtContext';
-import { useOjtProgress } from '@hooks/useOJtProgress';
 import { useAuth } from '@context/authContext';
+import { useOjt } from '@context/ojtContext';
+import { useUser, isStudent, isSupervisor } from '@context/userContext';
+import { useSupervisorOjt } from '@context/supervisorOjtContext';
+import { useOjtProgress } from '@hooks/useOJtProgress';
 import { formatDate } from '@utils/date';
-import BottomNav from '@components/BottomNav';
 import ChangePasswordModal from '@components/ChangePasswordModal';
+import BottomNav from '@components/BottomNav';
 import LogoutModal from '@components/LogoutModal';
+import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import TermsModal from '@components/TermsModal';
 import VerifyEmailModal from '@components/VerifyEmailModal';
 
@@ -23,6 +25,7 @@ function Account() {
   const { logout } = useAuth();
   const { user, refreshUser } = useUser();
   const { progressPercentage } = useOjtProgress(currentOjt);
+  const { stats } = useSupervisorOjt();
   const [showLogoutModal, setShowLogoutModal]       = useState(false);
   const [isLoggingOut, setIsLoggingOut]             = useState(false);
   const [showTermsModal, setShowTermsModal]         = useState(false);
@@ -54,7 +57,7 @@ function Account() {
 
   const details = [
     { icon: personCircleOutline,    label: 'Username',         value: user?.username                 || '—' },
-    { icon: shieldCheckmarkOutline, label: 'Student ID',       value: isStudent(user) ? user.userId   : '—' },
+    { icon: shieldCheckmarkOutline, label: isStudent(user) ? 'Student ID' : 'Employee ID', value: user?.userId   || '—' },
     { icon: calendarOutline,        label: 'Birthday',         value: formatDate(user?.birthDate || '') },
     { icon: transgenderOutline,     label: 'Gender',           value: user?.gender                   || '—' },
     { icon: locationOutline,        label: 'Address',          value: user?.address                  || '—' },
@@ -101,28 +104,61 @@ function Account() {
                 </button>
               </div>
               <p className="acc-name">{user?.fullName}</p>
-              <p className="acc-role">Trainee</p>
-              <span className="acc-program-badge">{isStudent(user) ? user.program : "-"}</span>
-              <span className="acc-program-badge">{isStudent(user) ? user.major   : "-"}</span>
+              <p className="acc-role">{isSupervisor(user) ? 'OJT Supervisor' : 'Trainee'}</p>
+              {isStudent(user) && (
+                <>
+                  <span className="acc-program-badge">{user.program}</span>
+                  <span className="acc-program-badge">{user.major}</span>
+                  <span className="acc-program-badge">{user.section}</span>
+                </>
+              )}
+              {isSupervisor(user) && (
+                <>
+                  <span className="acc-program-badge">{user.officeName}</span>
+                </>
+              )}
             </div>
           </div>
 
           {/* Quick Stats */}
           <div className="acc-stats-card">
-            <div className="acc-stat">
-              <p className="acc-stat-val">{isStudent(user) ? user.year : "-"}</p>
-              <p className="acc-stat-lbl">Year Level</p>
-            </div>
-            <div className="acc-stat-div" />
+            {isStudent(user) && (
+              <>
+                <div className="acc-stat">
+                  <p className="acc-stat-val">{user.year}</p>
+                  <p className="acc-stat-lbl">Year Level</p>
+                </div>
+                <div className="acc-stat-div" />
+              </>
+            )}
+
             <div className="acc-stat">
               <p className="acc-stat-val">{user?.userId}</p>
-              <p className="acc-stat-lbl">Student ID</p>
+              <p className="acc-stat-lbl">{isStudent(user) ? "Student ID" : "Employee ID"}</p>
             </div>
-            <div className="acc-stat-div" />
-            <div className="acc-stat">
-              <p className="acc-stat-val">{progressPercentage.toFixed(1)}%</p>
-              <p className="acc-stat-lbl">OJT Progress</p>
-            </div>
+
+            {isStudent(user) ? (
+              <>
+                <div className="acc-stat-div" />
+                <div className="acc-stat">
+                  <p className="acc-stat-val">{progressPercentage.toFixed(1)}%</p>
+                  <p className="acc-stat-lbl">OJT Progress</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="acc-stat-div" />
+                <div className="acc-stat">
+                  <p className="acc-stat-val">{isSupervisor(user) ? user.position : 'Supervisor'}</p>
+                  <p className="acc-stat-lbl">Position</p>
+                </div>
+                <div className="acc-stat-div" />
+                <div className="acc-stat">
+                  <p className="acc-stat-val">{stats?.total || '0'}</p>
+                  <p className="acc-stat-lbl">Trainees</p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Profile Info */}
@@ -178,7 +214,11 @@ function Account() {
         </div>
       </IonContent>
 
-      <BottomNav activeTab="account" />
+      {isSupervisor(user) ? (
+        <SupervisorBottomNav activeTab="account" />
+      ) : (
+        <BottomNav activeTab="account" />
+      )}
 
       <LogoutModal
         isOpen={showLogoutModal}

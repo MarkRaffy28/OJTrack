@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 
-export const fetchStudentOjts = async (databaseId) => {
+export const getStudentOjts = async (databaseId) => {
   const [rows] = await db.query(
     `
       SELECT 
@@ -22,13 +22,12 @@ export const fetchStudentOjts = async (databaseId) => {
   return rows || null;
 };
 
-export const fetchSupervisorStudentsOjts = async (databaseId) => {
+export const getSupervisorStudentsOjts = async (databaseId) => {
   const [rows] = await db.query(
     `
       SELECT 
         u.id,
-        u.first_name,
-        u.last_name,
+        CONCAT_WS(' ', u.first_name, u.middle_name, u.last_name, u.extension_name) AS fullName,
         so.id AS ojtId,
         so.student_id AS studentId,
         so.academic_year AS academicYear,

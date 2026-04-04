@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const fetchOjtsSchema = z.object({
+export const getOjtsSchema = z.object({
   role: z.enum(["student", "supervisor"]),
   databaseId: z.coerce.number().int().positive(),
 });

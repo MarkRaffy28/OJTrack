@@ -10,7 +10,7 @@ import {
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUser, isStudent } from '@context/userContext';
+import { useUser, isStudent, isSupervisor } from '@context/userContext';
 import { useAuth } from '@context/authContext';
 import API from '@api/api';
 import AvatarCropInput from '@components/AvatarCropInput';
@@ -35,10 +35,14 @@ const schema = z.object({
   email:         z.email('Enter a valid email address'),
   address:       z.string().min(10, 'At least 10 characters'),
   // Locked — passthrough only, no user-facing validation
-  studentId:     z.string(),
-  year:          z.string(),
-  program:       z.string(),
-  major:         z.string(),
+  studentId:     z.string().optional(),
+  year:          z.string().optional(),
+  program:       z.string().optional(),
+  major:         z.string().optional(),
+  section:       z.string().optional(),
+  employeeId:    z.string().optional(),
+  position:      z.string().optional(),
+  officeName:    z.string().optional(),
   profilePicture:z.string().nullable().optional(),
 });
 
@@ -85,7 +89,7 @@ function EditAccount() {
 
   // ── Seed from user context ──────────────────────────────────────────────────
   useEffect(() => {
-    if (!user || !isStudent(user)) return;
+    if (!user) return;
     const vals: EditAccountForm = {
       username:       user.username        ?? '',
       firstName:      user.firstName       ?? '',
@@ -97,10 +101,14 @@ function EditAccount() {
       contactNumber:  user.contactNumber   ?? '',
       email:          user.emailAddress    ?? '',
       address:        user.address         ?? '',
-      studentId:      user.userId          ?? '',
-      year:           String(user.year     ?? ''),
-      program:        user.program         ?? '',
-      major:          user.major           ?? '',
+      studentId:      isStudent(user) ? user.userId : '',
+      year:           isStudent(user) ? String(user.year || '') : '',
+      program:        isStudent(user) ? user.program : '',
+      major:          isStudent(user) ? user.major : '',
+      section:        isStudent(user) ? user.section : '',
+      employeeId:     isSupervisor(user) ? user.userId : '',
+      position:       isSupervisor(user) ? user.position : '',
+      officeName:     isSupervisor(user) ? user.officeName : '',
       profilePicture: user.profilePicture  ?? null,
     };
     reset(vals);
@@ -159,7 +167,7 @@ function EditAccount() {
     if (usernameStatus === 'taken' || emailStatus === 'taken') return;
     setServerError('');
     try {
-      await API.patch(`/users/${databaseId}/profile`,
+      await API.patch(`/users/${user?.role}/${databaseId}/profile`,
         {
           username:      data.username.trim(),
           firstName:     data.firstName.trim(),
@@ -175,6 +183,10 @@ function EditAccount() {
           year:          data.year,
           program:       data.program,
           major:         data.major,
+          section:       data.section,
+          employeeId:    data.employeeId,
+          position:      data.position,
+          officeId:      isSupervisor(user) ? user.officeId : undefined,
           ...(data.profilePicture ? { profilePicture: data.profilePicture } : {}),
         },
         { headers: { Authorization: `Bearer ${token}` } },
@@ -432,63 +444,109 @@ function EditAccount() {
               </div>
             </div>
 
-            {/* Academic Details */}
-            <div className="ea-section">
-              <p className="ea-section-label">Academic Details</p>
-              <p className="ea-section-hint">Some fields are managed by your institution</p>
+            {/* Academic Details - Student Only */}
+            {isStudent(user) && (
+              <div className="ea-section">
+                <p className="ea-section-label">Academic Details</p>
+                <p className="ea-section-hint">Some fields are managed by your institution</p>
 
-              {/* Student ID — locked */}
-              <div className="ea-input-group">
-                <label className="ea-floating-label">
-                  <IonIcon icon={shieldCheckmarkOutline} className="ea-label-icon" />Student ID
-                </label>
-                <div className="ea-input-container">
-                  <input {...register('studentId')} type="text" readOnly disabled
-                    className="ea-styled-input ea-input-locked" />
-                  <span className="ea-lock-badge">Locked</span>
+                {/* Student ID — locked */}
+                <div className="ea-input-group">
+                  <label className="ea-floating-label">
+                    <IonIcon icon={shieldCheckmarkOutline} className="ea-label-icon" />Student ID
+                  </label>
+                  <div className="ea-input-container">
+                    <input {...register('studentId')} type="text" readOnly disabled
+                      className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
+                </div>
+
+                {/* Year Level */}
+                <div className={`ea-input-group ${errors.year ? 'ea-group-error' : ''}`}>
+                  <label className="ea-floating-label">
+                    <IonIcon icon={statsChartOutline} className="ea-label-icon" />Year Level
+                  </label>
+                  <div className="ea-input-container">
+                    <select {...register('year')} className={inputClass('year')}>
+                      <option value="">Select year level</option>
+                      <option value="2">2nd Year</option>
+                      <option value="4">4th Year</option>
+                    </select>
+                    <FieldIcon name="year" />
+                  </div>
+                  <FieldError name="year" />
+                </div>
+
+                {/* Program — locked */}
+                <div className="ea-input-group">
+                  <label className="ea-floating-label">
+                    <IonIcon icon={schoolOutline} className="ea-label-icon" />Program / Course
+                  </label>
+                  <div className="ea-input-container">
+                    <input {...register('program')} type="text" readOnly disabled
+                      className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
+                </div>
+
+                {/* Major — locked */}
+                <div className="ea-input-group">
+                  <label className="ea-floating-label">
+                    <IonIcon icon={codeSlashOutline} className="ea-label-icon" />Major
+                  </label>
+                  <div className="ea-input-container">
+                    <input {...register('major')} type="text" readOnly disabled
+                      className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
+                </div>
+
+                {/* Section — locked */}
+                <div className="ea-input-group">
+                  <label className="ea-floating-label">
+                    <IonIcon icon={schoolOutline} className="ea-label-icon" />Section
+                  </label>
+                  <div className="ea-input-container">
+                    <input {...register('section')} type="text" readOnly disabled
+                      className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Year Level */}
-              <div className={`ea-input-group ${errors.year ? 'ea-group-error' : ''}`}>
-                <label className="ea-floating-label">
-                  <IonIcon icon={statsChartOutline} className="ea-label-icon" />Year Level
-                </label>
-                <div className="ea-input-container">
-                  <select {...register('year')} className={inputClass('year')}>
-                    <option value="">Select year level</option>
-                    <option value="2">2nd Year</option>
-                    <option value="4">4th Year</option>
-                  </select>
-                  <FieldIcon name="year" />
+            {/* Employment Details - Supervisor Only */}
+            {isSupervisor(user) && (
+              <div className="ea-section">
+                <p className="ea-section-label">Employment Details</p>
+                <p className="ea-section-hint">Some fields are managed by your institution</p>
+                
+                <div className="ea-input-group">
+                  <label className="ea-floating-label"><IonIcon icon={shieldCheckmarkOutline} className="ea-label-icon" />Employee ID</label>
+                  <div className="ea-input-container">
+                    <input {...register('employeeId')} type="text" readOnly disabled className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
                 </div>
-                <FieldError name="year" />
-              </div>
-
-              {/* Program — locked */}
-              <div className="ea-input-group">
-                <label className="ea-floating-label">
-                  <IonIcon icon={schoolOutline} className="ea-label-icon" />Program / Course
-                </label>
-                <div className="ea-input-container">
-                  <input {...register('program')} type="text" readOnly disabled
-                    className="ea-styled-input ea-input-locked" />
-                  <span className="ea-lock-badge">Locked</span>
+                
+                <div className="ea-input-group">
+                  <label className="ea-floating-label"><IonIcon icon={schoolOutline} className="ea-label-icon" />Office/Department</label>
+                  <div className="ea-input-container">
+                    <input {...register('officeName')} type="text" readOnly disabled className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Major — locked */}
-              <div className="ea-input-group">
-                <label className="ea-floating-label">
-                  <IonIcon icon={codeSlashOutline} className="ea-label-icon" />Major
-                </label>
-                <div className="ea-input-container">
-                  <input {...register('major')} type="text" readOnly disabled
-                    className="ea-styled-input ea-input-locked" />
-                  <span className="ea-lock-badge">Locked</span>
+                <div className="ea-input-group">
+                  <label className="ea-floating-label"><IonIcon icon={personOutline} className="ea-label-icon" />Position</label>
+                  <div className="ea-input-container">
+                    <input {...register('position')} type="text" readOnly disabled className="ea-styled-input ea-input-locked" />
+                    <span className="ea-lock-badge">Locked</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Server error */}
             {serverError && (

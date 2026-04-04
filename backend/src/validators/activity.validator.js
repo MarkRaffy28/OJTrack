@@ -25,7 +25,7 @@ export const logActivitySchema = z.object({
   description: z.string().max(500).optional(),
 });
 
-export const fetchStudentActivitiesSchema = z.object({
+export const getActivitiesSchema = z.object({
   databaseId: z.coerce.number().int().positive(),
-  ojtId: z.coerce.number().int().positive(),
+  ojtId: z.coerce.number().int().positive().optional(),
 });

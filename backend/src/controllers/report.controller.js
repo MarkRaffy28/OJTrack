@@ -2,9 +2,9 @@ import { fetchOrFail } from "../helpers/resource.helper.js";
 import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { deleteFiles } from "../utils/storage.util.js";
-import { fetchStudentOjts } from "../models/ojt.model.js";
-import { createReport, fetchReports, updateReport, deleteReport, getReportById } from "../models/report.model.js";
-import { createReportSchema, deleteReportSchema, fetchReportsSchema, updateReportSchema } from "../validators/report.validator.js";
+import { getStudentOjts } from "../models/ojt.model.js";
+import { createReport, getReports, updateReport, deleteReport, getReportById } from "../models/report.model.js";
+import { createReportSchema, deleteReportSchema, getReportsSchema, updateReportSchema } from "../validators/report.validator.js";
 
 
 export const createReportController = async (req, res) => {
@@ -20,7 +20,7 @@ export const createReportController = async (req, res) => {
 
   const {studentId, ojtId, type, title } = data;
 
-  if (!await fetchOrFail(res, fetchStudentOjts, [studentId], "Student's OJTs not found")) return;
+  if (!await fetchOrFail(res, getStudentOjts, [studentId], "Student's OJTs not found")) return;
 
   const insertId = await createReport(data);
 
@@ -71,15 +71,13 @@ export const deleteReportController = async (req, res) => {
   res.status(200).json({ message: "OJT report deleted successfully" });
 };
 
-export const fetchReportsController = async (req, res) => {
-  const data = validate(res, fetchReportsSchema, req.params);
+export const getReportsController = async (req, res) => {
+  const data = validate(res, getReportsSchema, req.params);
   if (!data) return;
 
   const { ojtId } = data;
-
-  if (!await fetchOrFail(res, fetchStudentOjts, [studentId], "Student's OJTs not found")) return;
-
-  const reports = await fetchReports(ojtId);
+  
+  const reports = await getReports(ojtId);
   if (!reports) return;
 
   res.status(200).json({

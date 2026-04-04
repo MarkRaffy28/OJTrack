@@ -26,6 +26,7 @@ interface StudentUser extends BaseUser {
   year: number;
   program: string;
   major: string;
+  section: string;
 }
 
 interface SupervisorUser extends BaseUser {

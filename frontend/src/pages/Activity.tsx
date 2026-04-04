@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/react';
-import { logInOutline, logOutOutline, documentTextOutline, cloudUploadOutline, searchOutline, closeOutline, personOutline, shieldCheckmarkOutline, keyOutline, trashOutline, createOutline, statsChartOutline } from 'ionicons/icons';
+import {  
+  logInOutline,  logOutOutline,  documentTextOutline,  cloudUploadOutline,  searchOutline,  closeOutline,  
+  personOutline,  shieldCheckmarkOutline,  keyOutline,  trashOutline,  createOutline,  statsChartOutline 
+} from 'ionicons/icons';
 import { useActivity } from '@context/activityContext';
+import { useAuth } from '@context/authContext';
 import { formatRelativeDate, formatTime12 } from '@utils/date';
 import BottomNav from '@components/BottomNav';
+import SupervisorBottomNav from '@components/SupervisorBottomNav';
 
 function Activity() {
   const { activities, loadingActivities, getLatestActivities, fetchActivities } = useActivity();
+  const { role } = useAuth();
   const location = useLocation();
   const [searchText, setSearchText] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
 
-  const latestActivities = useMemo(() => getLatestActivities(20), [activities, getLatestActivities]);
+  const latestActivities = useMemo(() => getLatestActivities(50), [activities, getLatestActivities]);
 
   const typeConfig: Record<string, { icon: string; color: string; bg: string; label: string; category: string }> = {
     'TIME_IN':        { icon: logInOutline,          color: '#34d399', bg: 'rgba(52,211,153,0.15)',  label: 'Time In',      category: 'Attendance' },
@@ -29,12 +35,14 @@ function Activity() {
     'DTR':            { icon: documentTextOutline,   color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)',  label: 'DTR',          category: 'DTR' }
   };
 
+  const isSupervisor = role === 'supervisor';
+
   const filters = [
     { key: 'all', label: 'All' },
     { key: 'attendance', label: 'Attendance' },
     { key: 'reports', label: 'Reports' },
     { key: 'account', label: 'Account' },
-  ];
+  ].filter(f => !(isSupervisor && f.key === 'attendance'));
 
   useEffect(() => {
     fetchActivities();
@@ -44,7 +52,8 @@ function Activity() {
     const q = searchText.toLowerCase();
     const config = typeConfig[a.action] || { category: 'Other', label: a.action };
     
-    const match = a.description.toLowerCase().includes(q) || config.label.toLowerCase().includes(q);
+    const matcheName = a.fullName?.toLowerCase().includes(q);
+    const match = a.description.toLowerCase().includes(q) || config.label.toLowerCase().includes(q) || matcheName;
     const fmatch = selectedFilter === 'all' || config.category.toLowerCase() === selectedFilter;
     return match && fmatch;
   });
@@ -52,13 +61,16 @@ function Activity() {
   return (
     <IonPage>
       <IonContent fullscreen className="act-content">
-
         {/* Hero */}
         <div className="act-hero">
           <div className="act-hero-bg" />
           <div className="act-hero-inner">
-            <h1 className="act-hero-title">Your Activity</h1>
-            <p className="act-hero-sub">Track your daily progress and achievements</p>
+            <h1 className="act-hero-title">
+              {isSupervisor ? 'Activity History' : 'Your Activity'}
+            </h1>
+            <p className="act-hero-sub">
+              Monitor system interactions
+            </p>
           </div>
         </div>
 
@@ -98,7 +110,9 @@ function Activity() {
 
           {/* Timeline */}
           <div className="act-timeline-head">
-            <span className="act-timeline-title">Recent Activity History</span>
+            <span className="act-timeline-title">
+              {isSupervisor ? 'Trainee Activity Logs' : 'Recent Activity History'}
+            </span>
             <span className="act-timeline-count">{filtered.length} activities</span>
           </div>
 
@@ -145,6 +159,9 @@ function Activity() {
                         {cfg.label}
                       </span>
                     </div>
+                    {activity.fullName && (
+                      <p className="act-tl-card-student">{activity.fullName}</p>
+                    )}
                     <p className="act-tl-card-title">{cfg.label}</p>
                     <p className="act-tl-card-desc">{activity.description}</p>
                   </div>
@@ -155,7 +172,11 @@ function Activity() {
 
         </div>
       </IonContent>
-      <BottomNav activeTab="activity" />
+      {isSupervisor ? (
+        <SupervisorBottomNav activeTab="activity" />
+      ) : (
+        <BottomNav activeTab="activity" />
+      )}
     </IonPage>
   );
 };

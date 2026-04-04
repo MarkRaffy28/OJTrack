@@ -4,12 +4,12 @@ import { ensureUniqueField, ensureUserExists } from "../helpers/user.helper.js";
 import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { 
-  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, fetchStudentProfile, fetchSupervisorProfile, updateStudentUserProfile,
-  updateUserPassword
+  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, getStudentProfile, getSupervisorProfile, updateStudentUserProfile,
+  updateSupervisorUserProfile, updateUserPassword
 } from "../models/user.model.js";
 import { 
-  checkEmailSchema, checkExistenceSchema, checkUserIdSchema, checkUsernameSchema, fetchProfileSchema, updateProfileSchema, updateStudentProfileSchema,
-  updateUserPasswordSchema 
+  checkEmailSchema, checkExistenceSchema, checkUserIdSchema, checkUsernameSchema, getProfileSchema, updateProfileSchema, updateStudentProfileSchema,
+  updateSupervisorProfileSchema, updateUserPasswordSchema 
 } from "../validators/user.validator.js";
 
 
@@ -58,19 +58,19 @@ export const checkExistenceController = async (req, res) => {
   return res.status(400).json({ message: "Provide email, userId or username" });
 };
 
-export const fetchProfileController = async (req, res) => {
-  const data = validate(res, fetchProfileSchema, req.params);
+export const getProfileController = async (req, res) => {
+  const data = validate(res, getProfileSchema, req.params);
   if (!data) return;
 
   const { role, databaseId } = data;
 
   if (role === "student") {
-    const user = await fetchOrFail(res, fetchStudentProfile, [databaseId], "User not found");
+    const user = await fetchOrFail(res, getStudentProfile, [databaseId], "User not found");
     if (!user) return;
 
     return res.status(200).json(user);
   } else if (role === "supervisor") {
-    const user = await fetchOrFail(res, fetchSupervisorProfile, [databaseId], "User not found");
+    const user = await fetchOrFail(res, getSupervisorProfile, [databaseId], "User not found");
     if (!user) return;
 
     return res.status(200).json(user);
@@ -86,25 +86,33 @@ export const updateUserProfileController = async (req, res) => {
   const { role, databaseId } = baseData;
 
   let data;
+  let identifierUserId;
   if (role === "student") {
     data = validate(res, updateStudentProfileSchema, req.body);
     if (!data) return;
+    identifierUserId = data.studentId;
   } else if (role === "supervisor") {
-    // TODO
+    data = validate(res, updateSupervisorProfileSchema, req.body);
+    if (!data) return;
+    identifierUserId = data.employeeId;
   } else {
     return res.status(400).json({ message: "Invalid role" });
   }
 
-  const { username, email, userId } = data;
+  const { username, email } = data;
 
   const user = await fetchOrFail(res, findUserByDatabaseId, [databaseId], "User not found");
   if (!user) return;
 
   if (!(await ensureUniqueField(res, findUserByUsername, username, user.username, user.id, "Username"))) return;
   if (!(await ensureUniqueField(res, findUserByEmail, email, user.email_address, user.id, "Email"))) return;
-  if (!(await ensureUniqueField(res, findUserByUserId, userId, user.userId, user.id, "User ID"))) return;
+  if (!(await ensureUniqueField(res, findUserByUserId, identifierUserId, user.user_id, user.id, "User ID"))) return;
 
-  await updateStudentUserProfile(data, databaseId);
+  if (role === "student") {
+    await updateStudentUserProfile(data, databaseId);
+  } else {
+    await updateSupervisorUserProfile(data, databaseId);
+  }
 
   await logActivityController({
     databaseId: Number(databaseId),

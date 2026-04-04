@@ -34,6 +34,7 @@ function Login() {
 
   const handleLogin = async () => {
     if (isSubmitting || !formReady) return;
+    setLoginError('');
     setIsSubmitting(true);
 
     try {
@@ -47,10 +48,10 @@ function Login() {
     } catch (error: any) {
       console.log("Error: ", error);
 
-      if (error.response.status === 401) {
+      if (error.response && error.response.status === 401) {
         setLoginError(error.response.data?.message || "Invalid username or password.");
       } else {
-        setLoginError("Server error. Please try again later.");
+        setLoginError(error.message);
       }
 
     } finally {
@@ -71,7 +72,7 @@ function Login() {
           <div className="login-container">
             <div className="login-header">
               <div className="logo-wrapper">
-                <IonImg src="/logo.png" alt="OJTrack Logo" className="logo-image" />
+                <IonImg src="/logo.svg" alt="OJTrack Logo" className="logo-image" />
               </div>
               <IonText className="header-text">
                 <h1 className="title">Welcome Back</h1>

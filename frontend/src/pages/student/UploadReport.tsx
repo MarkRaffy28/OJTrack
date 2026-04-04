@@ -1,23 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { IonPage, IonContent, IonIcon } from "@ionic/react";
-import {
-  arrowBackOutline,
-  calendarOutline,
-  documentTextOutline,
-  createOutline,
-  cloudUploadOutline,
-  imagesOutline,
-  closeCircleOutline,
-  checkmarkCircleOutline,
-  attachOutline,
-  trashOutline,
-  alertCircleOutline,
+import { 
+  arrowBackOutline, calendarOutline, documentTextOutline, createOutline, cloudUploadOutline, imagesOutline, closeCircleOutline, 
+  checkmarkCircleOutline, attachOutline, trashOutline, alertCircleOutline
 } from "ionicons/icons";
-import API from "@api/api";
 import { useAuth } from "@context/authContext";
 import { useOjt } from "@context/ojtContext";
 import { useReport } from "@context/reportContext";
+import API from "@api/api";
 import "@css/UploadReport.css";
 
 const MAX_FILES = 10;
@@ -77,7 +68,6 @@ function UploadReport() {
     setSubmitted(false);
 
     return () => {
-      // Revoke all previews to prevent memory leaks when leaving the page
       filesRef.current.forEach((file) => {
         if (file.preview) URL.revokeObjectURL(file.preview);
       });

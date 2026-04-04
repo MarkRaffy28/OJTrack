@@ -20,6 +20,7 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import { ActivityProvider } from "./context/activityContext";
 import { AuthProvider } from "@context/authContext";
 import { OjtProvider } from "@context/ojtContext";
+import { SupervisorOjtProvider } from "./context/supervisorOjtContext";
 import { ReportProvider } from "@context/reportContext";
 import { UserProvider } from "@context/userContext";
 import RoleRoute from "@components/RoleRoute";
@@ -28,17 +29,17 @@ import Register from "@pages/Register";
 import Login from "@pages/Login";
 import Logout from "@pages/Logout";
 
-import Qr from "@pages/Qr";
+import Account from "@pages/Account";
+import Activity from "@pages/Activity";
+import EditAccount from "@pages/EditAccount";
 
-import Account from "@pages/student/Account";
-import Activity from "./pages/student/Activity";
 import Dashboard from "@pages/student/Dashboard";
 import DTR from "@pages/student/DTR";
-import EditAccount from "@pages/student/EditAccount";
 import ReportDetail from "@pages/student/ReportDetail";
 import Reports from "@pages/student/Reports";
 import UploadReport from "@pages/student/UploadReport";
 
+import Attendance from "@pages/supervisor/Attendance";
 import SupervisorDashboard from "@pages/supervisor/SupervisorDashboard";
 
 StatusBar.setOverlaysWebView({ overlay: false });
@@ -51,31 +52,34 @@ const App: React.FC = () => (
     <AuthProvider>
       <UserProvider>
         <OjtProvider>
-          <ReportProvider>
-            <ActivityProvider>
-              <IonReactRouter>
-              <IonRouterOutlet>
-                <Route exact path="/register" component={Register} />
-                <Route exact path="/login"    component={Login}    />
-                <Route exact path="/logout"   component={Logout}   />
-                <Route exact path="/qr"       component={Qr}       />
+          <SupervisorOjtProvider>
+            <ReportProvider>
+              <ActivityProvider>
+                <IonReactRouter>
+                <IonRouterOutlet>
+                  <Route exact path="/register" component={Register} />
+                  <Route exact path="/login"    component={Login}    />
+                  <Route exact path="/logout"   component={Logout}   />
 
-                <RoleRoute exact path="/account"       component={Account}       allowedRoles={["student"]} />
-                <RoleRoute exact path="/activity"      component={Activity}      allowedRoles={["student"]} />
-                <RoleRoute exact path="/dashboard"     component={Dashboard}     allowedRoles={["student"]} />
-                <RoleRoute exact path="/dtr"           component={DTR}           allowedRoles={["student"]} />
-                <RoleRoute exact path="/edit-account"  component={EditAccount}   allowedRoles={["student"]} />
-                <RoleRoute exact path="/reports"       component={Reports}       allowedRoles={["student"]} />
-                <RoleRoute exact path="/report-detail" component={ReportDetail}  allowedRoles={["student"]} />
-                <RoleRoute exact path="/upload-report" component={UploadReport}  allowedRoles={["student"]} />
-                
-                <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard} allowedRoles={["supervisor"]} />
+                  <RoleRoute exact path="/account"       component={Account}       allowedRoles={["student", "supervisor"]} />
+                  <RoleRoute exact path="/activity"      component={Activity}      allowedRoles={["student", "supervisor"]} />
+                  <RoleRoute exact path="/edit-account"  component={EditAccount}   allowedRoles={["student", "supervisor"]} />
 
-                <Redirect to="/login" />
-              </IonRouterOutlet>
-            </IonReactRouter>
-            </ActivityProvider>
-          </ReportProvider>
+                  <RoleRoute exact path="/dashboard"     component={Dashboard}     allowedRoles={["student"]}               />
+                  <RoleRoute exact path="/dtr"           component={DTR}           allowedRoles={["student"]}               />
+                  <RoleRoute exact path="/reports"       component={Reports}       allowedRoles={["student"]}               />
+                  <RoleRoute exact path="/report-detail" component={ReportDetail}  allowedRoles={["student"]}               />
+                  <RoleRoute exact path="/upload-report" component={UploadReport}  allowedRoles={["student"]}               />
+                  
+                  <RoleRoute exact path="/attendance"           component={Attendance}          allowedRoles={["supervisor"]} />
+                  <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard} allowedRoles={["supervisor"]} />
+
+                  <Redirect to="/login" />
+                </IonRouterOutlet>
+              </IonReactRouter>
+              </ActivityProvider>
+            </ReportProvider>
+          </SupervisorOjtProvider>
         </OjtProvider>
       </UserProvider>
     </AuthProvider>
@@ -83,3 +87,4 @@ const App: React.FC = () => (
 );
 
 export default App;
+

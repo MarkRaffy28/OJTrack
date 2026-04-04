@@ -7,4 +7,14 @@ const API = axios.create({
   }
 });
 
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (!error.response) {
+      error.message = "Could not connect to server. Please try again later.";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default API;

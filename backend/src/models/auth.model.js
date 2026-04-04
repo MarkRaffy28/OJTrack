@@ -3,7 +3,7 @@ import { db } from "../config/db.js";
 export const createStudentUser = async (data) => {
   const { 
     username, password, profilePicture, firstName, middleName, lastName, extensionName, studentId, birthDate, gender, address, 
-    contactNumber, email, year, program, major
+    contactNumber, email, year, program, major, section
   } = data;
 
   const [userResult] = await db.query(
@@ -14,8 +14,8 @@ export const createStudentUser = async (data) => {
   const internalID = userResult.insertId;
 
   await db.query(
-    "INSERT INTO student_details(student_id, year, program, major) VALUES(?, ?, ?, ?)",
-    [internalID, year, program, major]
+    "INSERT INTO student_details(student_id, year, program, major, section) VALUES(?, ?, ?, ?, ?)",
+    [internalID, year, program, major, section]
   );
 
   return internalID;

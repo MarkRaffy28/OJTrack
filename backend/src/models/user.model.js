@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 
-export const fetchStudentProfile = async (databaseId) => {
+export const getStudentProfile = async (databaseId) => {
   const [rows] = await db.query(
     `
       SELECT 
@@ -22,7 +22,8 @@ export const fetchStudentProfile = async (databaseId) => {
         u.role,
         s.year,
         s.program,
-        s.major
+        s.major,
+        s.section
       FROM users u
       JOIN student_details s ON u.id = s.student_id
       WHERE u.id = ? AND u.role = 'student'
@@ -38,7 +39,7 @@ export const fetchStudentProfile = async (databaseId) => {
   } || null;
 };
 
-export const fetchSupervisorProfile = async (databaseId) => {
+export const getSupervisorProfile = async (databaseId) => {
   const [rows] = await db.query(
     `
       SELECT 
@@ -116,7 +117,7 @@ export const findUserByUsername = async (username) => {
 export const updateStudentUserProfile = async (data, databaseId) => {
   const { 
     username, profilePicture, firstName, middleName, lastName, extensionName, studentId, birthDate, gender, address, 
-    contactNumber, email, year, program, major
+    contactNumber, email, year, program, major, section
   } = data;
 
   await db.query(
@@ -145,10 +146,48 @@ export const updateStudentUserProfile = async (data, databaseId) => {
       UPDATE student_details SET
         year = ?,
         program = ?,
-        major =?
-      WHERE user_id = ?
+        major = ?,
+        section = ?
+      WHERE student_id = ?
     `,
-    [year, program, major, databaseId]
+    [year, program, major, section, databaseId]
+  );
+};
+
+export const updateSupervisorUserProfile = async (data, databaseId) => {
+  const { 
+    username, profilePicture, firstName, middleName, lastName, extensionName, employeeId, birthDate, gender, address, 
+    contactNumber, email, officeId, position
+  } = data;
+
+  await db.query(
+    `
+      UPDATE users SET 
+        username =?,
+        profile_picture =?,
+        first_name =?,
+        middle_name =?,
+        last_name =?,
+        extension_name =?,
+        user_id =?,
+        birth_date =?,
+        gender =?,
+        address =?,
+        contact_number =?,
+        email_address =?
+      WHERE id = ?
+    `,
+    [username, profilePicture, firstName, middleName, lastName, extensionName, employeeId, birthDate, gender, address, contactNumber, email, databaseId]
+  );
+
+  await db.query(
+    `
+      UPDATE supervisor_details SET
+        office_id = ?,
+        position = ?
+      WHERE supervisor_id = ?
+    `,
+    [officeId, position, databaseId]
   );
 };
 

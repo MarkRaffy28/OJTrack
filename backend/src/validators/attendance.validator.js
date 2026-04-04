@@ -15,3 +15,7 @@ export const scanAttendanceSchema = z.object({
     s: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be in YYYY-MM-DD format'),
   }),
 });
+
+export const supervisorAttendanceSchema = z.object({
+  supervisorId: z.coerce.number().int().positive(),
+});

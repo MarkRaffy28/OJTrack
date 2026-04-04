@@ -372,6 +372,30 @@ select.styled-input {
   color: #764ba2;
 }
 
+.login-button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: rgb(106, 121, 220);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+}
+
 .login-button:active:not(:disabled) {
   transform: translateY(0);
 }
@@ -1312,7 +1336,18 @@ body, ion-app, ion-content {
   gap: 14px;
 }
 
-.dtr-date-card {}
+.dash-loading {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.no-data-msg {
+  text-align: center;
+  color: var(--c-text-muted);
+  font-size: 14px;
+  padding: 20px 0;
+}
 
 .dtr-card-icon-wrap {
   width: 46px; height: 46px;
@@ -1930,6 +1965,12 @@ body, ion-app, ion-content {
   padding: 3px 10px;
   border-radius: 20px;
   font-size: 11px; font-weight: 700;
+}
+.act-tl-card-student {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--c-purple);
+  margin: 0 0 4px;
 }
 .act-tl-card-title {
   font-size: 14px; font-weight: 700;

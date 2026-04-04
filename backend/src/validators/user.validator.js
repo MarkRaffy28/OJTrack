@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export const baseUserSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
   profilePicture: z.string().regex(/^data:image\/(jpeg|jpg|png);base64,[A-Za-z0-9+/=]+$/, "Invalid base64 image format").nullable().optional(),
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().nullable().optional(),
@@ -32,7 +31,7 @@ export const checkUsernameSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
 });
 
-export const fetchProfileSchema = z.object({
+export const getProfileSchema = z.object({
   role: z.enum(["student", "supervisor"]),
   databaseId: z.coerce.number().int().positive(),
 });
@@ -47,6 +46,7 @@ export const updateStudentProfileSchema = baseUserSchema.extend({
   year: z.string().min(1, "Year level is required"),
   program: z.string().min(1, "Program is required"),
   major: z.string().min(1, "Major is required"),
+  section: z.string().min(1, "Section is required"),
 });
 
 export const updateSupervisorProfileSchema = baseUserSchema.extend({

@@ -22,7 +22,7 @@ export const deleteReport = async (reportId) => {
   );
 };
 
-export const fetchReports = async (ojtId) => {
+export const getReports = async (ojtId) => {
   const [rows] = await db.query(
     `
       SELECT 

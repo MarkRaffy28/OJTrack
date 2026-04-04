@@ -47,6 +47,7 @@ export const studentRegistrationSchema = baseUserSchema.extend({
   year: z.string().min(1, "Year level is required"),
   program: z.string().min(1, "Program is required"),
   major: z.string().min(1, "Major is required"),
+  section: z.string().min(1, "Section is required"),
 });
 
 export const supervisorRegistrationSchema = baseUserSchema.extend({

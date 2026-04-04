@@ -19,7 +19,7 @@ export const deleteReportSchema = z.object({
   reportId: z.coerce.number().int().positive(),
 });
 
-export const fetchReportsSchema = z.object({
+export const getReportsSchema = z.object({
   ojtId: z.coerce.number().int().positive(),
 });
 

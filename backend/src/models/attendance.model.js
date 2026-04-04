@@ -36,3 +36,31 @@ export const isStudentInOffice = async (studentId, officeId) => {
 
   return rows.length > 0;
 };
+
+export const getSupervisorAttendanceRows = async (supervisorId) => {
+  const [rows] = await db.query(
+    `
+      SELECT 
+        u.id AS studentId,
+        CONCAT(u.first_name, ' ', COALESCE(u.middle_name, ''), ' ', u.last_name) AS studentName,
+        a.id AS attendanceId,
+        DATE_FORMAT(a.date, '%Y-%m-%d') AS date,
+        TIME_FORMAT(a.morning_in, '%h:%i %p') AS morningIn,
+        TIME_FORMAT(a.morning_out, '%h:%i %p') AS morningOut,
+        TIME_FORMAT(a.afternoon_in, '%h:%i %p') AS afternoonIn,
+        TIME_FORMAT(a.afternoon_out, '%h:%i %p') AS afternoonOut,
+        ROUND((
+          COALESCE(TIMESTAMPDIFF(MINUTE, a.morning_in, a.morning_out), 0) +
+          COALESCE(TIMESTAMPDIFF(MINUTE, a.afternoon_in, a.afternoon_out), 0)
+        ) / 60.0, 2) AS totalHours
+      FROM student_ojt so
+      JOIN users u ON so.student_id = u.id
+      JOIN attendance a ON so.id = a.ojt_id
+      WHERE so.supervisor_id = ?
+      ORDER BY u.id, a.date DESC
+    `,
+    [supervisorId]
+  );
+  
+  return rows;
+};
