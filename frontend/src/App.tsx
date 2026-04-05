@@ -12,6 +12,7 @@ import "@ionic/react/css/palettes/dark.system.css";
 import "@theme/variables.css";
 import "@css/App.css";
 
+import { lazy, Suspense } from "react";
 import { Redirect, Route } from "react-router-dom";
 import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
@@ -25,22 +26,22 @@ import { ReportProvider } from "@context/reportContext";
 import { UserProvider } from "@context/userContext";
 import RoleRoute from "@components/RoleRoute";
 
-import Register from "@pages/Register";
-import Login from "@pages/Login";
-import Logout from "@pages/Logout";
+const Register            = lazy(() => import("@pages/Register"));
+const Login               = lazy(() => import("@pages/Login"));
+const Logout              = lazy(() => import("@pages/Logout"));
 
-import Account from "@pages/Account";
-import Activity from "@pages/Activity";
-import EditAccount from "@pages/EditAccount";
+const Account             = lazy(() => import("@pages/Account"));
+const Activity            = lazy(() => import("@pages/Activity"));
+const EditAccount         = lazy(() => import("@pages/EditAccount"));
 
-import Dashboard from "@pages/student/Dashboard";
-import DTR from "@pages/student/DTR";
-import ReportDetail from "@pages/student/ReportDetail";
-import Reports from "@pages/student/Reports";
-import UploadReport from "@pages/student/UploadReport";
+const Dashboard           = lazy(() => import("@pages/student/Dashboard"));
+const DTR                 = lazy(() => import("@pages/student/DTR"));
+const ReportDetail        = lazy(() => import("@pages/student/ReportDetail"));
+const Reports             = lazy(() => import("@pages/student/Reports"));
+const UploadReport        = lazy(() => import("@pages/student/UploadReport"));
 
-import Attendance from "@pages/supervisor/Attendance";
-import SupervisorDashboard from "@pages/supervisor/SupervisorDashboard";
+const Attendance          = lazy(() => import("@pages/supervisor/Attendance"));
+const SupervisorDashboard = lazy(() => import("@pages/supervisor/SupervisorDashboard"));
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -56,27 +57,29 @@ const App: React.FC = () => (
             <ReportProvider>
               <ActivityProvider>
                 <IonReactRouter>
-                <IonRouterOutlet>
-                  <Route exact path="/register" component={Register} />
-                  <Route exact path="/login"    component={Login}    />
-                  <Route exact path="/logout"   component={Logout}   />
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <IonRouterOutlet>
+                      <Route     exact path="/register"             component={Register}             />
+                      <Route     exact path="/login"                component={Login}                />
+                      <Route     exact path="/logout"               component={Logout}               />
 
-                  <RoleRoute exact path="/account"       component={Account}       allowedRoles={["student", "supervisor"]} />
-                  <RoleRoute exact path="/activity"      component={Activity}      allowedRoles={["student", "supervisor"]} />
-                  <RoleRoute exact path="/edit-account"  component={EditAccount}   allowedRoles={["student", "supervisor"]} />
+                      <RoleRoute exact path="/account"              component={Account}              allowedRoles={["student", "supervisor"]} />
+                      <RoleRoute exact path="/activity"             component={Activity}             allowedRoles={["student", "supervisor"]} />
+                      <RoleRoute exact path="/edit-account"         component={EditAccount}          allowedRoles={["student", "supervisor"]} />
+        
+                      <RoleRoute exact path="/dashboard"            component={Dashboard}            allowedRoles={["student"]}               />
+                      <RoleRoute exact path="/dtr"                  component={DTR}                  allowedRoles={["student"]}               />
+                      <RoleRoute exact path="/reports"              component={Reports}              allowedRoles={["student"]}               />
+                      <RoleRoute exact path="/report-detail"        component={ReportDetail}         allowedRoles={["student"]}               />
+                      <RoleRoute exact path="/upload-report"        component={UploadReport}         allowedRoles={["student"]}               />
+                      
+                      <RoleRoute exact path="/attendance"           component={Attendance}           allowedRoles={["supervisor"]}            />
+                      <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard}  allowedRoles={["supervisor"]}            />
 
-                  <RoleRoute exact path="/dashboard"     component={Dashboard}     allowedRoles={["student"]}               />
-                  <RoleRoute exact path="/dtr"           component={DTR}           allowedRoles={["student"]}               />
-                  <RoleRoute exact path="/reports"       component={Reports}       allowedRoles={["student"]}               />
-                  <RoleRoute exact path="/report-detail" component={ReportDetail}  allowedRoles={["student"]}               />
-                  <RoleRoute exact path="/upload-report" component={UploadReport}  allowedRoles={["student"]}               />
-                  
-                  <RoleRoute exact path="/attendance"           component={Attendance}          allowedRoles={["supervisor"]} />
-                  <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard} allowedRoles={["supervisor"]} />
-
-                  <Redirect to="/login" />
-                </IonRouterOutlet>
-              </IonReactRouter>
+                      <Redirect to="/login" />
+                    </IonRouterOutlet>
+                  </Suspense>
+                </IonReactRouter>
               </ActivityProvider>
             </ReportProvider>
           </SupervisorOjtProvider>
