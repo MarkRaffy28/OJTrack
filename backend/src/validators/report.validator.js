@@ -37,3 +37,13 @@ export const updateReportSchema = z.object({
     size: z.number()
   })).nullable().optional(),
 });
+
+export const getSupervisorReportsSchema = z.object({
+  supervisorId: z.coerce.number().int().positive(),
+});
+
+export const updateReportStatusSchema = z.object({
+  reportId: z.coerce.number().int().positive(),
+  status: z.enum(['approved', 'rejected', 'pending']),
+  feedback: z.string().nullable().optional(),
+});

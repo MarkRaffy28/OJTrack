@@ -134,19 +134,6 @@ ion-spinner.button-spinner {
   font-size: 12px; font-weight: 600;
 }
 
-
-.act-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: #1a1a2e;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 20px;
-}
-
-
 .cp-overlay {
   position: fixed;
   inset: 0;
@@ -470,16 +457,6 @@ ion-spinner.button-spinner {
 }
 
 
-.rp-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: #1a1a2e;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 20px;
-}
 
 
 .sv-qr-btn {

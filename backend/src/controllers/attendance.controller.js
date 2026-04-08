@@ -13,6 +13,8 @@ export const getTodayAttendanceController = async (req, res) => {
   const { studentId, ojtId, date } = data;
 
   const dbRecord = await fetchOrFail(res, getTodayAttendance, [studentId, ojtId, date], "No attendance record found");
+  if (!dbRecord) return;
+
   const record = {
     morningTimeIn: dbRecord?.morning_in ?? '',
     morningTimeOut: dbRecord?.morning_out ?? '',

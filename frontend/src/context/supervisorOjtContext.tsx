@@ -5,6 +5,7 @@ import API from "@api/api";
 export interface SupervisorOjt {
   id: number; // student's user id
   fullName: string;
+  profilePicture: string | null;
   ojtId: number;
   studentId: number;
   academicYear: string;
@@ -14,6 +15,13 @@ export interface SupervisorOjt {
   status: "pending" | "ongoing" | "completed" | "dropped";
   startDate: string | null;
   endDate: string | null;
+  program: string;
+  year: number;
+  section: string;
+  officeName: string;
+  isActive: boolean;
+  supervisorNotes: string | null;
+  progress: number;
 }
 
 interface DashboardStats {
@@ -47,11 +55,13 @@ interface SupervisorOjtContextType {
   dashboardStats: DashboardStats | null;
   availableAcademicYears: string[];
   availableTerms: string[];
+  uniqueCohorts: { academicYear: string, term: string }[];
   setFilters: React.Dispatch<React.SetStateAction<FilterOptions>>;
   fetchAllOjts: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
   selectOjt: (ojtId: number | null) => void;
   resetFilters: () => void;
+  updateNotes: (ojtId: number, notes: string) => Promise<void>;
 }
 
 const SupervisorOjtContext = createContext<SupervisorOjtContextType | null>(null);
@@ -81,7 +91,17 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const ojts: SupervisorOjt[] = response.data;
+      const ojts: SupervisorOjt[] = response.data.map((ojt: any) => {
+        if (ojt.profilePicture?.data) {
+          const uint8Array = new Uint8Array(ojt.profilePicture.data);
+          const decodedString = new TextDecoder().decode(uint8Array);
+          ojt.profilePicture = decodedString;
+        }
+        ojt.progress = ojt.requiredHours > 0
+          ? Math.min(100, Math.round((ojt.renderedHours / ojt.requiredHours) * 100))
+          : 0;
+        return ojt;
+      });
       setAllOjts(ojts);
 
       if (ojts.length > 0) {
@@ -95,11 +115,13 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         }
+        
         setFilters(prev => ({
           ...prev,
           academicYear: latestOjt.academicYear,
           term: latestOjt.term
         }));
+
       } else {
         setFilters(prev => ({
           ...prev,
@@ -107,6 +129,7 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
           term: "all"
         }));
       }
+
     } catch (err) {
       console.error("Failed to fetch supervisor OJTs:", err);
     } finally {
@@ -122,6 +145,7 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
         headers: { Authorization: `Bearer ${token}` }
       });
       setDashboardStats(response.data);
+      
     } catch (err) {
       console.error("Failed to fetch dashboard stats:", err);
     }
@@ -154,6 +178,22 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
+  const updateNotes = useCallback(async (ojtId: number, notes: string) => {
+    if (!token) return;
+    try {
+      await API.patch(`/ojts/${ojtId}/notes`, 
+        { databaseId, notes }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAllOjts(prev =>
+        prev.map(o => o.ojtId === ojtId ? { ...o, supervisorNotes: notes } : o)
+      );
+    } catch (err) {
+      console.error("Failed to update supervisor notes:", err);
+      throw err;
+    }
+  }, [token]);
+
   const filteredOjts = useMemo(() => {
     return allOjts.filter(ojt => {
       const matchesStatus = filters.status === "all" || ojt.status === filters.status;
@@ -179,11 +219,11 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
       dropped:   filteredOjts.filter(o => o.status === "dropped"  ).length,
     };
 
-    const completionRate = filteredOjts.length > 0 
-      ? filteredOjts.reduce((acc, o) => acc + (o.renderedHours / o.requiredHours), 0) / filteredOjts.length 
+    const completionRate = filteredOjts.length > 0
+      ? filteredOjts.reduce((acc, o) => acc + o.progress, 0) / filteredOjts.length
       : 0;
 
-    return { ...counts, completionRate: Math.round(completionRate * 100) };
+    return { ...counts, completionRate: Math.round(completionRate) };
   }, [filteredOjts]);
 
   const availableAcademicYears = useMemo(() => {
@@ -194,6 +234,22 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
   const availableTerms = useMemo(() => {
     const terms = Array.from(new Set(allOjts.map(o => o.term)));
     return terms.sort();
+  }, [allOjts]);
+
+  const uniqueCohorts = useMemo(() => {
+    const map = new Map<string, { academicYear: string, term: string }>();
+    allOjts.forEach(ojt => {
+      const key = `${ojt.academicYear}|${ojt.term}`;
+      if (!map.has(key)) {
+        map.set(key, { academicYear: ojt.academicYear, term: ojt.term });
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => {
+      if (b.academicYear !== a.academicYear) {
+         return b.academicYear.localeCompare(a.academicYear);
+      }
+      return b.term.localeCompare(a.term);
+    });
   }, [allOjts]);
 
   return (
@@ -207,11 +263,13 @@ export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({
       dashboardStats,
       availableAcademicYears,
       availableTerms,
+      uniqueCohorts,
       setFilters,
       fetchAllOjts,
       fetchDashboardStats,
       selectOjt,
       resetFilters,
+      updateNotes,
     }}>
       {children}
     </SupervisorOjtContext.Provider>

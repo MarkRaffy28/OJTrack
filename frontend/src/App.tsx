@@ -33,15 +33,17 @@ const Logout              = lazy(() => import("@pages/Logout"));
 const Account             = lazy(() => import("@pages/Account"));
 const Activity            = lazy(() => import("@pages/Activity"));
 const EditAccount         = lazy(() => import("@pages/EditAccount"));
+const Reports             = lazy(() => import("@pages/Reports"));
 
 const Dashboard           = lazy(() => import("@pages/student/Dashboard"));
 const DTR                 = lazy(() => import("@pages/student/DTR"));
 const ReportDetail        = lazy(() => import("@pages/student/ReportDetail"));
-const Reports             = lazy(() => import("@pages/student/Reports"));
 const UploadReport        = lazy(() => import("@pages/student/UploadReport"));
 
 const Attendance          = lazy(() => import("@pages/supervisor/Attendance"));
 const SupervisorDashboard = lazy(() => import("@pages/supervisor/SupervisorDashboard"));
+const Trainees            = lazy(() => import("@pages/supervisor/Trainees"));
+const TraineeDetail       = lazy(() => import("@pages/supervisor/TraineeDetail"));
 
 StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
@@ -65,16 +67,18 @@ const App: React.FC = () => (
 
                       <RoleRoute exact path="/account"              component={Account}              allowedRoles={["student", "supervisor"]} />
                       <RoleRoute exact path="/activity"             component={Activity}             allowedRoles={["student", "supervisor"]} />
+                      <RoleRoute exact path="/reports"              component={Reports}              allowedRoles={["student", "supervisor"]} />
                       <RoleRoute exact path="/edit-account"         component={EditAccount}          allowedRoles={["student", "supervisor"]} />
         
                       <RoleRoute exact path="/dashboard"            component={Dashboard}            allowedRoles={["student"]}               />
                       <RoleRoute exact path="/dtr"                  component={DTR}                  allowedRoles={["student"]}               />
-                      <RoleRoute exact path="/reports"              component={Reports}              allowedRoles={["student"]}               />
                       <RoleRoute exact path="/report-detail"        component={ReportDetail}         allowedRoles={["student"]}               />
                       <RoleRoute exact path="/upload-report"        component={UploadReport}         allowedRoles={["student"]}               />
                       
                       <RoleRoute exact path="/attendance"           component={Attendance}           allowedRoles={["supervisor"]}            />
                       <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard}  allowedRoles={["supervisor"]}            />
+                      <RoleRoute exact path="/trainees"             component={Trainees}             allowedRoles={["supervisor"]}            />
+                      <RoleRoute exact path="/trainee-detail/:id"   component={TraineeDetail}        allowedRoles={["supervisor"]}            />
 
                       <Redirect to="/login" />
                     </IonRouterOutlet>

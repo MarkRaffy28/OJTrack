@@ -11,8 +11,8 @@ import { useUser, isStudent, isSupervisor } from '@context/userContext';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
 import { useOjtProgress } from '@hooks/useOJtProgress';
 import { formatDate } from '@utils/date';
-import ChangePasswordModal from '@components/ChangePasswordModal';
 import BottomNav from '@components/BottomNav';
+import ChangePasswordModal from '@components/ChangePasswordModal';
 import LogoutModal from '@components/LogoutModal';
 import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import TermsModal from '@components/TermsModal';
@@ -109,7 +109,6 @@ function Account() {
                 <>
                   <span className="acc-program-badge">{user.program}</span>
                   <span className="acc-program-badge">{user.major}</span>
-                  <span className="acc-program-badge">{user.section}</span>
                 </>
               )}
               {isSupervisor(user) && (
@@ -125,17 +124,12 @@ function Account() {
             {isStudent(user) && (
               <>
                 <div className="acc-stat">
-                  <p className="acc-stat-val">{user.year}</p>
-                  <p className="acc-stat-lbl">Year Level</p>
+                  <p className="acc-stat-val">{user.year} - {user.section}</p>
+                  <p className="acc-stat-lbl">Year & Section</p>
                 </div>
                 <div className="acc-stat-div" />
               </>
             )}
-
-            <div className="acc-stat">
-              <p className="acc-stat-val">{user?.userId}</p>
-              <p className="acc-stat-lbl">{isStudent(user) ? "Student ID" : "Employee ID"}</p>
-            </div>
 
             {isStudent(user) ? (
               <>
@@ -147,7 +141,6 @@ function Account() {
               </>
             ) : (
               <>
-                <div className="acc-stat-div" />
                 <div className="acc-stat">
                   <p className="acc-stat-val">{isSupervisor(user) ? user.position : 'Supervisor'}</p>
                   <p className="acc-stat-lbl">Position</p>

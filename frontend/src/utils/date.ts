@@ -45,6 +45,11 @@ export const todayISO = () => {
   return new Date().toISOString().split('T')[0];
 };
 
+export const thisMonthISO = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
+
 export const formatRelativeDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -69,4 +74,4 @@ export const formatRelativeDate = (dateString: string) => {
     day: 'numeric',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
   });
-};
+};

@@ -26,6 +26,8 @@ export interface Report {
   feedback: string | null;
   createdAt: string;
   updatedAt: string;
+  studentName?: string;
+  studentProfilePicture?: string;
 }
 
 export interface UpdateReportPayload {
@@ -42,6 +44,7 @@ interface ReportContextValue {
   loadingReports: boolean;
   fetchReports: () => Promise<void>;
   updateReport: (id: number, payload: UpdateReportPayload) => Promise<void>;
+  updateReportStatus: (id: number, status: 'approved' | 'rejected' | 'pending', feedback?: string) => Promise<void>;
   deleteReport: (id: number) => Promise<void>;
 } 
 
@@ -50,26 +53,52 @@ const ReportContext = createContext<ReportContextValue>({
   loadingReports: false,
   fetchReports: async () => {},
   updateReport: async () => {},
+  updateReportStatus: async () => {},
   deleteReport: async () => {},
 });
 
 export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token } = useAuth();
+  const { token, role, databaseId } = useAuth();
   const { currentOjt } = useOjt();
 
   const [reports, setReports] = useState<Report[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
 
   const fetchReports = useCallback(async () => {
-    if (!currentOjt?.id || !token) return;
+    if (!token) return;
+
+    if (role === 'student' && !currentOjt?.id) {
+      return;
+    }
+
+    if (role === 'supervisor' && !databaseId) {
+      return;
+    }
 
     setLoadingReports(true);
     try {
-      const res = await API.get(`/reports/${currentOjt?.id}`, {
+      let endpoint = '';
+      if (role === 'student') {
+        endpoint = `/reports/${currentOjt?.id}`;
+      } else if (role === 'supervisor') {
+        endpoint = `/reports/supervisor/${databaseId}`;
+      }
+
+      if (!endpoint) return;
+
+      const res = await API.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const reports: Report[] = res.data.data;
+      const rawReports = res.data.data;
+      const reports: Report[] = rawReports.map((r: any) => {
+        if (r.studentProfilePicture?.data) {
+          const uint8Array = new Uint8Array(r.studentProfilePicture.data);
+          const decodedString = new TextDecoder().decode(uint8Array);
+          r.studentProfilePicture = decodedString;
+        }
+        return r;
+      });
       setReports(reports);
 
     } catch (error) {
@@ -77,14 +106,14 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } finally {
       setLoadingReports(false);
     }
-  }, [currentOjt?.id, token]);
+  }, [currentOjt?.id, token, role, databaseId]);
 
-  // Auto-fetch when OJT context changes
+  // Auto-fetch when context changes
   useEffect(() => {
-    if (currentOjt?.id && token) {
+    if (token && ((role === 'student' && currentOjt?.id) || (role === 'supervisor' && databaseId))) {
       fetchReports();
     }
-  }, [currentOjt?.id, token]);
+  }, [currentOjt?.id, token, role, databaseId, fetchReports]);
 
   const updateReport = useCallback(async (id: number, payload: UpdateReportPayload) => {
     try {
@@ -135,9 +164,22 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [token]);
 
+  const updateReportStatus = useCallback(async (id: number, status: 'approved' | 'rejected' | 'pending', feedback?: string) => {
+    try {
+      await API.patch(`/reports/${id}/status`, { status, feedback }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status, feedback: feedback || r.feedback } : r));
+    } catch (error) {
+      console.error("Status update error:", error);
+      throw error;
+    }
+  }, [token]);
+
   return (
     <ReportContext.Provider
-      value={{ reports, loadingReports, fetchReports, updateReport, deleteReport }}
+      value={{ reports, loadingReports, fetchReports, updateReport, updateReportStatus, deleteReport }}
     >
       {children}
     </ReportContext.Provider>

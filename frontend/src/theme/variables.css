@@ -1675,7 +1675,7 @@ body, ion-app, ion-content {
   padding: 0 14px;
   box-shadow: var(--shadow-sm);
   height: 48px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   border: 1.5px solid var(--c-border);
 }
 .rp-search-icon { color: var(--c-text-muted); font-size: 18px; margin-right: 10px; }
@@ -1726,6 +1726,7 @@ body, ion-app, ion-content {
   display: flex; align-items: center; gap: 5px;
   padding: 4px 10px;
   background: var(--c-surface-3);
+  border: 1px solid var(--c-border);
   border-radius: 20px;
   font-size: 12px; font-weight: 600;
   color: var(--c-text-secondary);

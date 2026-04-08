@@ -3,8 +3,8 @@ import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { deleteFiles } from "../utils/storage.util.js";
 import { getStudentOjts } from "../models/ojt.model.js";
-import { createReport, getReports, updateReport, deleteReport, getReportById } from "../models/report.model.js";
-import { createReportSchema, deleteReportSchema, getReportsSchema, updateReportSchema } from "../validators/report.validator.js";
+import { createReport, getReports, updateReport, deleteReport, getReportById, getSupervisorReports, updateReportStatus } from "../models/report.model.js";
+import { createReportSchema, deleteReportSchema, getReportsSchema, updateReportSchema, getSupervisorReportsSchema, updateReportStatusSchema } from "../validators/report.validator.js";
 
 
 export const createReportController = async (req, res) => {
@@ -141,5 +141,45 @@ export const updateReportController = async (req, res) => {
     message: "OJT report updated successfully",
     reportId,
     attachments: finalAttachments
+  });
+};
+
+export const getSupervisorReportsController = async (req, res) => {
+  const data = validate(res, getSupervisorReportsSchema, req.params);
+  if (!data) return;
+
+  const { supervisorId } = data;
+  
+  const reports = await getSupervisorReports(supervisorId);
+  if (!reports) return;
+
+  res.status(200).json({
+    message: "Supervisor reports fetched successfully",
+    data: reports
+  });
+};
+
+export const updateReportStatusController = async (req, res) => {
+  const data = validate(res, updateReportStatusSchema, { ...req.params, ...req.body });
+  if (!data) return;
+
+  const { reportId, status, feedback } = data;
+
+  const report = await fetchOrFail(res, getReportById, [reportId], "Report not found");
+  if (!report) return;
+
+  await updateReportStatus(reportId, status, req.user.id, feedback);
+
+  await logActivityController({
+    databaseId: report.student_id,
+    ojtId: report.ojt_id,
+    action: "UPDATE_REPORT",
+    targetType: "REPORT",
+    targetId: reportId,
+    description: `Report marked as ${status} by supervisor`
+  });
+
+  res.status(200).json({
+    message: `Report ${status} successfully`
   });
 };

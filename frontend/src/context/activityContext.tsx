@@ -41,7 +41,7 @@ export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     setLoadingActivities(true);
     try {
-      const params: any = { databaseId };
+      const params: any = { databaseId, role };
       if (role === 'student' && currentOjt?.id) {
         params.ojtId = currentOjt.id;
       }

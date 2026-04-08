@@ -3,7 +3,7 @@ import { useLocation } from 'react-router';
 import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/react';
 import {  
   logInOutline,  logOutOutline,  documentTextOutline,  cloudUploadOutline,  searchOutline,  closeOutline,  
-  personOutline,  shieldCheckmarkOutline,  keyOutline,  trashOutline,  createOutline,  statsChartOutline 
+  personOutline,  shieldCheckmarkOutline,  keyOutline,  trashOutline,  createOutline,  statsChartOutline, arrowBackOutline 
 } from 'ionicons/icons';
 import { useActivity } from '@context/activityContext';
 import { useAuth } from '@context/authContext';
@@ -21,18 +21,19 @@ function Activity() {
   const latestActivities = useMemo(() => getLatestActivities(50), [activities, getLatestActivities]);
 
   const typeConfig: Record<string, { icon: string; color: string; bg: string; label: string; category: string }> = {
-    'TIME_IN':        { icon: logInOutline,          color: '#34d399', bg: 'rgba(52,211,153,0.15)',  label: 'Time In',      category: 'Attendance' },
-    'TIME_OUT':       { icon: logOutOutline,         color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Time Out',     category: 'Attendance' },
-    'SUBMIT_REPORT':  { icon: cloudUploadOutline,    color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       category: 'Reports' },
-    'CREATE_REPORT':  { icon: cloudUploadOutline,    color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       category: 'Reports' },
-    'UPDATE_REPORT':  { icon: createOutline,         color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Update',       category: 'Reports' },
-    'DELETE_REPORT':  { icon: trashOutline,          color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Delete',       category: 'Reports' },
-    'LOGIN':          { icon: personOutline,         color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', label: 'Login',        category: 'Account' },
-    'LOGOUT':         { icon: personOutline,         color: '#ec4899', bg: 'rgba(236,72,153,0.15)',  label: 'Logout',       category: 'Account' },
-    'REGISTER':       { icon: shieldCheckmarkOutline, color: '#10b981', bg: 'rgba(16,185,129,0.15)', label: 'Register',     category: 'Account' },
-    'UPDATE_PROFILE': { icon: personOutline,         color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  label: 'Profile',      category: 'Account' },
-    'UPDATE_PASSWORD':{ icon: keyOutline,            color: '#6366f1', bg: 'rgba(99,102,241,0.15)',  label: 'Password',     category: 'Account' },
-    'DTR':            { icon: documentTextOutline,   color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)',  label: 'DTR',          category: 'DTR' }
+    'TIME_IN':                 { icon: logInOutline,           color: '#34d399', bg: 'rgba(52,211,153,0.15)',  label: 'Time In',      category: 'Attendance' },
+    'TIME_OUT':                { icon: logOutOutline,          color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Time Out',     category: 'Attendance' },
+    'SUBMIT_REPORT':           { icon: cloudUploadOutline,     color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       category: 'Reports'    },
+    'CREATE_REPORT':           { icon: cloudUploadOutline,     color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       category: 'Reports'    },
+    'UPDATE_REPORT':           { icon: createOutline,          color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Update',       category: 'Reports'    },
+    'DELETE_REPORT':           { icon: trashOutline,           color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Delete',       category: 'Reports'    },
+    'LOGIN':                   { icon: personOutline,          color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', label: 'Login',        category: 'Account'    },
+    'LOGOUT':                  { icon: personOutline,          color: '#ec4899', bg: 'rgba(236,72,153,0.15)',  label: 'Logout',       category: 'Account'    },
+    'REGISTER':                { icon: shieldCheckmarkOutline, color: '#10b981', bg: 'rgba(16,185,129,0.15)',  label: 'Register',     category: 'Account'    },
+    'UPDATE_PROFILE':          { icon: personOutline,          color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  label: 'Profile',      category: 'Account'    },
+    'UPDATE_PASSWORD':         { icon: keyOutline,             color: '#6366f1', bg: 'rgba(99,102,241,0.15)',  label: 'Password',     category: 'Account'    },
+    'DTR':                     { icon: documentTextOutline,    color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)',  label: 'DTR',          category: 'DTR'        },
+    'UPDATE_SUPERVISOR_NOTES': { icon: createOutline,          color: '#9e00c2', bg: 'rgba(158,0,194,0.15)',   label: 'Notes',        category: 'OJT'        }
   };
 
   const isSupervisor = role === 'supervisor';
@@ -41,8 +42,13 @@ function Activity() {
     { key: 'all', label: 'All' },
     { key: 'attendance', label: 'Attendance' },
     { key: 'reports', label: 'Reports' },
+    { key: 'ojt', label: 'OJT' },
     { key: 'account', label: 'Account' },
-  ].filter(f => !(isSupervisor && f.key === 'attendance'));
+  ].filter(f => {
+    if (isSupervisor && f.key === 'attendance') return false;
+    if (!isSupervisor && f.key === 'ojt') return false;
+    return true;
+  });
 
   useEffect(() => {
     fetchActivities();
@@ -124,9 +130,19 @@ function Activity() {
             )}
 
             {!loadingActivities && filtered.length === 0 && (
-              <div className="act-empty">
-                <IonIcon icon={statsChartOutline} />
-                <p>No activity found</p>
+              <div className="sv-no-results">
+                <div className="sv-no-results-icon">
+                  <IonIcon icon={searchOutline} />
+                </div>
+                <p className="sv-no-results-text">No activity found</p>
+                <p className="sv-no-results-sub">Try adjusting your filters or search query</p>
+                <button 
+                  className="sv-back-button"
+                  onClick={() => { setSearchText(""); setSelectedFilter("all"); }}
+                >
+                  <IonIcon icon={arrowBackOutline} />
+                  Clear all filters
+                </button>
               </div>
             ) }
 

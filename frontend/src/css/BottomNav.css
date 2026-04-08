@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-around;
   padding: 0;
-  z-index: 100;
+  z-index: 1000;
   /* Make room for the protruding center button */
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -55,11 +55,14 @@
 
 /* Center (DRT) floating button */
 .center-btn-wrapper {
-  position: absolute;
+  position: fixed;
   bottom: calc(64px - 28px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 101;
+  z-index: 1001;
+  transform: translateZ(0);
+  will-change: transform;
+  isolation: isolate;
 }
 
 .center-btn {

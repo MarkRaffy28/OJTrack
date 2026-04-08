@@ -1,15 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { IonPage, IonContent, IonIcon, IonAvatar, IonSpinner, IonSearchbar, IonSelect, IonSelectOption } from '@ionic/react';
-import { 
-  peopleOutline,  documentTextOutline,  personOutline,  timeOutline,  notificationsOutline,  settingsOutline, 
-  schoolOutline, checkmarkCircleOutline, hourglassOutline, closeCircleOutline, timerOutline, analyticsOutline, 
-  calendarOutline, searchOutline
-} from 'ionicons/icons';
+import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/react';
+import { peopleOutline, documentTextOutline, personOutline, schoolOutline, analyticsOutline, calendarOutline } from 'ionicons/icons';
 import { useActivity } from '@context/activityContext';
 import { useUser, isSupervisor } from '@context/userContext';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
 import { getGreeting } from '@utils/date';
+import Avatar from '@components/Avatar';
 import RecentActivity from '@components/RecentActivity';
 import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import '@css/Supervisor.css';
@@ -17,25 +14,9 @@ import '@css/Supervisor.css';
 function SupervisorDashboard() {
   const history = useHistory();
   const { user } = useUser();
-  const { dashboardStats, stats, loading, fetchDashboardStats, setFilters, filters, allOjts } = useSupervisorOjt();
+  const { dashboardStats, stats, loading, fetchDashboardStats, setFilters, filters, allOjts, uniqueCohorts } = useSupervisorOjt();
   const { activities, loadingActivities, fetchActivities } = useActivity();
   const location = useLocation();
-
-  const uniqueCohorts = useMemo(() => {
-    const map = new Map<string, { academicYear: string, term: string }>();
-    allOjts.forEach(ojt => {
-      const key = `${ojt.academicYear}|${ojt.term}`;
-      if (!map.has(key)) {
-        map.set(key, { academicYear: ojt.academicYear, term: ojt.term });
-      }
-    });
-    return Array.from(map.values()).sort((a, b) => {
-      if (b.academicYear !== a.academicYear) {
-         return b.academicYear.localeCompare(a.academicYear);
-      }
-      return b.term.localeCompare(a.term);
-    });
-  }, [allOjts]);
 
   const handleNavigation = (route: string) => {
     history.push(route);
@@ -65,15 +46,11 @@ function SupervisorDashboard() {
           <div className="sv-hero-inner">
             <div className="sv-hero-top">
               <div className="acc-dash-avatar-wrap">
-                {user?.profilePicture ? (
-                  <div className="acc-dash-avatar">
-                    <img src={user?.profilePicture} alt={user?.fullName} />
-                  </div>
-                ) : (
-                  <div className="acc-avatar">
-                    <IonIcon icon={personOutline} />
-                  </div>
-                )}
+                <Avatar
+                   src={user?.profilePicture}
+                   name={user?.fullName || 'User'}
+                   className="acc-dash-avatar"
+                />
               </div>
               <div className="dash-ojt-selector" style={{ marginLeft: 'auto' }}>
                 <IonSelect 
@@ -170,21 +147,21 @@ function SupervisorDashboard() {
             <span className="sv-section-title">Quick Actions</span>
           </div>
           <div className="sv-qa-grid">
-            <button className="sv-qa-card" onClick={() => handleNavigation('/manage-trainees')}>
+            <button className="sv-qa-card" onClick={() => handleNavigation('/trainees')}>
               <div className="sv-qa-icon qa-purple"><IonIcon icon={schoolOutline} /></div>
-              <span className="sv-qa-label">Students</span>
+              <span className="sv-qa-label">Trainees</span>
             </button>
             <button className="sv-qa-card" onClick={() => handleNavigation('/review-reports')}>
               <div className="sv-qa-icon qa-amber"><IonIcon icon={analyticsOutline} /></div>
               <span className="sv-qa-label">Reports</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/attendance-logs')}>
+            <button className="sv-qa-card" onClick={() => handleNavigation('/attendance')}>
               <div className="sv-qa-icon qa-green"><IonIcon icon={calendarOutline} /></div>
               <span className="sv-qa-label">Attendance</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/settings')}>
-              <div className="sv-qa-icon qa-dark"><IonIcon icon={settingsOutline} /></div>
-              <span className="sv-qa-label">Settings</span>
+            <button className="sv-qa-card" onClick={() => handleNavigation('/account')}>
+              <div className="sv-qa-icon qa-dark"><IonIcon icon={personOutline} /></div>
+              <span className="sv-qa-label">Account</span>
             </button>
           </div>
 

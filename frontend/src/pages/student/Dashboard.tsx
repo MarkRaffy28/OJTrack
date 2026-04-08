@@ -7,6 +7,7 @@ import { useUser } from '@context/userContext';
 import { useActivity } from '@context/activityContext';
 import { useOjtProgress } from '@hooks/useOJtProgress';
 import { getGreeting } from '@utils/date';
+import Avatar from '@components/Avatar';
 import BottomNav from '@components/BottomNav';
 import RecentActivity from '@components/RecentActivity';
 
@@ -37,15 +38,11 @@ function Dashboard() {
           <div className="dash-hero-inner">
             <div className="dash-hero-top">
               <div className="acc-dash-avatar-wrap">
-                {user?.profilePicture ? (
-                  <div className="acc-dash-avatar">
-                    <img src={user?.profilePicture} alt={user?.fullName} />
-                  </div>
-                ) : (
-                  <div className="acc-avatar">
-                    <IonIcon icon={personOutline} />
-                  </div>
-                )}
+                <Avatar
+                  src={user?.profilePicture}
+                  name={user?.fullName || 'User'}
+                  className="acc-dash-avatar"
+                />
               </div>
               
               {/* OJT Selector */}

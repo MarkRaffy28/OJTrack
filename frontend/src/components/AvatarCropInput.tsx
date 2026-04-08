@@ -86,10 +86,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
     canvas.width = canvas.height = OUTPUT;
     const ctx = canvas.getContext('2d')!;
 
-    ctx.beginPath();
-    ctx.arc(OUTPUT / 2, OUTPUT / 2, OUTPUT / 2, 0, Math.PI * 2);
-    ctx.clip();
-
     // Image top-left is at (x, y) in viewport space, scaled by `scale`.
     // To find what part of the natural image covers the viewport [0..CROP_SIZE]:
     //   viewport point (vx, vy) → natural image point ((vx - x) / scale, (vy - y) / scale)

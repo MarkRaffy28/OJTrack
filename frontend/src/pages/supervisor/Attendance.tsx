@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { IonPage, IonContent, IonIcon, IonModal } from '@ionic/react';
-import { qrCodeOutline, timeOutline, chevronDownOutline, chevronUpOutline, closeOutline } from 'ionicons/icons';
+import { qrCodeOutline, timeOutline, chevronDownOutline, chevronUpOutline, closeOutline, warning, searchOutline, arrowBackOutline } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
+import { useSupervisorOjt } from '@context/supervisorOjtContext';
 import { useUser } from '@context/userContext';
-import SupervisorBottomNav from '@components/SupervisorBottomNav';
+import { todayISO, thisMonthISO } from '@utils/date';
+import { initials } from '@/utils/string';
 import API from '@api/api';
+import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import '@css/supervisor.css';
 
 interface DTRRecord {
@@ -24,13 +27,15 @@ interface AttendanceRecord {
   dtr: DTRRecord[];
 }
 
-const Attendance: React.FC = () => {
+function Attendance() {
   const { databaseId, token } = useAuth();
   const { user } = useUser();
+  const { filteredOjts } = useSupervisorOjt();
   const [filter, setFilter] = useState<'all' | 'today' | 'this_month'>('today');
   const [showQrModal, setShowQrModal] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [qrUrl, setQrUrl] = useState<string>("");
   const [qrLoading, setQrLoading] = useState(true);
@@ -84,7 +89,7 @@ const Attendance: React.FC = () => {
     generateQr();
     const interval = setInterval(generateQr, 60000);
     return () => clearInterval(interval);
-  }, [showQrModal]);
+  }, [showQrModal, token, user]);
 
   useEffect(() => {
     if (!showQrModal || !lastUpdated) return;
@@ -95,30 +100,31 @@ const Attendance: React.FC = () => {
     return () => clearInterval(timer);
   }, [showQrModal, lastUpdated]);
 
-  const initials = (name: string) =>
-    name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  const todayDateString = todayISO();
+  const thisMonthString = thisMonthISO();
 
-  //TODO
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayDateString = `${yyyy}-${mm}-${dd}`;
-  const thisMonthString = `${yyyy}-${mm}`;
+  const cohortFilteredRecords = useMemo(() => {
+    return records.filter((rec: AttendanceRecord) => 
+      filteredOjts.some(ojt => ojt.studentId === rec.id)
+    );
+  }, [records, filteredOjts]);
 
-  const filteredRecords = records.map(rec => {
+  const filteredRecords = cohortFilteredRecords.map((rec: AttendanceRecord) => {
     let filteredDtr = rec.dtr;
     if (filter === 'today') {
-      filteredDtr = rec.dtr.filter(d => d.date === todayDateString);
+      filteredDtr = rec.dtr.filter((d: DTRRecord) => d.date === todayDateString);
     } else if (filter === 'this_month') {
-      filteredDtr = rec.dtr.filter(d => d.date.startsWith(thisMonthString));
+      filteredDtr = rec.dtr.filter((d: DTRRecord) => d.date.startsWith(thisMonthString));
     }
 
-    filteredDtr = filteredDtr.filter(d => d.hours > 0 || d.morningIn || d.afternoonIn);
-    filteredDtr = filteredDtr.sort((a,b) => b.date.localeCompare(a.date));
+    filteredDtr = filteredDtr.filter((d: DTRRecord) => d.hours > 0 || d.morningIn || d.afternoonIn);
+    filteredDtr = filteredDtr.sort((a: DTRRecord, b: DTRRecord) => b.date.localeCompare(a.date));
 
     return { ...rec, dtr: filteredDtr };
-  }).filter(rec => {
+  }).filter((rec: AttendanceRecord) => {
+    const matchesSearch = rec.studentName.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
     if (filter === 'today' && rec.dtr.length === 0) return false;
     if (rec.dtr.length === 0) return false;
     return true;
@@ -170,104 +176,137 @@ const Attendance: React.FC = () => {
             </button>
           </div>
 
+          {/* Search Bar */}
+          <div className="sv-search-bar sv-mt-20">
+            <IonIcon icon={searchOutline} className="sv-search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search students..." 
+              className="sv-search-input" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
           <div className="sv-list-header" style={{ marginTop: 24 }}>
             <span className="sv-list-title">Attendance Records</span>
             <span className="sv-list-count">{filteredRecords.length} students</span>
           </div>
 
           <div className="sv-attend-list">
-            {filteredRecords.map(rec => {
-              const isExpanded = expandedId === rec.id;
+            {filteredRecords.length > 0 ? (
+              filteredRecords.map(rec => {
+                const isExpanded = expandedId === rec.id;
 
-              return (
-                <div key={rec.id} className="sv-attend-wrapper">
-                  <div className="sv-attend-card">
-                    <div className="sv-attend-avatar">{initials(rec.studentName)}</div>
-                    <div className="sv-attend-info" style={{ flex: 1 }}>
-                      <div className="sv-attend-name-row">
-                        <span className="sv-attend-name">{rec.studentName}</span>
+                return (
+                  <div key={rec.id} className="sv-attend-wrapper">
+                    <div className="sv-attend-card">
+                      <div className="sv-attend-avatar">{initials(rec.studentName)}</div>
+                      <div className="sv-attend-info" style={{ flex: 1 }}>
+                        <div className="sv-attend-name-row">
+                          <span className="sv-attend-name">{rec.studentName}</span>
+                        </div>
+
+                        <div className="sv-attend-times">
+                          {rec.dtr.slice(0, 1).map((dLog, idx) => (
+                             <div key={idx} className="sv-time-row">
+                               {dLog.morningIn && (
+                                 <span className="sv-time-pill sv-time-in">
+                                   <IonIcon icon={timeOutline} /> AM In: {dLog.morningIn}
+                                 </span>
+                               )}
+                               {dLog.morningOut && (
+                                 <span className="sv-time-pill sv-time-out">
+                                   <IonIcon icon={timeOutline} /> AM Out: {dLog.morningOut}
+                                 </span>
+                               )}
+                               {dLog.afternoonIn && (
+                                 <span className="sv-time-pill sv-time-in">
+                                   <IonIcon icon={timeOutline} /> PM In: {dLog.afternoonIn}
+                                 </span>
+                               )}
+                               {dLog.afternoonOut && (
+                                 <span className="sv-time-pill sv-time-out">
+                                   <IonIcon icon={timeOutline} /> PM Out: {dLog.afternoonOut}
+                                 </span>
+                               )}
+                             </div>
+                          ))}
+                        </div>
                       </div>
 
-                      <div className="sv-attend-times">
-                        {rec.dtr.slice(0, 1).map((dLog, idx) => (
-                           <div key={idx} className="sv-time-row">
-                             {dLog.morningIn && (
-                               <span className="sv-time-pill sv-time-in">
-                                 <IonIcon icon={timeOutline} /> AM In: {dLog.morningIn}
-                               </span>
-                             )}
-                             {dLog.morningOut && (
-                               <span className="sv-time-pill sv-time-out">
-                                 <IonIcon icon={timeOutline} /> AM Out: {dLog.morningOut}
-                               </span>
-                             )}
-                             {dLog.afternoonIn && (
-                               <span className="sv-time-pill sv-time-in">
-                                 <IonIcon icon={timeOutline} /> PM In: {dLog.afternoonIn}
-                               </span>
-                             )}
-                             {dLog.afternoonOut && (
-                               <span className="sv-time-pill sv-time-out">
-                                 <IonIcon icon={timeOutline} /> PM Out: {dLog.afternoonOut}
-                               </span>
-                             )}
-                           </div>
-                        ))}
-                      </div>
+                      {filter !== 'today' && rec.dtr.length > 0 && (
+                        <div className="sv-attend-right">
+                          <button
+                            className="sv-expand-btn"
+                            onClick={() => setExpandedId(isExpanded ? null : rec.id)}
+                            title={isExpanded ? 'Collapse' : 'View DTR'}
+                          >
+                            <IonIcon icon={isExpanded ? chevronUpOutline : chevronDownOutline} />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {filter !== 'today' && rec.dtr.length > 0 && (
-                      <div className="sv-attend-right">
-                        <button
-                          className="sv-expand-btn"
-                          onClick={() => setExpandedId(isExpanded ? null : rec.id)}
-                          title={isExpanded ? 'Collapse' : 'View DTR'}
-                        >
-                          <IonIcon icon={isExpanded ? chevronUpOutline : chevronDownOutline} />
-                        </button>
+                    {isExpanded && filter !== 'today' && (
+                      <div className="sv-dtr-panel">
+                        <p className="sv-dtr-panel-title">Daily Time Record</p>
+                        <div className="sv-dtr-cards">
+                          {rec.dtr.map(dtr => (
+                            <div key={dtr.id} className="sv-dtr-day-card">
+                              <div className="sv-dtr-day-header">
+                                <span className="sv-dtr-date">{dtr.date}</span>
+                              </div>
+                              <div className="sv-dtr-slots">
+                                <div className="sv-dtr-slot">
+                                  <span className="sv-dtr-slot-lbl">Morning In</span>
+                                  <span className="sv-dtr-slot-val">{dtr.morningIn || '—'}</span>
+                                </div>
+                                <div className="sv-dtr-slot">
+                                  <span className="sv-dtr-slot-lbl">Morning Out</span>
+                                  <span className="sv-dtr-slot-val">{dtr.morningOut || '—'}</span>
+                                </div>
+                                <div className="sv-dtr-slot">
+                                  <span className="sv-dtr-slot-lbl">Afternoon In</span>
+                                  <span className="sv-dtr-slot-val">{dtr.afternoonIn || '—'}</span>
+                                </div>
+                                <div className="sv-dtr-slot">
+                                  <span className="sv-dtr-slot-lbl">Afternoon Out</span>
+                                  <span className="sv-dtr-slot-val">{dtr.afternoonOut || '—'}</span>
+                                </div>
+                              </div>
+                              <div className="sv-dtr-hours">
+                                <span className="sv-dtr-slot-lbl">Total Hours</span>
+                                <span className="sv-dtr-hours-val">{dtr.hours.toFixed(2)} hrs</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  {isExpanded && filter !== 'today' && (
-                    <div className="sv-dtr-panel">
-                      <p className="sv-dtr-panel-title">Daily Time Record</p>
-                      <div className="sv-dtr-cards">
-                        {rec.dtr.map(dtr => (
-                          <div key={dtr.id} className="sv-dtr-day-card">
-                            <div className="sv-dtr-day-header">
-                              <span className="sv-dtr-date">{dtr.date}</span>
-                            </div>
-                            <div className="sv-dtr-slots">
-                              <div className="sv-dtr-slot">
-                                <span className="sv-dtr-slot-lbl">Morning In</span>
-                                <span className="sv-dtr-slot-val">{dtr.morningIn || '—'}</span>
-                              </div>
-                              <div className="sv-dtr-slot">
-                                <span className="sv-dtr-slot-lbl">Morning Out</span>
-                                <span className="sv-dtr-slot-val">{dtr.morningOut || '—'}</span>
-                              </div>
-                              <div className="sv-dtr-slot">
-                                <span className="sv-dtr-slot-lbl">Afternoon In</span>
-                                <span className="sv-dtr-slot-val">{dtr.afternoonIn || '—'}</span>
-                              </div>
-                              <div className="sv-dtr-slot">
-                                <span className="sv-dtr-slot-lbl">Afternoon Out</span>
-                                <span className="sv-dtr-slot-val">{dtr.afternoonOut || '—'}</span>
-                              </div>
-                            </div>
-                            <div className="sv-dtr-hours">
-                              <span className="sv-dtr-slot-lbl">Total Hours</span>
-                              <span className="sv-dtr-hours-val">{dtr.hours.toFixed(2)} hrs</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                );
+              })
+            ) : (
+              <div className="sv-no-results sv-mt-24">
+                <div className="sv-no-results-icon">
+                  <IonIcon icon={searchOutline} />
                 </div>
-              );
-            })}
+                <p className="sv-no-results-text">No records found</p>
+                <p className="sv-no-results-sub">
+                  {filter === 'today' 
+                    ? "No trainees have timed in today yet." 
+                    : "No attendance logs found for the selected period."}
+                </p>
+                <button 
+                  className="sv-back-button"
+                  onClick={() => { setSearchQuery(''); setFilter('all'); }}
+                >
+                  <IonIcon icon={arrowBackOutline} />
+                  Back to all records
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </IonContent>

@@ -87,3 +87,57 @@ export const updateReport = async (reportId, data) => {
     [type, reportDate, title, content, attachments ? JSON.stringify(attachments) : null, reportId]
   );
 };
+
+export const updateReportStatus = async (reportId, status, reviewerId, feedback = null) => {
+  await db.query(
+    `
+      UPDATE reports SET 
+        status = ?, 
+        reviewed_by = ?, 
+        reviewed_at = CURRENT_TIMESTAMP(),
+        feedback = ?
+      WHERE id = ?
+    `,
+    [status, reviewerId, feedback, reportId]
+  );
+};
+
+export const getSupervisorReports = async (supervisorId) => {
+  const [rows] = await db.query(
+    `
+      SELECT 
+        r.id,
+        r.student_id AS studentId,
+        r.ojt_id AS ojtId,
+        r.type,
+        r.report_date AS reportDate,
+        r.title,
+        r.content,
+        r.attachments,
+        r.status,
+        r.reviewed_by AS reviewedBy,
+        r.reviewed_at AS reviewedAt,
+        r.feedback,
+        r.created_at AS createdAt,
+        r.updated_at AS updatedAt,
+        CONCAT(u.first_name, ' ', u.last_name) AS studentName,
+        u.profile_picture AS studentProfilePicture,
+        CASE WHEN r.reviewed_by IS NOT NULL 
+          THEN CONCAT(rev.first_name, ' ', rev.last_name)
+          ELSE NULL 
+        END AS reviewerName
+      FROM reports r
+      JOIN student_ojt so ON r.ojt_id = so.id
+      JOIN users u ON r.student_id = u.id
+      LEFT JOIN users rev ON r.reviewed_by = rev.id
+      WHERE so.supervisor_id = ?
+      ORDER BY r.report_date DESC
+    `,
+    [supervisorId]
+  );
+
+  return rows.map(row => ({
+    ...row,
+    attachments: row.attachments ? JSON.parse(row.attachments) : null
+  })) || null;
+};

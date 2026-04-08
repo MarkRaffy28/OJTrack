@@ -6,8 +6,8 @@ import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
 import { formatDate, formatTime12 } from '@utils/date';
-import BottomNav from '@components/BottomNav';
 import API from '@api/api';
+import BottomNav from '@components/BottomNav';
 import '@css/DTR.css';
 
 interface AttendanceRecord {

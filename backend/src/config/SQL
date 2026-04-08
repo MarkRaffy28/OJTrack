@@ -76,6 +76,7 @@ CREATE TABLE student_ojt (
   status ENUM('pending', 'ongoing', 'completed', 'dropped') DEFAULT 'pending',
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
+  supervisor_notes TEXT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
