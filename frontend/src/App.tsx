@@ -12,16 +12,18 @@ import "@ionic/react/css/palettes/dark.system.css";
 import "@theme/variables.css";
 import "@css/App.css";
 
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import { Redirect, Route } from "react-router-dom";
-import { IonApp, IonRouterOutlet, setupIonicReact } from "@ionic/react";
+import { IonApp, IonRouterOutlet, setupIonicReact, IonSpinner } from "@ionic/react";
 import { IonReactRouter } from "@ionic/react-router";
 import { StatusBar, Style } from "@capacitor/status-bar";
 
-import { ActivityProvider } from "./context/activityContext";
-import { AuthProvider } from "@context/authContext";
+import { initAPI } from "@api/api";
+
+import { ActivityProvider } from "@context/activityContext";
+import { AuthProvider, useAuth } from "@context/authContext";
 import { OjtProvider } from "@context/ojtContext";
-import { SupervisorOjtProvider } from "./context/supervisorOjtContext";
+import { SupervisorOjtProvider } from "@context/supervisorOjtContext";
 import { ReportProvider } from "@context/reportContext";
 import { UserProvider } from "@context/userContext";
 import RoleRoute from "@components/RoleRoute";
@@ -49,49 +51,64 @@ StatusBar.setOverlaysWebView({ overlay: false });
 StatusBar.setStyle({ style: Style.Default });
 
 setupIonicReact();
+initAPI();
+
+const AppRoutes: React.FC = () => {
+  const { loading, role } = useAuth();
+
+  return (
+    <Suspense fallback={
+      <div className="app-route">
+        <IonSpinner name="crescent" color="primary" />
+        <p>Loading...</p>
+      </div>
+    }>
+      <IonRouterOutlet>
+        <Route     exact path="/register"             component={Register}             />
+        <Route     exact path="/login"                component={Login}                />
+        <Route     exact path="/logout"               component={Logout}               />
+
+        <RoleRoute exact path="/account"              component={Account}              allowedRoles={["student", "supervisor"]} />
+        <RoleRoute exact path="/activity"             component={Activity}             allowedRoles={["student", "supervisor"]} />
+        <RoleRoute exact path="/reports"              component={Reports}              allowedRoles={["student", "supervisor"]} />
+        <RoleRoute exact path="/edit-account"         component={EditAccount}          allowedRoles={["student", "supervisor"]} />
+
+        <RoleRoute exact path="/dashboard"            component={Dashboard}            allowedRoles={["student"]}               />
+        <RoleRoute exact path="/dtr"                  component={DTR}                  allowedRoles={["student"]}               />
+        <RoleRoute exact path="/report-detail"        component={ReportDetail}         allowedRoles={["student"]}               />
+        <RoleRoute exact path="/upload-report"        component={UploadReport}         allowedRoles={["student"]}               />
+
+        <RoleRoute exact path="/attendance"           component={Attendance}           allowedRoles={["supervisor"]}            />
+        <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard}  allowedRoles={["supervisor"]}            />
+        <RoleRoute exact path="/trainees"             component={Trainees}             allowedRoles={["supervisor"]}            />
+        <RoleRoute exact path="/trainee-detail/:id"   component={TraineeDetail}        allowedRoles={["supervisor"]}            />
+
+        <Route exact path="/">
+          <Redirect to={loading ? "/login" : role === 'student' ? "/dashboard" : role === 'supervisor' ? "/supervisor-dashboard" : "/login"} />
+        </Route>
+      </IonRouterOutlet>
+    </Suspense>
+  );
+};
 
 const App: React.FC = () => (
   <IonApp>
-    <AuthProvider>
-      <UserProvider>
-        <OjtProvider>
-          <SupervisorOjtProvider>
-            <ReportProvider>
-              <ActivityProvider>
-                <IonReactRouter>
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <IonRouterOutlet>
-                      <Route     exact path="/register"             component={Register}             />
-                      <Route     exact path="/login"                component={Login}                />
-                      <Route     exact path="/logout"               component={Logout}               />
-
-                      <RoleRoute exact path="/account"              component={Account}              allowedRoles={["student", "supervisor"]} />
-                      <RoleRoute exact path="/activity"             component={Activity}             allowedRoles={["student", "supervisor"]} />
-                      <RoleRoute exact path="/reports"              component={Reports}              allowedRoles={["student", "supervisor"]} />
-                      <RoleRoute exact path="/edit-account"         component={EditAccount}          allowedRoles={["student", "supervisor"]} />
-        
-                      <RoleRoute exact path="/dashboard"            component={Dashboard}            allowedRoles={["student"]}               />
-                      <RoleRoute exact path="/dtr"                  component={DTR}                  allowedRoles={["student"]}               />
-                      <RoleRoute exact path="/report-detail"        component={ReportDetail}         allowedRoles={["student"]}               />
-                      <RoleRoute exact path="/upload-report"        component={UploadReport}         allowedRoles={["student"]}               />
-                      
-                      <RoleRoute exact path="/attendance"           component={Attendance}           allowedRoles={["supervisor"]}            />
-                      <RoleRoute exact path="/supervisor-dashboard" component={SupervisorDashboard}  allowedRoles={["supervisor"]}            />
-                      <RoleRoute exact path="/trainees"             component={Trainees}             allowedRoles={["supervisor"]}            />
-                      <RoleRoute exact path="/trainee-detail/:id"   component={TraineeDetail}        allowedRoles={["supervisor"]}            />
-
-                      <Redirect to="/login" />
-                    </IonRouterOutlet>
-                  </Suspense>
-                </IonReactRouter>
-              </ActivityProvider>
-            </ReportProvider>
-          </SupervisorOjtProvider>
-        </OjtProvider>
-      </UserProvider>
-    </AuthProvider>
+    <IonReactRouter>
+      <AuthProvider>
+        <UserProvider>
+          <OjtProvider>
+            <SupervisorOjtProvider>
+              <ReportProvider>
+                <ActivityProvider>
+                  <AppRoutes />
+                </ActivityProvider>
+              </ReportProvider>
+            </SupervisorOjtProvider>
+          </OjtProvider>
+        </UserProvider>
+      </AuthProvider>
+    </IonReactRouter>
   </IonApp>
 );
 
 export default App;
-

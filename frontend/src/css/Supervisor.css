@@ -169,7 +169,12 @@ body, ion-app, ion-content {
 .sv-chip-amber { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.3); color: #fde68a; }
 
 /* Detail hero with profile */
-.sv-hero-detail { padding-bottom: 20px; }
+.sv-hero-detail { 
+  padding-bottom: 20px; 
+  position: relative;
+  overflow: hidden;
+  padding: 30px 22px 28px;
+}
 
 .sv-back-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1121,8 +1126,17 @@ body, ion-app, ion-content {
   color: #fff; flex-shrink: 0;
 }
 .sv-report-header-info {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; 
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   flex: 1;
+}
+.rp-card-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
 .sv-report-student {
   font-size: 15px; font-weight: 700;
@@ -1130,6 +1144,7 @@ body, ion-app, ion-content {
 }
 .sv-report-status-chip {
   padding: 3px 10px;
+  padding-top: 2px;
   border-radius: 20px;
   font-size: 11px; font-weight: 700;
 }
@@ -1625,6 +1640,7 @@ body, ion-app, ion-content {
   justify-content: center;
   z-index: 9999;
   backdrop-filter: blur(8px);
+  touch-action: none;
 }
 
 .av-overlay-img {
@@ -1633,6 +1649,7 @@ body, ion-app, ion-content {
   border-radius: 12px;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
   animation: sv-zoom-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: none;
 }
 
 .av-overlay-close {

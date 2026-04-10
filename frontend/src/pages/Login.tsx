@@ -4,6 +4,7 @@ import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner } from '@ioni
 import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, alertCircleOutline, } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import API from '@api/api';
+import SecretTrigger from "@components/SwitchServer";
 
 function Login() {
   const history = useHistory();
@@ -182,6 +183,13 @@ function Login() {
                 </IonText>
               </div>
             </form>
+
+            <SecretTrigger>
+              <div style={{
+                width: "50px",
+                height: "50px"
+              }}></div>
+            </SecretTrigger>
           </div>
         </div>
       </IonContent>

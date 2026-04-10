@@ -7,23 +7,30 @@ import {
   closeOutline, printOutline, createOutline, trashOutline, closeCircleOutline, alertCircleOutline, saveOutline, cloudUploadOutline, 
   attachOutline, banOutline, documentOutline, checkmarkOutline, arrowBackOutline
 } from "ionicons/icons";
+import { getMediaUrl } from "@api/api";
 import { useAuth } from "@context/authContext";
 import { useReport, Report, ReportAttachment } from "@context/reportContext";
 import { formatDate, formatDateForInput } from "@utils/date";
 import { capitalize } from "@utils/string";
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
 import Avatar from "@components/Avatar";
 import BottomNav from "@components/BottomNav";
+import Lightbox from "@components/Lightbox";
 import printReport from "@components/PrintReport";
+import ServerImage from "@components/ServerImage";
 import SupervisorBottomNav from "@components/SupervisorBottomNav";
 import "@css/ReportsModal.css";
 import "@css/Supervisor.css";
 
-const API_URL = import.meta.env.VITE_API_URL;
 const MAX_FILES = 10;
 
 /* ── Edit modal state ──────────────────────────────────────────────────── */
 interface EditState {
   id: number;
+  ojtId: number;
   title: string;
   reportDate: string;
   type: Report["type"];
@@ -52,8 +59,6 @@ function Reports() {
   const [imgExpanded, setImgExpanded] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
-  const [downloadedIds, setDownloadedIds] = useState<Set<number>>(new Set());
   const [editState, setEditState] = useState<EditState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Report | null>(null);
@@ -112,10 +117,10 @@ function Reports() {
   }, [location.pathname]);
 
   /* ── Download ─────────────────────────────────────────────────────────── */
-  const handleDownload = (report: Report) => {
-    setDownloadingId(report.id);
+  const handleDownloadReport = async (report: Report) => {
+    const reportTitle = (report.title ?? "report").replace(/[^a-z0-9]/gi, "_");
     const content = [
-      `REPORT TITLE: ${report.title ?? "Untitled"}`,
+      `REPORT: ${report.title ?? "Untitled"}`,
       `TYPE: ${capitalize(report.type)}`,
       `DATE: ${formatDate(report.reportDate)}`,
       `STATUS: ${capitalize(report.status)}`,
@@ -131,19 +136,57 @@ function Reports() {
         : "No attachments.",
     ].join("\n");
 
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const fileName = `${reportTitle}.txt`;
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: content,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8
+        });
+        await Share.share({
+          title: report.title ?? 'Activity Report',
+          text: `Report submission details for ${report.title}`,
+          url: result.uri,
+          dialogTitle: 'Save or Share Report',
+        });
+      } catch (e) {
+        console.error("Native share/download failed", e);
+      }
+      return;
+    }
+
     const blob = new Blob([content], { type: "text/plain" });
+
+    // Try web native share
+    if (navigator.share) {
+      try {
+        const file = new File([blob], `${reportTitle}.txt`, { type: "text/plain" });
+        await navigator.share({
+          files: [file],
+          title: report.title ?? "Activity Report",
+          text: `Activity Report: ${report.title ?? "Untitled"}`
+        });
+        return;
+      } catch (err) {
+        console.log("Native share cancelled/failed", err);
+      }
+    }
+
+    // Fallback to standard download
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${(report.title ?? "report").replace(/[^a-z0-9]/gi, "_")}.txt`;
+    a.download = `${reportTitle}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    setTimeout(() => {
-      setDownloadingId(null);
-      setDownloadedIds((prev) => new Set(prev).add(report.id));
-    }, 800);
+  };
+
+  const handleDownloadFile = (url: string) => {
+    window.open(url, "_blank");
   };
 
   /* ── Edit handlers ────────────────────────────────────────────────────── */
@@ -151,6 +194,7 @@ function Reports() {
     if (report.status === "approved") return;
     setEditState({
       id: report.id,
+      ojtId: report.ojtId,
       title: report.title ?? "",
       reportDate: formatDateForInput(report.reportDate),
       type: report.type,
@@ -225,6 +269,7 @@ function Reports() {
     if (!editState) return;
     setIsSaving(true);
     await updateReport(editState.id, {
+      ojtId: editState.ojtId,
       title: editState.title.trim() || null,
       type: editState.type,
       reportDate: editState.reportDate,
@@ -358,8 +403,6 @@ function Reports() {
             ) : (
               filtered.map((report: Report) => {
                 const cfg = statusConfig[report.status] ?? statusConfig.pending;
-                const isDownloading = downloadingId === report.id;
-                const isDownloaded = downloadedIds.has(report.id);
                 const approved = isApproved(report);
                 return (
                   <div key={report.id} className="sv-report-card">
@@ -380,14 +423,16 @@ function Reports() {
                             {report.title || "Untitled Report"}
                           </span>
                         )}
-                        <span className="sv-report-status-chip" style={{ color: cfg?.color, background: cfg?.bg, border: `1px solid ${cfg?.color}` }}>
-                          <IonIcon icon={cfg?.icon} className="rp-icon-margin" />
-                          {capitalize(report.status)}
-                        </span>
+                        <div className="rp-card-chips-row">
+                          <span className="rp-status-chip" style={{ color: cfg?.color, background: cfg?.bg, border: `1px solid ${cfg?.color}` }}>
+                            <IonIcon icon={cfg?.icon} className="rp-icon-margin" />
+                            {capitalize(report.status)}
+                          </span>
+                          <span className="rp-type-chip">
+                            <IonIcon icon={documentTextOutline} /> {capitalize(report.type)}
+                          </span>
+                        </div>
                       </div>
-                      <span className="rp-type-chip ml-auto">
-                        <IonIcon icon={documentTextOutline} /> {capitalize(report.type)}
-                      </span>
                       {!approved && !isSupervisor && (
                         <div className="rp-card-corner-actions rp-side-actions-wrap">
                           <button
@@ -428,8 +473,7 @@ function Reports() {
                     {report.attachments && report.attachments.length > 0 && (
                       report.attachments.map((att, idx) => {
                         const isImg = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                        const fullPath = att.path.replace(/\\\\/g, "/").replace(/^\.\//, "");
-                        const thumbUrl = isImg ? `${API_URL}/${fullPath}` : undefined;
+                        const thumbUrl = isImg ? getMediaUrl(att.path) : undefined;
                         
                         return (
                           <button
@@ -438,7 +482,7 @@ function Reports() {
                               if (isImg) {
                                 setSelectedImage(thumbUrl!);
                               } else {
-                                handleDownload({ ...report, id: idx, title: att.originalName, content: '', attachments: [att] } as any);
+                                handleDownloadFile(getMediaUrl(att.path));
                               }
                             }}
                             className="rp-attachment-btn-wrapper"
@@ -457,7 +501,7 @@ function Reports() {
                             {/* Thumbnail strip */}
                             {isImg && thumbUrl && (
                               <div className="rp-attachment-thumb-strip">
-                                <img
+                                <ServerImage
                                   src={thumbUrl}
                                   alt="preview"
                                   className="rp-attachment-thumb-img"
@@ -480,8 +524,8 @@ function Reports() {
                           <button className="unified-sv-btn unified-sv-btn-print" onClick={() => printReport(report)}>
                             <IonIcon icon={printOutline} /> Print
                           </button>
-                          <button className={`unified-sv-btn unified-sv-btn-dl ${isDownloading ? "rp-btn-dl--loading" : ""} ${isDownloaded ? "rp-btn-dl--done" : ""}`} onClick={() => handleDownload(report)} disabled={isDownloading}>
-                            {isDownloading ? <><span className="rp-btn-spinner" /> Saving…</> : isDownloaded ? <><IonIcon icon={checkmarkCircleOutline} /> Saved</> : <><IonIcon icon={downloadOutline} /> Download</>}
+                          <button className="unified-sv-btn unified-sv-btn-dl" onClick={() => handleDownloadReport(report)}>
+                            <IonIcon icon={downloadOutline} /> Download
                           </button>
                         </>
                       ) : (
@@ -702,14 +746,13 @@ function Reports() {
                 </p>
                 {viewState.attachments?.map((att, i) => {
                   const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                  const fullPath = att.path.replace(/\\/g, "/").replace(/^\.\//, "");
-                  const fileUrl = `${API_URL}/${fullPath}`;
+                  const fileUrl = getMediaUrl(att.path);
 
                   return (
                     <div key={i} className="mb-12">
                       {isImage ? (
                         <div className="attachment-image-wrap">
-                          <img
+                          <ServerImage
                             src={fileUrl}
                             alt={att.originalName}
                             className="attachment-image-main"
@@ -717,19 +760,22 @@ function Reports() {
                           />
                         </div>
                       ) : (
-                        <div className="attachment-file-pill">
+                        <button 
+                          onClick={() => handleDownloadFile(fileUrl)} 
+                          className="attachment-file-pill"
+                        >
                           <div className="attachment-file-icon-box">
                             <IonIcon icon={documentOutline} style={{ fontSize: 16, color: '#5f0076' }} />
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                             <p className="attachment-file-name-text">
                               {att.originalName}
                             </p>
                           </div>
-                          <button onClick={() => handleDownload({ ...viewState, id: i, title: att.originalName, content: '', attachments: [att] } as any)} className="attachment-file-dl-icon">
+                          <div className="attachment-file-dl-icon-circle">
                             <IonIcon icon={downloadOutline} />
-                          </button>
-                        </div>
+                          </div>
+                        </button>
                       )}
                     </div>
                   );
@@ -745,7 +791,7 @@ function Reports() {
               </button>
               <button
                 className="unified-sv-btn unified-sv-btn-dl footer-btn-half"
-                onClick={() => handleDownload(viewState)}
+                onClick={() => handleDownloadReport(viewState)}
               >
                 <IonIcon icon={downloadOutline} style={{ fontSize: 18 }} /> Download
               </button>
@@ -851,12 +897,11 @@ function Reports() {
                   <div className="rp-edit-file-list">
                     {editState.existingAttachments.map((att, i) => {
                       const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                      const fullPath = att.path.replace(/\\/g, "/").replace(/^\.\//, "");
-                      const thumbUrl = isImage ? `${API_URL}/${fullPath}` : undefined;
+                      const thumbUrl = isImage ? getMediaUrl(att.path) : undefined;
                       return (
                         <div key={`existing-${i}`} className="rp-edit-file-item" onClick={() => thumbUrl && setSelectedImage(thumbUrl)} style={{ cursor: thumbUrl ? 'pointer' : 'default' }}>
                           {thumbUrl ? (
-                            <img src={thumbUrl} alt={att.originalName} className="rp-edit-file-thumb" />
+                            <ServerImage src={thumbUrl} alt={att.originalName} className="rp-edit-file-thumb" />
                           ) : (
                             <div className="rp-edit-file-icon-wrap"><IonIcon icon={attachOutline} /></div>
                           )}
@@ -974,21 +1019,10 @@ function Reports() {
 
       {/* Image Lightbox */}
       {selectedImage && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 20000,
-          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }} onClick={() => setSelectedImage(null)}>
-          <button style={{
-            position: 'absolute', top: 20, right: 20,
-            background: 'none', border: 'none', color: '#fff', fontSize: 32, cursor: 'pointer'
-          }} onClick={() => setSelectedImage(null)}>
-            <IonIcon icon={closeCircleOutline} />
-          </button>
-          <div style={{ padding: 20, maxWidth: '100%', maxHeight: '100%', display: 'flex', justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
-            <img src={selectedImage} alt="attachment" style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} />
-          </div>
-        </div>
+        <Lightbox 
+          src={selectedImage} 
+          onClose={() => setSelectedImage(null)} 
+        />
       )}
 
       {isSupervisor ? <SupervisorBottomNav activeTab="reports" /> : <BottomNav activeTab="reports" />}

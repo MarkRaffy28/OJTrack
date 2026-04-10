@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/react';
-import { peopleOutline, documentTextOutline, personOutline, schoolOutline, analyticsOutline, calendarOutline } from 'ionicons/icons';
+import { peopleOutline, documentTextOutline, personOutline, schoolOutline, analyticsOutline, calendarOutline, statsChartOutline } from 'ionicons/icons';
 import { useActivity } from '@context/activityContext';
 import { useUser, isSupervisor } from '@context/userContext';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
@@ -151,17 +151,17 @@ function SupervisorDashboard() {
               <div className="sv-qa-icon qa-purple"><IonIcon icon={schoolOutline} /></div>
               <span className="sv-qa-label">Trainees</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/review-reports')}>
-              <div className="sv-qa-icon qa-amber"><IonIcon icon={analyticsOutline} /></div>
-              <span className="sv-qa-label">Reports</span>
-            </button>
             <button className="sv-qa-card" onClick={() => handleNavigation('/attendance')}>
               <div className="sv-qa-icon qa-green"><IonIcon icon={calendarOutline} /></div>
               <span className="sv-qa-label">Attendance</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/account')}>
-              <div className="sv-qa-icon qa-dark"><IonIcon icon={personOutline} /></div>
-              <span className="sv-qa-label">Account</span>
+            <button className="sv-qa-card" onClick={() => handleNavigation('/reports')}>
+              <div className="sv-qa-icon qa-amber"><IonIcon icon={analyticsOutline} /></div>
+              <span className="sv-qa-label">Reports</span>
+            </button>
+            <button className="sv-qa-card" onClick={() => handleNavigation('/activity')}>
+              <div className="sv-qa-icon qa-dark"><IonIcon icon={statsChartOutline} /></div>
+              <span className="sv-qa-label">Activities</span>
             </button>
           </div>
 

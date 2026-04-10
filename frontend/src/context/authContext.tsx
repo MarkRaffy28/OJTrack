@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useRef, FC, ReactNode } from 'react';
 import { Preferences } from '@capacitor/preferences';
 import { jwtDecode } from 'jwt-decode';
 import API from '@api/api';
@@ -22,7 +22,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [databaseId, setDatabaseId] = useState<number | null>(null);
   const [role, setRole] = useState<Role | null>(null);
@@ -124,8 +124,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     scheduleLogout(decoded.exp);
   };
 
+  const authContextValue = useMemo(() => ({
+    token, databaseId, role, loading, login, logout
+  }), [token, databaseId, role, loading]);
+
   return (
-    <AuthContext.Provider value={{ token, databaseId, role, loading, login, logout }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );

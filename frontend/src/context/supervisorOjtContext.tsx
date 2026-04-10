@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, FC, ReactNode } from "react";
 import { useAuth } from "./authContext";
 import API from "@api/api";
 
@@ -66,7 +66,7 @@ interface SupervisorOjtContextType {
 
 const SupervisorOjtContext = createContext<SupervisorOjtContextType | null>(null);
 
-export const SupervisorOjtProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, databaseId, role } = useAuth();
   
   const [allOjts, setAllOjts] = useState<SupervisorOjt[]>([]);

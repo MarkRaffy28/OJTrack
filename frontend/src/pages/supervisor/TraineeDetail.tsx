@@ -101,7 +101,7 @@ function TraineeDetail() {
       <IonContent fullscreen className="sv-content">
 
         {/* Hero */}
-        <div className="sv-hero sv-hero-detail">
+        <div className="sv-hero-detail">
           <div className="sv-hero-bg" />
           <div className="sv-hero-inner">
             <button className="sv-back-btn" onClick={() => history.goBack()}>

@@ -12,6 +12,24 @@ export default defineConfig({
   },
 
   plugins: [react(), legacy()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@ionic') || id.includes('ionicons')) {
+              return 'vendor-ionic';
+            }
+            if (id.includes('react') || id.includes('router')) {
+              return 'vendor-react';
+            }
+            return 'vendor';
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
   test: {
     globals: true,
     environment: "jsdom",

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, FC, ReactNode } from "react";
 import { useAuth } from "./authContext";
 import API from "@api/api";
 
@@ -23,7 +23,7 @@ interface OjtContextType {
 
 const OjtContext = createContext<OjtContextType | null>(null);
 
-export const OjtProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, databaseId, role } = useAuth();
 
   const [ojtRecords, setOjtRecords] = useState<StudentOjt[]>([]);

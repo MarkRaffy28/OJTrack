@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, FC, ReactNode } from 'react';
 import { useAuth } from './authContext';
 import API from '@api/api';
 
@@ -54,7 +54,7 @@ export const isStudent = (user: User | null): user is StudentUser => user?.role 
 export const isSupervisor = (user: User | null): user is SupervisorUser => user?.role === 'supervisor';
 export const isAdmin = (user: User | null): user is AdminUser => user?.role === 'admin';
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { databaseId, token, role } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

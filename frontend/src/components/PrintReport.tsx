@@ -1,31 +1,22 @@
+import { Capacitor } from '@capacitor/core';
+import { Printer } from '@capgo/capacitor-printer';
+import { getMediaUrl } from "@api/api";
 import { Report } from "@/context/reportContext";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { formatDate } from "@utils/date";
+import { capitalize } from "@utils/string";
 
 /** Only these extensions render as <img> in the print view */
 const IMAGE_EXTS = /\.(jpe?g|png|gif|webp|bmp|svg)$/i;
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+async function printReport (report: Report) {
+  const printedOn = formatDate(new Date().toISOString());
 
-function printReport (report: Report) {
-  const printedOn = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  const displayDate = report.reportDate
-    ? new Date(report.reportDate).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "N/A";
+  const displayDate = report.reportDate ? formatDate(report.reportDate) : "N/A";
 
   // Build full image URLs from attachments stored on the server
   const imageAttachments = (report.attachments ?? [])
     .filter((att) => IMAGE_EXTS.test(att.filename))
-    .map((att) => `${API_URL}/${att.path.replace(/\\/g, "/").replace(/^\.\//, "")}`);
+    .map((att) => getMediaUrl(att.path));
 
   const imagesHtml =
     imageAttachments.length > 0
@@ -451,6 +442,15 @@ function printReport (report: Report) {
 </div>
 </body>
 </html>`;
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await Printer.printHtml({ name: report.title || "Activity Report", html });
+    } catch (e) {
+      console.error("Native print failed:", e);
+    }
+    return;
+  }
 
   const existing = document.getElementById("__print_frame__");
   if (existing) existing.remove();

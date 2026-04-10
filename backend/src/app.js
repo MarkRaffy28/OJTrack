@@ -16,7 +16,12 @@ const apiRouter = express.Router();
 app.use(cors());
 app.use(express.json());
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", (req, res, next) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, ngrok-skip-browser-warning");
+  next();
+}, express.static("uploads"));
 
 apiRouter.use("/activities", activityRoutes);
 apiRouter.use("/attendance", attendanceRoutes);

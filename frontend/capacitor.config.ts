@@ -7,9 +7,15 @@ const config: CapacitorConfig = {
   webDir: "dist",
 
   server: {
-    url: process.env.SERVER_URL,
+    // url: process.env.SERVER_URL,
     cleartext: true,
     androidScheme: "http",
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 3000,
+      launchAutoHide: true,
+    },
   },
 };
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, FC, ReactNode } from 'react';
 import { useAuth } from './authContext';
 import { useOjt } from './ojtContext';
 import API from '@api/api';
@@ -31,6 +31,7 @@ export interface Report {
 }
 
 export interface UpdateReportPayload {
+  ojtId: number;
   type: Report['type'];
   reportDate: string;
   title: string | null;
@@ -57,7 +58,7 @@ const ReportContext = createContext<ReportContextValue>({
   deleteReport: async () => {},
 });
 
-export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ReportProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, role, databaseId } = useAuth();
   const { currentOjt } = useOjt();
 
@@ -118,6 +119,7 @@ export const ReportProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const updateReport = useCallback(async (id: number, payload: UpdateReportPayload) => {
     try {
       const formData = new FormData();
+      formData.append('ojtId', String(payload.ojtId));
       formData.append('type', payload.type);
       formData.append('reportDate', payload.reportDate);
       formData.append('title', payload.title ?? '');

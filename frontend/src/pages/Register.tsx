@@ -227,6 +227,64 @@ function Register() {
     fetchOffices();
   }, [])
 
+  const clearAllFields = () => {
+    setSelectedRole(null);
+    setRegistrationStep("role");
+    setUsername("");
+    setUsernameAvailable(false);
+    setUsernameError("");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setFirstName("");
+    setMiddleName("");
+    setLastName("");
+    setExtensionName("");
+    setGender("");
+    setBirthdate("");
+    setContactNumber("");
+    setEmail("");
+    setEmailError("");
+    setEmailAvailable(false);
+    setAddress("");
+    setStudentId("");
+    setYear("");
+    setProgram("");
+    setMajor("");
+    setSection("");
+    setEmployeeId("");
+    setOfficeId("");
+    setOfficeName("");
+    setPosition("");
+    setIsContactNumberValid(true);
+    setIsEmailValid(true);
+    setIsPasswordValid(true);
+    setIsConfirmPasswordValid(true);
+    setIsPasswordTouched(false);
+    setIsConfirmPasswordTouched(false);
+    setIsFirstNameTouched(false);
+    setIsMiddleNameTouched(false);
+    setIsLastNameTouched(false);
+    setIsExtensionNameTouched(false);
+    setIsGenderTouched(false);
+    setIsBirthdayTouched(false);
+    setIsContactNumberTouched(false);
+    setIsEmailTouched(false);
+    setIsAddressTouched(false);
+    setIsStudentIdTouched(false);
+    setIsProgramTouched(false);
+    setIsMajorTouched(false);
+    setIsSectionTouched(false);
+    setIsYearTouched(false);
+    setIsEmployeeIdTouched(false);
+    setIsOfficeIdTouched(false);
+    setIsPositionTouched(false);
+    setCroppedPhoto(null);
+    formDataRef.current = null;
+    setRegistrationError("");
+  };
+
   // HANDLERS
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -234,11 +292,7 @@ function Register() {
   };
 
   const handleBackFromUsername = () => {
-    setSelectedRole(null);
-    setRegistrationStep("role");
-    setUsername("");
-    setUsernameError("");
-    setUsernameAvailable(false);
+    clearAllFields();
   };
 
   const handleBack = () => {
@@ -323,7 +377,7 @@ function Register() {
       const response = await API.post(`/auth/register/${selectedRole}`, formDataRef.current);
 
       if (response.data.newUserId) {
-        formDataRef.current = null;
+        clearAllFields();
         setRedirectMessage("Account created! Redirecting to login...");
         setTimeout(() => {
           setIsRedirecting(false);
@@ -1091,7 +1145,7 @@ function Register() {
                       setIsProgramTouched(true);
                     }}
                     onBlur={() => setIsProgramTouched(true)}
-                    className={`styled-input ${isProgramTouched && program.length === 0 ? "input-invalid" : year.length > 0 ? "input-valid" : ""}`}
+                    className={`styled-input ${isProgramTouched && program.length === 0 ? "input-invalid" : program.length > 0 ? "input-valid" : ""}`}
                   >
                     <option value="">Select program</option>
                     <option value="BSIT">BSIT</option>

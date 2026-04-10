@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, FC, ReactNode } from "react";
 import { useAuth } from "./authContext";
 import { useOjt } from "./ojtContext";
 import API from "@api/api";
@@ -23,7 +23,7 @@ interface ActivityContextType {
 
 const ActivityContext = createContext<ActivityContextType | null>(null);
 
-export const ActivityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, databaseId, role } = useAuth();
   const { currentOjt } = useOjt();
   const [activities, setActivities] = useState<UserActivity[]>([]);

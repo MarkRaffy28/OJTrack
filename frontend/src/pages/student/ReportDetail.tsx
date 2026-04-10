@@ -6,13 +6,18 @@ import {
   informationCircleOutline, attachOutline, closeCircleOutline, printOutline, createOutline, trashOutline, alertCircleOutline, 
   saveOutline, banOutline, personOutline, chatbubbleOutline, cloudUploadOutline,
 } from 'ionicons/icons';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+import { getMediaUrl } from '@api/api';
 import { useReport, Report, ReportAttachment } from '@context/reportContext';
 import { formatDate, formatDateTime, formatDateForInput } from '@utils/date';
 import { capitalize } from '@utils/string';
+import Lightbox from '@components/Lightbox';
 import printReport from '@components/PrintReport';
+import ServerImage from '@components/ServerImage';
 import '@css/ReportDetail.css';
 
-const API_URL = import.meta.env.VITE_API_URL;
 const MAX_FILES = 10;
 
 const statusConfig: Record<string, { color: string; bg: string; icon: string; label: string }> = {
@@ -44,8 +49,6 @@ function ReportDetail() {
   const history = useHistory();
   const location = useLocation<{ report: Report }>();
   const { updateReport, deleteReport } = useReport();
-  const [downloading, setDownloading] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const editFileRef = useRef<HTMLInputElement>(null);
 
@@ -88,13 +91,13 @@ function ReportDetail() {
   const cfg = statusConfig[report.status] ?? statusConfig.pending;
   const isApproved = report.status === 'approved';
 
-  const handleDownload = () => {
-    setDownloading(true);
+  const handleDownload = async () => {
+    const reportTitle = (report.title ?? 'report').replace(/[^a-z0-9]/gi, '_');
     const content = [
-      `REPORT TITLE: ${report.title ?? 'Untitled'}`,
-      `TYPE:         ${capitalize(report.type)}`,
-      `DATE:         ${formatDate(report.reportDate)}`,
-      `STATUS:       ${capitalize(report.status)}`,
+      `REPORT: ${report.title ?? 'Untitled'}`,
+      `TYPE:   ${capitalize(report.type)}`,
+      `DATE:   ${formatDate(report.reportDate)}`,
+      `STATUS: ${capitalize(report.status)}`,
       '',
       'CONTENT',
       '------------',
@@ -116,15 +119,50 @@ function ReportDetail() {
     ].join('\n');
 
     const blob = new Blob([content], { type: 'text/plain' });
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const fileName = `${reportTitle}.txt`;
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: content,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8
+        });
+        await Share.share({
+          title: report.title ?? 'Activity Report',
+          text: `Report submission details for ${report.title}`,
+          url: result.uri,
+          dialogTitle: 'Save or Share Report',
+        });
+        return;
+      } catch (e) {
+        console.error("Native share/download failed", e);
+      }
+    }
+
+    if (navigator.share) {
+      try {
+        const file = new File([blob], `${reportTitle}.txt`, { type: 'text/plain' });
+        await navigator.share({
+          files: [file],
+          title: report.title ?? 'Activity Report',
+          text: `Report submission details for ${report.title}`
+        });
+        return;
+      } catch (e) {
+        console.log("Share failed/cancelled:", e);
+      }
+    }
+
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${(report.title ?? 'report').replace(/[^a-z0-9]/gi, '_')}.txt`;
+    a.download = `${reportTitle}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    setTimeout(() => { setDownloading(false); setDownloaded(true); }, 800);
   };
 
   const openEdit = () => {
@@ -193,6 +231,7 @@ function ReportDetail() {
     if (!editState || !report) return;
     setIsSaving(true);
     await updateReport(report.id, {
+      ojtId: report.ojtId,
       title: editState.title.trim() || null,
       type: editState.type,
       reportDate: editState.reportDate,
@@ -326,8 +365,7 @@ function ReportDetail() {
               <div className="rd-attachments">
                 {report.attachments.map((att, i) => {
                   const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                  const fullPath = att.path.replace(/\\/g, '/').replace(/^\.\//, '');
-                  const fileUrl = `${API_URL}/${fullPath}`;
+                  const fileUrl = getMediaUrl(att.path);
                   return (
                     <div
                       key={i}
@@ -335,7 +373,7 @@ function ReportDetail() {
                       onClick={() => isImage ? setSelectedImage(fileUrl) : window.open(fileUrl, '_blank')}
                     >
                       {isImage ? (
-                        <img src={fileUrl} alt={att.originalName} className="rd-attachment-thumb-img" />
+                        <ServerImage src={fileUrl} alt={att.originalName} className="rd-attachment-thumb-img" />
                       ) : (
                         <div className="rd-attachment-thumb">
                           <IonIcon icon={attachOutline} />
@@ -369,33 +407,21 @@ function ReportDetail() {
               Print
             </button>
             <button
-              className={`rd-dl-btn ${downloading ? 'rd-dl-btn--loading' : ''} ${downloaded ? 'rd-dl-btn--done' : ''}`}
+              className="rd-dl-btn"
               onClick={handleDownload}
-              disabled={downloading}
             >
-              {downloading ? (
-                <><span className="rd-spinner" />Saving…</>
-              ) : downloaded ? (
-                <><IonIcon icon={checkmarkCircleOutline} />Downloaded</>
-              ) : (
-                <><IonIcon icon={downloadOutline} />Download</>
-              )}
+              <IonIcon icon={downloadOutline} />
+              Download
             </button>
           </div>
         </div>
 
         {/* Image Lightbox */}
         {selectedImage && (
-          <div className="rd-lightbox-overlay" onClick={() => setSelectedImage(null)}>
-            <button className="rd-lightbox-close" onClick={() => setSelectedImage(null)}>
-              <IonIcon icon={closeCircleOutline} />
-            </button>
-            <div className="rd-lightbox-body" onClick={e => e.stopPropagation()}>
-              <div className="rd-lightbox-img-wrap">
-                <img src={selectedImage} alt="attachment" />
-              </div>
-            </div>
-          </div>
+          <Lightbox 
+            src={selectedImage} 
+            onClose={() => setSelectedImage(null)} 
+          />
         )}
 
       </IonContent>
@@ -467,11 +493,11 @@ function ReportDetail() {
                   <div className="rp-edit-file-list">
                     {editState.existingAttachments.map((att, i) => {
                       const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                      const thumbUrl = isImage ? `${API_URL}/${att.path.replace(/\\/g, '/')}` : undefined;
+                      const thumbUrl = isImage ? getMediaUrl(att.path) : undefined;
                       return (
                         <div key={`existing-${i}`} className="rp-edit-file-item">
                           {thumbUrl ? (
-                            <img src={thumbUrl} alt={att.originalName} className="rp-edit-file-thumb" />
+                            <ServerImage src={thumbUrl} alt={att.originalName} className="rp-edit-file-thumb" />
                           ) : (
                             <div className="rp-edit-file-icon-wrap"><IonIcon icon={attachOutline} /></div>
                           )}

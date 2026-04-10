@@ -1,6 +1,6 @@
 .vem-otp-input {
-  width: 42px;
-  height: 52px;
+  width: 35px;
+  height: 42px;
   text-align: center;
   font-size: 22px;
   font-weight: 700;
@@ -82,6 +82,6 @@
 }
 
 .vem-btn-resend:disabled {
-  color: #9e92ab;
   cursor: not-allowed;
+  background-color: white;
 }

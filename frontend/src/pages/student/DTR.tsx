@@ -5,7 +5,7 @@ import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, re
 import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
-import { formatDate, formatTime12 } from '@utils/date';
+import { formatDate, formatTime12, todayISO } from '@utils/date';
 import API from '@api/api';
 import BottomNav from '@components/BottomNav';
 import '@css/DTR.css';
@@ -32,8 +32,6 @@ const COLUMN_TO_KEY: Record<ScanResponse['session'], keyof AttendanceRecord> = {
   afternoon_in:  'afternoonTimeIn',
   afternoon_out: 'afternoonTimeOut',
 };
-
-const todayISO = () => new Date().toISOString().split('T')[0];
 
 const calcTotalHours = (r: AttendanceRecord) => {
   const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };

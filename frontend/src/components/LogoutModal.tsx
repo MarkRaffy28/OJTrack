@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import { IonIcon } from '@ionic/react';
+import { closeCircleOutline } from 'ionicons/icons';  
 import '@css/LogoutModal.css';
 
 interface LogoutModalProps {
@@ -110,7 +112,7 @@ function LogoutModal({ isOpen, onConfirm, onCancel, isLoading = false, onComplet
           disabled={isLoading}
           aria-label="Close"
         >
-          ✕
+          <IonIcon icon={closeCircleOutline} />
         </button>
 
         {/* Icon */}
@@ -152,7 +154,9 @@ function LogoutModal({ isOpen, onConfirm, onCancel, isLoading = false, onComplet
               Confirm
             </button>
             <button className="lm-btn lm-btn-cancel" onClick={onCancel}>
-              <span className="lm-btn-icon lm-btn-icon-cancel">✕</span>
+              <span className="lm-btn-icon lm-btn-icon-cancel">
+                <IonIcon icon={closeCircleOutline} />
+              </span>
               Cancel
             </button>
           </div>

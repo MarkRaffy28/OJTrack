@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { IonPage, IonContent, IonIcon, IonAvatar, IonSelect, IonSelectOption, IonSpinner } from '@ionic/react';
-import { timeOutline, documentTextOutline, cloudUploadOutline, logInOutline, logOutOutline, personOutline, shieldCheckmarkOutline, keyOutline, trashOutline, createOutline } from 'ionicons/icons';
+import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/react';
+import { timeOutline, documentTextOutline, cloudUploadOutline, qrCodeOutline } from 'ionicons/icons';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
 import { useActivity } from '@context/activityContext';
@@ -107,13 +107,9 @@ function Dashboard() {
             <span className="dash-section-title">Quick Actions</span>
           </div>
           <div className="quick-actions-grid">
-            <button className="qa-card qa-timein" onClick={() => handleNavigation('/qr')}>
-              <div className="qa-icon"><IonIcon icon={logInOutline} /></div>
-              <span className="qa-label">Scan QR</span>
-            </button>
-            <button className="qa-card qa-dtr" onClick={() => handleNavigation('/dtr')}>
-              <div className="qa-icon"><IonIcon icon={documentTextOutline} /></div>
-              <span className="qa-label">Daily Record</span>
+            <button className="qa-card qa-timein" onClick={() => handleNavigation('/dtr')}>
+              <div className="qa-icon"><IonIcon icon={qrCodeOutline} /></div>
+              <span className="qa-label">Time In/Out</span>
             </button>
             <button className="qa-card qa-report" onClick={() => handleNavigation('/upload-report')}>
               <div className="qa-icon"><IonIcon icon={cloudUploadOutline} /></div>
@@ -121,7 +117,11 @@ function Dashboard() {
             </button>
             <button className="qa-card qa-activity" onClick={() => handleNavigation('/activity')}>
               <div className="qa-icon"><IonIcon icon={timeOutline} /></div>
-              <span className="qa-label">Timeline</span>
+              <span className="qa-label">Activities</span>
+            </button>
+            <button className="qa-card qa-dtr" onClick={() => handleNavigation('/reports')}>
+              <div className="qa-icon"><IonIcon icon={documentTextOutline} /></div>
+              <span className="qa-label">Reports</span>
             </button>
           </div>
 

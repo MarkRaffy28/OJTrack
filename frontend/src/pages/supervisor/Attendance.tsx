@@ -337,20 +337,23 @@ function Attendance() {
                 </div>
 
                 <div className="qr-timer">
-                  <span className="qr-timer-count">
-                    00:{String(countdown).padStart(2, "0")}
-                  </span>
-                  <svg width="32" height="32" viewBox="0 0 48 48" className="qr-ring">
-                    <circle className="qr-ring-track" cx="24" cy="24" r="20" />
-                    <circle 
-                      className="qr-ring-progress" 
-                      cx="24" cy="24" r="20" 
-                      style={{ 
-                        strokeDasharray: circumference, 
-                        strokeDashoffset: circumference - progress 
-                      }}
-                    />
-                  </svg>
+                  <span className="qr-timer-label">Expires in</span>
+                  <div className="qr-timer-wrapper">
+                    <span className="qr-timer-count">
+                      00:{String(countdown).padStart(2, "0")}s
+                    </span>
+                    <svg width="32" height="32" viewBox="0 0 48 48" className="qr-ring">
+                      <circle className="qr-ring-track" cx="24" cy="24" r="20" />
+                      <circle 
+                        className="qr-ring-progress" 
+                        cx="24" cy="24" r="20" 
+                        style={{ 
+                          strokeDasharray: circumference, 
+                          strokeDashoffset: circumference - progress 
+                        }}
+                      />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>

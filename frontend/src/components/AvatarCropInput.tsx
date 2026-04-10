@@ -1,14 +1,12 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { IonIcon } from '@ionic/react';
 import { cameraOutline, trashOutline, closeOutline, checkmarkOutline } from 'ionicons/icons';
+import Avatar from './Avatar';
+import '@css/AvatarCropInput.css';
 
-const CROP_SIZE = 280;
+const CROP_SIZE = 248; // viewport square size in px
 
-interface CropState {
-  x: number;
-  y: number;
-  scale: number;
-}
+interface CropState { x: number; y: number; scale: number; }
 
 interface AvatarCropInputProps {
   value: string | null;
@@ -24,6 +22,27 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
   const dragStart    = useRef<{ mx: number; my: number; cx: number; cy: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cropImgRef   = useRef<HTMLImageElement>(null);
+  const viewportRef  = useRef<HTMLDivElement>(null);
+  const lastTouchDist = useRef<number>(0);
+
+  // ── Wheel zoom — must be non-passive to call preventDefault ──────────────
+  useEffect(() => {
+    if (!isCropping) return;
+    const el = viewportRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      setCropState(prev => {
+        const newScale = Math.max(0.5, Math.min(4, prev.scale - e.deltaY * 0.001));
+        const ratio    = newScale / prev.scale;
+        const cx = CROP_SIZE / 2;
+        const cy = CROP_SIZE / 2;
+        return { scale: newScale, x: cx - ratio * (cx - prev.x), y: cy - ratio * (cy - prev.y) };
+      });
+    };
+    el.addEventListener('wheel', handler, { passive: false });
+    return () => el.removeEventListener('wheel', handler);
+  }, [isCropping]);
 
   // ── File pick ────────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,12 +62,7 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
   const handleImageLoad = useCallback(() => {
     const img = cropImgRef.current;
     if (!img) return;
-    // Cover-fit scale: image fills the crop square on the shorter axis
-    const scale = Math.max(
-      CROP_SIZE / img.naturalWidth,
-      CROP_SIZE / img.naturalHeight,
-    );
-    // Center the scaled image within the viewport
+    const scale = Math.max(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
     const x = (CROP_SIZE - img.naturalWidth  * scale) / 2;
     const y = (CROP_SIZE - img.naturalHeight * scale) / 2;
     setCropState({ x, y, scale });
@@ -62,13 +76,10 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
 
   const onDragMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging || !dragStart.current) return;
-    const dx = clientX - dragStart.current.mx;
-    const dy = clientY - dragStart.current.my;
-    setCropState(prev => ({
-      ...prev,
-      x: dragStart.current!.cx + dx,
-      y: dragStart.current!.cy + dy,
-    }));
+    const start = dragStart.current;
+    const dx = clientX - start.mx;
+    const dy = clientY - start.my;
+    setCropState(prev => ({ ...prev, x: start.cx + dx, y: start.cy + dy }));
   }, [isDragging]);
 
   const onDragEnd = useCallback(() => {
@@ -80,32 +91,21 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
   const applyCrop = useCallback(() => {
     const img = cropImgRef.current;
     if (!img || !rawImageSrc) return;
-
     const canvas = document.createElement('canvas');
     const OUTPUT = 400;
     canvas.width = canvas.height = OUTPUT;
     const ctx = canvas.getContext('2d')!;
-
-    // Image top-left is at (x, y) in viewport space, scaled by `scale`.
-    // To find what part of the natural image covers the viewport [0..CROP_SIZE]:
-    //   viewport point (vx, vy) → natural image point ((vx - x) / scale, (vy - y) / scale)
-    // So viewport (0, 0) → natural (-x / scale, -y / scale)
     const srcX = -cropState.x / cropState.scale;
     const srcY = -cropState.y / cropState.scale;
     const srcW =  CROP_SIZE   / cropState.scale;
     const srcH =  CROP_SIZE   / cropState.scale;
-
     ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUTPUT, OUTPUT);
-
     onChange(canvas.toDataURL('image/jpeg', 0.92));
     setIsCropping(false);
     setRawImageSrc(null);
   }, [rawImageSrc, cropState, onChange]);
 
-  const cancelCrop = () => {
-    setIsCropping(false);
-    setRawImageSrc(null);
-  };
+  const cancelCrop = () => { setIsCropping(false); setRawImageSrc(null); };
 
   return (
     <>
@@ -113,37 +113,30 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
+        className="ea-hidden-file-input"
         onChange={handleFileChange}
       />
 
-      {/* ── Avatar with camera button ── */}
+      {/* ── Avatar preview ── */}
       <div className="ea-hero-avatar-area">
         <div className="ea-avatar-wrap">
           {value ? (
-            <div className="ea-avatar ea-avatar--photo">
-              <img src={value} alt="Profile" />
-            </div>
+            <Avatar 
+              src={value} 
+              name="Profile" 
+              className="ea-avatar ea-avatar--photo" 
+            />
           ) : (
             <div className="ea-avatar">
               <IonIcon icon={cameraOutline} />
             </div>
           )}
-          <button
-            type="button"
-            className="ea-avatar-cam"
-            onClick={() => fileInputRef.current?.click()}
-          >
+          <button type="button" className="ea-avatar-cam" onClick={() => fileInputRef.current?.click()}>
             <IonIcon icon={cameraOutline} />
           </button>
         </div>
-
         {value && (
-          <button
-            type="button"
-            className="ea-remove-photo"
-            onClick={() => onChange(null)}
-          >
+          <button type="button" className="ea-remove-photo" onClick={() => onChange(null)}>
             <IonIcon icon={trashOutline} /> Remove photo
           </button>
         )}
@@ -154,6 +147,7 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
         <div className="ea-cropper-overlay">
           <div className="ea-cropper-modal">
 
+            {/* Header */}
             <div className="ea-cropper-header">
               <div className="ea-cropper-title-group">
                 <div className="ea-cropper-icon-badge">
@@ -161,7 +155,7 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
                 </div>
                 <div>
                   <div className="ea-cropper-title">Adjust your photo</div>
-                  <div className="ea-cropper-subtitle">Drag · Scroll or slide to zoom</div>
+                  <div className="ea-cropper-subtitle">Drag · Pinch or slide to zoom</div>
                 </div>
               </div>
               <button type="button" className="ea-cropper-close" onClick={cancelCrop}>
@@ -169,30 +163,63 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
               </button>
             </div>
 
-            <div className="ea-cropper-viewport-wrap">
+            {/* Viewport */}
+            <div className="ea-cropper-viewport-container">
               <div
+                ref={viewportRef}
                 className="ea-cropper-viewport"
-                style={{ width: CROP_SIZE, height: CROP_SIZE, position: 'relative', overflow: 'hidden' }}
+                style={{
+                  width: CROP_SIZE,
+                  height: CROP_SIZE,
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                  '--crop-size': `${CROP_SIZE}px`
+                } as React.CSSProperties}
                 onMouseDown={e  => onDragStart(e.clientX, e.clientY)}
                 onMouseMove={e  => { if (isDragging) onDragMove(e.clientX, e.clientY); }}
                 onMouseUp={onDragEnd}
                 onMouseLeave={onDragEnd}
-                onTouchStart={e => { const t = e.touches[0]; onDragStart(t.clientX, t.clientY); }}
-                onTouchMove={e  => { const t = e.touches[0]; onDragMove(t.clientX, t.clientY); }}
-                onTouchEnd={onDragEnd}
-                onWheel={e => {
+                onTouchStart={e => {
                   e.preventDefault();
-                  setCropState(prev => {
-                    const newScale = Math.max(0.5, Math.min(4, prev.scale - e.deltaY * 0.001));
-                    const ratio = newScale / prev.scale;
-                    const cx = CROP_SIZE / 2;
-                    const cy = CROP_SIZE / 2;
-                    return {
-                      scale: newScale,
-                      x: cx - ratio * (cx - prev.x),
-                      y: cy - ratio * (cy - prev.y),
-                    };
-                  });
+                  if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    onDragStart(t.clientX, t.clientY);
+                  } else if (e.touches.length === 2) {
+                    const d = Math.hypot(
+                      e.touches[0].clientX - e.touches[1].clientX,
+                      e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    lastTouchDist.current = d;
+                  }
+                }}
+                onTouchMove={e => {
+                  e.preventDefault();
+                  if (e.touches.length === 1) {
+                    const t = e.touches[0];
+                    onDragMove(t.clientX, t.clientY);
+                  } else if (e.touches.length === 2) {
+                    const d = Math.hypot(
+                      e.touches[0].clientX - e.touches[1].clientX,
+                      e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const lastD = lastTouchDist.current || d;
+                    const ratio = d / lastD;
+                    setCropState(prev => {
+                      const newScale = Math.max(0.5, Math.min(4, prev.scale * ratio));
+                      const scaleRatio = newScale / prev.scale;
+                      const cx = CROP_SIZE / 2;
+                      const cy = CROP_SIZE / 2;
+                      return {
+                        scale: newScale,
+                        x: cx - scaleRatio * (cx - prev.x),
+                        y: cy - scaleRatio * (cy - prev.y)
+                      };
+                    });
+                    lastTouchDist.current = d;
+                  }
+                }}
+                onTouchEnd={() => {
+                  onDragEnd();
+                  lastTouchDist.current = 0;
                 }}
               >
                 <img
@@ -201,28 +228,17 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
                   alt="crop"
                   draggable={false}
                   onLoad={handleImageLoad}
+                  className="ea-cropper-image"
                   style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    // Size the image by its natural dimensions × scale,
-                    // then translate so top-left sits at (x, y).
-                    // This means cropState.x/y is literally the top-left corner
-                    // of the image in viewport space — exactly what the canvas math uses.
                     width:  cropImgRef.current ? cropImgRef.current.naturalWidth  * cropState.scale : undefined,
                     height: cropImgRef.current ? cropImgRef.current.naturalHeight * cropState.scale : undefined,
                     transform: `translate(${cropState.x}px, ${cropState.y}px)`,
-                    transformOrigin: 'top left',
-                    maxWidth: 'none',
-                    userSelect: 'none',
-                    pointerEvents: 'none',
                   }}
                 />
-                <div className="ea-cropper-mask" />
-                <div className="ea-cropper-ring" />
               </div>
             </div>
 
+            {/* Zoom slider */}
             <div className="ea-cropper-zoom-row">
               <span className="ea-cropper-zoom-label">–</span>
               <input
@@ -234,11 +250,7 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
                     const ratio = newScale / prev.scale;
                     const cx = CROP_SIZE / 2;
                     const cy = CROP_SIZE / 2;
-                    return {
-                      scale: newScale,
-                      x: cx - ratio * (cx - prev.x),
-                      y: cy - ratio * (cy - prev.y),
-                    };
+                    return { scale: newScale, x: cx - ratio * (cx - prev.x), y: cy - ratio * (cy - prev.y) };
                   });
                 }}
                 className="ea-cropper-slider"
@@ -246,6 +258,7 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
               <span className="ea-cropper-zoom-label">+</span>
             </div>
 
+            {/* Actions */}
             <div className="ea-cropper-actions">
               <button type="button" className="ea-cropper-btn ea-cropper-btn--cancel" onClick={cancelCrop}>
                 Cancel
@@ -260,6 +273,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
       )}
     </>
   );
-};
+}
 
 export default AvatarCropInput;

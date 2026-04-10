@@ -89,11 +89,14 @@ function Trainees() {
                     onClick={() => history.push(`/trainee-detail/${trainee.studentId}`)}
                   >
                     {/* Left: Avatar */}
-                    <Avatar
-                      src={trainee.profilePicture}
-                      name={trainee.fullName}
-                      className="sv-trainee-avatar"
-                    />
+                    <div onClick={e => e.stopPropagation()}>
+                      <Avatar
+                        src={trainee.profilePicture}
+                        name={trainee.fullName}
+                        className="sv-trainee-avatar"
+                        clickable={false}
+                      />
+                    </div>
 
                     {/* Middle: Info */}
                     <div className="sv-trainee-info">
