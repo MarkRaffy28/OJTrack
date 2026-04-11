@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useHistory } from 'react-router';
-import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner } from '@ionic/react';
-import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, alertCircleOutline, } from 'ionicons/icons';
+import { IonPage, IonContent, IonText, IonImg, IonIcon, IonSpinner, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { personOutline, lockClosedOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowForwardOutline, alertCircleOutline, chevronDownCircleOutline } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
+import { useNavigation } from '@/hooks/useNavigation';
 import API from '@api/api';
 import SecretTrigger from "@components/SwitchServer";
 
 function Login() {
-  const history = useHistory();
+  const { navigate } = useNavigation();
   const { login, role, loading } = useAuth();
 
   const [username, setUsername] = useState('');
@@ -19,15 +19,28 @@ function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formReady = username && password;
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    setUsername('');
+    setPassword('');
+    setLoginError('');
+    setUsernameTouched(false);
+    setPasswordTouched(false);
+    await new Promise(resolve => setTimeout(resolve, 800));
+    event.detail.complete();
+  };
   
+  const performRedirect = (userRole: string) => {
+    if (userRole === "student") {
+      navigate("/dashboard", "root");
+    } else if (userRole === "supervisor") {
+      navigate("/supervisor-dashboard", "root");
+    }
+  };
+
   useEffect(() => {
     if (loading || !role) return;
-
-    if (role === "student") {
-      history.replace("/dashboard");
-    } else if (role === "supervisor") {
-      history.replace("/supervisor-dashboard");
-    }
+    performRedirect(role);
 
     setUsername('');
     setPassword('');
@@ -44,6 +57,9 @@ function Login() {
       if (response.data.token) {
         setLoginError("");
         await login(response.data.token);
+        
+        const decoded = JSON.parse(atob(response.data.token.split('.')[1]));
+        performRedirect(decoded.role);
       } 
 
     } catch (error: any) {
@@ -63,6 +79,12 @@ function Login() {
   return (
     <IonPage>
       <IonContent fullscreen>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
         <div className="login-page">
           <div className="login-background">
             <div className="bg-gradient" />
@@ -146,7 +168,7 @@ function Login() {
                 <button
                   type="button"
                   className="forgot-link"
-                  onClick={() => history.push('/forgot-password')}
+                  onClick={() => navigate('/forgot-password')}
                 >
                   Forgot Password?
                 </button>
@@ -177,7 +199,7 @@ function Login() {
               <div className="register-section">
                 <IonText className="register-text">
                   Don't have an account?{' '}
-                  <span className="register-link" onClick={() => history.push('/register')}>
+                  <span className="register-link" onClick={() => navigate('/register')}>
                     Sign Up
                   </span>
                 </IonText>

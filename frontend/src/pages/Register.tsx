@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useHistory } from "react-router-dom";
-import { IonPage, IonContent, IonText, IonIcon, } from "@ionic/react";
+import { IonPage, IonContent, IonText, IonIcon, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import { 
-  mailOutline, lockClosedOutline, personOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowBackOutline, 
-  arrowForwardOutline, schoolOutline, briefcaseOutline, alertCircleOutline, calendarOutline, documentTextOutline, closeOutline, 
-  checkmarkOutline, callOutline, locationOutline, idCardOutline, statsChartOutline, 
-  maleFemaleOutline, codeSlashOutline, businessOutline
+  mailOutline, lockClosedOutline, personOutline, eyeOutline, eyeOffOutline, checkmarkCircleOutline, arrowBackOutline, arrowForwardOutline, 
+  schoolOutline, briefcaseOutline, alertCircleOutline, calendarOutline, documentTextOutline, closeOutline, checkmarkOutline, callOutline, locationOutline, idCardOutline, statsChartOutline, 
+  maleFemaleOutline, codeSlashOutline, businessOutline, chevronDownCircleOutline
 } from "ionicons/icons";
+import { useNavigation } from "@/hooks/useNavigation";
 import API from "@api/api";
 import AvatarCropInput from "@components/AvatarCropInput";
 import TermsModal from "@components/TermsModal";
@@ -16,9 +15,12 @@ type UserRole = "student" | "supervisor" | null;
 type RegistrationStep = "role" | "username" | "form" | "photo";
 
 function Register() {
-  const history = useHistory();
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [registrationStep, setRegistrationStep] = useState<RegistrationStep>("role");
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    window.location.reload();
+  };
 
   // Username
   const [username, setUsername] = useState("");
@@ -112,7 +114,6 @@ function Register() {
   const validateContactNumber = (v: string) => /^09\d{9}$/.test(v);
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const validatePassword = (v: string) => /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/.test(v);
-
 
  const handleUsernameCheck = async () => {
     setUsernameError("");
@@ -295,11 +296,22 @@ function Register() {
     clearAllFields();
   };
 
+  const { navigate } = useNavigation({
+    onBack: () => {
+      if (showTermsModal) setShowTermsModal(false);
+      else if (registrationStep === "photo") setRegistrationStep("form");
+      else if (registrationStep === "form") setRegistrationStep("username");
+      else if (registrationStep === "username") handleBackFromUsername();
+      else navigate("/login", "back");
+    },
+    exitOnBack: false,
+  });
+
   const handleBack = () => {
     if (registrationStep === "photo") setRegistrationStep("form");
     else if (registrationStep === "form") setRegistrationStep("username");
     else if (registrationStep === "username") handleBackFromUsername();
-    else history.push("/login");
+    else navigate("/login", "back");
   };
 
   // ── Handle form submit ────────────────────────────────────────────────────
@@ -382,7 +394,7 @@ function Register() {
         setTimeout(() => {
           setIsRedirecting(false);
           setShowTermsModal(false);
-          history.push("/login");
+          navigate("/login");
         }, 2200);
       } else {
         setIsRedirecting(false);
@@ -447,7 +459,7 @@ function Register() {
       <div className="login-link-section">
         <IonText className="login-text">
           Already have an account?{" "}
-          <span className="login-link" onClick={() => history.push("/login")}>
+          <span className="login-link" onClick={() => navigate("/login", "back")}>
             Log In
           </span>
         </IonText>
@@ -1492,7 +1504,13 @@ function Register() {
 
   return (
     <IonPage>
-      <IonContent fullscreen className={`register-page ${showTermsModal ? "no-scroll" : ""}`}>
+      <IonContent fullscreen forceOverscroll={false} className={`register-page ${showTermsModal ? "no-scroll" : ""}`}>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
         {registrationStep === "role" && renderRoleSelection()}
         {registrationStep === "username" && renderUsernameCheck()}
         {registrationStep === "form" && renderForm()}

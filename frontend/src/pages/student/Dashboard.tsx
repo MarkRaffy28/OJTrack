@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/react';
-import { timeOutline, documentTextOutline, cloudUploadOutline, qrCodeOutline } from 'ionicons/icons';
+import React, { useEffect } from 'react';
+import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { timeOutline, documentTextOutline, cloudUploadOutline, qrCodeOutline, chevronDownCircleOutline } from 'ionicons/icons';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
 import { useActivity } from '@context/activityContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { useOjtProgress } from '@hooks/useOJtProgress';
 import { getGreeting } from '@utils/date';
 import Avatar from '@components/Avatar';
@@ -12,25 +12,39 @@ import BottomNav from '@components/BottomNav';
 import RecentActivity from '@components/RecentActivity';
 
 function Dashboard() {
-  const history = useHistory();
-  const location = useLocation();
-  const { ojtRecords, currentOjt, selectedSchoolYear, selectSchoolYear } = useOjt();
-  const { user } = useUser();
+  const { navigate } = useNavigation();
+  const { ojtRecords, currentOjt, selectedSchoolYear, selectSchoolYear, fetchAllOjts } = useOjt();
+  const { user, refreshUser } = useUser();
   const { activities, getLatestActivities, loadingActivities, fetchActivities } = useActivity();
   const { requiredHours, renderedHours, remainingHours, progressPercentage } = useOjtProgress(currentOjt);
-
-
-  const handleNavigation = (route: string) => {
-    history.push(route);
-  };
 
   useEffect(() => {
     fetchActivities();
   }, [location.pathname]);
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    try {
+      await Promise.all([
+        refreshUser(),
+        fetchAllOjts(),
+        fetchActivities()
+      ]);
+    } catch (error) {
+      console.error("Refresh failed", error);
+    } finally {
+      event.detail.complete();
+    }
+  };
   
   return (
     <IonPage>
       <IonContent fullscreen className="dashboard-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
 
         {/* Hero Header */}
         <div className="dash-hero">
@@ -69,7 +83,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="dash-body">
+        <div className="dash-body" style={{ minHeight: '80vh', paddingBottom: '100px' }}>
 
           {/* Progress Card */}<br/> <br />
           <div className="dash-card progress-main-card">
@@ -107,19 +121,19 @@ function Dashboard() {
             <span className="dash-section-title">Quick Actions</span>
           </div>
           <div className="quick-actions-grid">
-            <button className="qa-card qa-timein" onClick={() => handleNavigation('/dtr')}>
+            <button className="qa-card qa-timein" onClick={() => navigate('/dtr')}>
               <div className="qa-icon"><IonIcon icon={qrCodeOutline} /></div>
               <span className="qa-label">Time In/Out</span>
             </button>
-            <button className="qa-card qa-report" onClick={() => handleNavigation('/upload-report')}>
+            <button className="qa-card qa-report" onClick={() => navigate('/upload-report')}>
               <div className="qa-icon"><IonIcon icon={cloudUploadOutline} /></div>
               <span className="qa-label">New Report</span>
             </button>
-            <button className="qa-card qa-activity" onClick={() => handleNavigation('/activity')}>
+            <button className="qa-card qa-activity" onClick={() => navigate('/activity')}>
               <div className="qa-icon"><IonIcon icon={timeOutline} /></div>
               <span className="qa-label">Activities</span>
             </button>
-            <button className="qa-card qa-dtr" onClick={() => handleNavigation('/reports')}>
+            <button className="qa-card qa-dtr" onClick={() => navigate('/reports')}>
               <div className="qa-icon"><IonIcon icon={documentTextOutline} /></div>
               <span className="qa-label">Reports</span>
             </button>
@@ -128,7 +142,7 @@ function Dashboard() {
           {/* Recent Activity */}
           <div className="dash-section-header">
             <span className="dash-section-title">Recent Activity</span>
-            <button className="dash-view-all" onClick={() => handleNavigation('/activity')}>View All</button>
+            <button className="dash-view-all" onClick={() => navigate('/activity')}>View All</button>
           </div>
 
           <RecentActivity activities={activities} loading={loadingActivities} />

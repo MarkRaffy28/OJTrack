@@ -13,7 +13,21 @@ import supervisorRoutes from "./routes/supervisor.route.js";
 const app = express();
 const apiRouter = express.Router();
 
-app.use(cors());
+const corsOptions = {
+  origin: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "ngrok-skip-browser-warning",
+    "X-Requested-With",
+  ],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 app.use("/uploads", (req, res, next) => {

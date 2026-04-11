@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption } from '@ionic/react';
-import { peopleOutline, documentTextOutline, personOutline, schoolOutline, analyticsOutline, calendarOutline, statsChartOutline } from 'ionicons/icons';
+import { useLocation } from 'react-router-dom';
+import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { peopleOutline, documentTextOutline, personOutline, schoolOutline, analyticsOutline, calendarOutline, statsChartOutline, chevronDownCircleOutline } from 'ionicons/icons';
 import { useActivity } from '@context/activityContext';
 import { useUser, isSupervisor } from '@context/userContext';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { getGreeting } from '@utils/date';
 import Avatar from '@components/Avatar';
 import RecentActivity from '@components/RecentActivity';
@@ -12,21 +13,25 @@ import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import '@css/Supervisor.css';
 
 function SupervisorDashboard() {
-  const history = useHistory();
+  const { navigate } = useNavigation();
   const { user } = useUser();
   const { dashboardStats, stats, loading, fetchDashboardStats, setFilters, filters, allOjts, uniqueCohorts } = useSupervisorOjt();
   const { activities, loadingActivities, fetchActivities } = useActivity();
   const location = useLocation();
 
-  const handleNavigation = (route: string) => {
-    history.push(route);
-  };
-
   const handleSearch = (e: any) => {
     setFilters({ ...filters, search: e.detail.value || "" });
     if (e.detail.value) {
-      history.push('/manage-trainees');
+      navigate('/manage-trainees');
     }
+  };
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await Promise.all([
+      fetchDashboardStats(),
+      fetchActivities()
+    ]);
+    event.detail.complete();
   };
 
   useEffect(() => {
@@ -41,6 +46,12 @@ function SupervisorDashboard() {
   return (
     <IonPage>
       <IonContent fullscreen className="sv-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
         <div className="sv-hero">
           <div className="sv-hero-bg" />
           <div className="sv-hero-inner">
@@ -85,25 +96,25 @@ function SupervisorDashboard() {
           </div>
         </div>
 
-        <div className="sv-body">
+        <div className="sv-body" style={{ minHeight: '80vh', paddingBottom: '100px' }}>
 
           {/* Quick Stats Grid */}
           <div className="sv-stats-grid">
-            <div className="sv-stat-card sv-stat-purple" onClick={() => handleNavigation('/manage-trainees')}>
+            <div className="sv-stat-card sv-stat-purple" onClick={() => navigate('/manage-trainees')}>
               <div className="sv-stat-icon-wrap">
                 <IonIcon icon={peopleOutline} />
               </div>
               <p className="sv-stat-num">{stats.total}</p>
               <p className="sv-stat-lbl">Trainees</p>
             </div>
-            <div className="sv-stat-card sv-stat-amber" onClick={() => handleNavigation('/review-reports')}>
+            <div className="sv-stat-card sv-stat-amber" onClick={() => navigate('/review-reports')}>
               <div className="sv-stat-icon-wrap">
                 <IonIcon icon={documentTextOutline} />
               </div>
               <p className="sv-stat-num">{dashboardStats?.pendingReports || 0}</p>
               <p className="sv-stat-lbl">Pending</p>
             </div>
-            <div className="sv-stat-card sv-stat-green" onClick={() => handleNavigation('/attendance-logs')}>
+            <div className="sv-stat-card sv-stat-green" onClick={() => navigate('/attendance-logs')}>
               <div className="sv-stat-icon-wrap">
                 <IonIcon icon={personOutline} />
               </div>
@@ -147,19 +158,19 @@ function SupervisorDashboard() {
             <span className="sv-section-title">Quick Actions</span>
           </div>
           <div className="sv-qa-grid">
-            <button className="sv-qa-card" onClick={() => handleNavigation('/trainees')}>
+            <button className="sv-qa-card" onClick={() => navigate('/trainees')}>
               <div className="sv-qa-icon qa-purple"><IonIcon icon={schoolOutline} /></div>
               <span className="sv-qa-label">Trainees</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/attendance')}>
+            <button className="sv-qa-card" onClick={() => navigate('/attendance')}>
               <div className="sv-qa-icon qa-green"><IonIcon icon={calendarOutline} /></div>
               <span className="sv-qa-label">Attendance</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/reports')}>
+            <button className="sv-qa-card" onClick={() => navigate('/reports')}>
               <div className="sv-qa-icon qa-amber"><IonIcon icon={analyticsOutline} /></div>
               <span className="sv-qa-label">Reports</span>
             </button>
-            <button className="sv-qa-card" onClick={() => handleNavigation('/activity')}>
+            <button className="sv-qa-card" onClick={() => navigate('/activity')}>
               <div className="sv-qa-icon qa-dark"><IonIcon icon={statsChartOutline} /></div>
               <span className="sv-qa-label">Activities</span>
             </button>
@@ -168,7 +179,7 @@ function SupervisorDashboard() {
           {/* Recent Student Activity */}
           <div className="sv-section-header">
             <span className="sv-section-title">Recent Activity</span>
-            <button className="sv-view-all" onClick={() => handleNavigation('/activity')}>View All</button>
+            <button className="sv-view-all" onClick={() => navigate('/activity')}>View All</button>
           </div>
 
           <RecentActivity 

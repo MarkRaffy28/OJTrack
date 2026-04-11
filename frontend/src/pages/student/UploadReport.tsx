@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useHistory, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { IonPage, IonContent, IonIcon } from "@ionic/react";
 import { 
   arrowBackOutline, calendarOutline, documentTextOutline, createOutline, cloudUploadOutline, imagesOutline, closeCircleOutline, 
@@ -8,6 +8,7 @@ import {
 import { useAuth } from "@context/authContext";
 import { useOjt } from "@context/ojtContext";
 import { useReport } from "@context/reportContext";
+import { useNavigation } from "@hooks/useNavigation";
 import API from "@api/api";
 import "@css/UploadReport.css";
 
@@ -40,13 +41,13 @@ interface UploadedFile {
 }
 
 function UploadReport() {
-  const history = useHistory();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { token, databaseId } = useAuth();
   const { currentOjt } = useOjt();
   const { fetchReports } = useReport();
+  const { navigate } = useNavigation();
 
   const [reportDate, setReportDate] = useState("");
   const [reportTitle, setReportTitle] = useState("");
@@ -183,7 +184,7 @@ function UploadReport() {
       await fetchReports();
       resetForm();
       setSubmitted(true);
-      setTimeout(() => history.push("/reports"), 1800);
+      setTimeout(() => navigate('/reports'), 1800);
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||
@@ -221,7 +222,7 @@ function UploadReport() {
           <div className="ur-hero-inner">
             <button
               className="ur-back-btn"
-              onClick={() => history.push("/reports")}
+              onClick={() => navigate('/reports')}
             >
               <IonIcon icon={arrowBackOutline} />
             </button>

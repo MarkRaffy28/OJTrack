@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { IonPage, IonContent, IonIcon, IonToast } from '@ionic/react';
+import { IonPage, IonContent, IonIcon, IonToast, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import { CapacitorBarcodeScanner, CapacitorBarcodeScannerTypeHint } from '@capacitor/barcode-scanner';
-import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, refreshOutline, closeCircle } from 'ionicons/icons';
+import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, refreshOutline, closeCircle, chevronDownCircleOutline } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { formatDate, formatTime12, todayISO } from '@utils/date';
 import API from '@api/api';
 import BottomNav from '@components/BottomNav';
@@ -42,6 +43,8 @@ const calcTotalHours = (r: AttendanceRecord) => {
 };
 
 function DTR() {
+  useNavigation(); 
+
   const { token }      = useAuth();
   const { currentOjt } = useOjt();
   const { user }       = useUser();
@@ -85,6 +88,11 @@ function DTR() {
       setLoadingFetch(false);
     }
   }, [token, user?.databaseId, currentOjt?.id, showToast]);
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchAttendance();
+    event.detail.complete();
+  };
 
   useEffect(() => {
     fetchAttendance();
@@ -131,6 +139,12 @@ function DTR() {
   return (
     <IonPage>
       <IonContent fullscreen className="dtr-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
 
         {/* Hero */}
         <div className="dtr-hero">

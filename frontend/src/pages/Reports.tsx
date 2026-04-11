@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useHistory, useLocation } from "react-router-dom";
-import { IonPage, IonContent, IonIcon } from "@ionic/react";
-import { personOutline } from "ionicons/icons";
+import { useLocation } from "react-router-dom";
+import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, RefresherEventDetail } from "@ionic/react";
 import { 
   documentTextOutline, downloadOutline, eyeOutline, addOutline, calendarOutline, checkmarkCircleOutline, timeOutline, searchOutline, 
   closeOutline, printOutline, createOutline, trashOutline, closeCircleOutline, alertCircleOutline, saveOutline, cloudUploadOutline, 
-  attachOutline, banOutline, documentOutline, checkmarkOutline, arrowBackOutline
+  attachOutline, banOutline, documentOutline, checkmarkOutline, arrowBackOutline, chevronDownCircleOutline,
+  personOutline
 } from "ionicons/icons";
 import { getMediaUrl } from "@api/api";
 import { useAuth } from "@context/authContext";
 import { useReport, Report, ReportAttachment } from "@context/reportContext";
+import { useNavigation } from "@hooks/useNavigation";
 import { formatDate, formatDateForInput } from "@utils/date";
 import { capitalize } from "@utils/string";
 import { Capacitor } from '@capacitor/core';
@@ -50,23 +51,44 @@ const REPORT_TYPES: { label: string; value: Report["type"] }[] = [
 ];
 
 function Reports() {
-  const history = useHistory();
   const location = useLocation();
   const { role } = useAuth();
-  const isSupervisor = role === "supervisor";
   const { reports, deleteReport, fetchReports, updateReport, updateReportStatus, loadingReports } = useReport();
   const [viewState, setViewState] = useState<Report | null>(null);
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Report | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isEditingFeedback, setIsEditingFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchReports();
+    event.detail.complete();
+  };
+
+  const hasOpenModal = viewState || editState || deleteTarget || selectedImage;
+
+  const { navigate, goBack } = useNavigation(hasOpenModal ? {
+    onBack: () => {
+      if (selectedImage) setSelectedImage(null);
+      else if (editState) closeEdit();
+      else if (deleteTarget) setDeleteTarget(null);
+      else if (isEditingFeedback) setIsEditingFeedback(false);
+      else if (viewState) {
+        setViewState(null);
+        setFeedbackText("");
+        setIsEditingFeedback(false);
+      }
+    }
+  } : {});
+
   const [imgExpanded, setImgExpanded] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [editState, setEditState] = useState<EditState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<Report | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [isEditingFeedback, setIsEditingFeedback] = useState(false);
   const [savingFeedback, setSavingFeedback] = useState(false);
   const editFileRef = useRef<HTMLInputElement>(null);
+  const isSupervisor = role === "supervisor";
 
   const stats = {
     total: reports.length,
@@ -309,6 +331,12 @@ function Reports() {
   return (
     <IonPage>
       <IonContent fullscreen className="rp-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
         {/* Hero */}
         <div className="rp-hero">
           <div className="rp-hero-bg" />
@@ -318,7 +346,7 @@ function Reports() {
           </div>
         </div>
 
-        <div className="rp-container">
+        <div className="rp-container" style={{ minHeight: '100%', paddingBottom: '120px' }}>
           {/* Stats Row */} <br />
           <div className="rp-stats-row">
             <div className="rp-stat-card rp-stat-total">
@@ -381,7 +409,7 @@ function Reports() {
           {/* Report Cards */}
           <div className="rp-list">
             {loadingReports ? (
-              <div className="rp-loading-state">
+              <div className="rp-loading-state" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                 <span className="rp-spinner-large" />
                 <p>Loading reports...</p>
               </div>
@@ -553,7 +581,7 @@ function Reports() {
         <div className="rp-fab-wrap">
           <button
             className="rp-fab"
-            onClick={() => history.push("/upload-report")}
+            onClick={() => navigate("/upload-report")}
           >
             <IonIcon icon={addOutline} />
             <span>Upload Report</span>

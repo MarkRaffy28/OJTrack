@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { IonIcon } from '@ionic/react';
+import { IonIcon, useIonRouter } from '@ionic/react';
 import { closeCircleOutline } from 'ionicons/icons';  
 import '@css/LogoutModal.css';
 
@@ -13,8 +12,7 @@ interface LogoutModalProps {
 }
 
 function LogoutModal({ isOpen, onConfirm, onCancel, isLoading = false, onComplete }: LogoutModalProps) {
-  const history = useHistory();
-  const [navigateToLogin, setNavigateToLogin] = useState(false);
+  const ionRouter       = useIonRouter();
   const modalRef         = useRef<HTMLDivElement>(null);
   const confirmButtonRef   = useRef<HTMLButtonElement>(null);
   const previousActiveEl   = useRef<HTMLElement | null>(null);
@@ -31,7 +29,6 @@ function LogoutModal({ isOpen, onConfirm, onCancel, isLoading = false, onComplet
   const handleBackdropClick = (event: React.MouseEvent) => {
     if (event.target === event.currentTarget && !isLoading) onCancel();
   };
-
   useEffect(() => {
     if (!isLoading) {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -43,19 +40,12 @@ function LogoutModal({ isOpen, onConfirm, onCancel, isLoading = false, onComplet
     hasNavigatedRef.current = true;
     timerRef.current = setTimeout(() => {
       onComplete?.();
-      setNavigateToLogin(true);
     }, 1500);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [isLoading, onComplete]);
-
-  useEffect(() => {
-    if (navigateToLogin) {
-      history.replace('/login');
-    }
-  }, [navigateToLogin, history]);
 
   useEffect(() => {
     if (isOpen) {

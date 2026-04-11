@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useIonRouter, RouterDirection } from '@ionic/react';
-import { App } from '@capacitor/app';
+import { useExitModal } from '@context/exitModalContext';
 
 interface UseNavigationOptions {
   onBack?: () => void;
@@ -10,25 +10,40 @@ interface UseNavigationOptions {
 export const useNavigation = (options: UseNavigationOptions = {}) => {
   const { onBack, exitOnBack = true } = options;
   const ionRouter = useIonRouter();
+  const { promptExit } = useExitModal();
+
+  const onBackRef      = useRef(onBack);
+  const exitOnBackRef  = useRef(exitOnBack);
+  const promptExitRef  = useRef(promptExit);
 
   useEffect(() => {
-    const listener = App.addListener('backButton', () => {
-      if (onBack) {
-        onBack();
-        return;
-      }
+    onBackRef.current     = onBack;
+    exitOnBackRef.current = exitOnBack;
+    promptExitRef.current = promptExit;
+  }, [onBack, exitOnBack, promptExit]);
 
-      if (ionRouter.canGoBack()) {
-        ionRouter.goBack();
-      } else if (exitOnBack) {
-        App.exitApp();
-      }
-    });
+  useEffect(() => {
+    const handler = (ev: any) => {
+      ev.detail.register(999, () => {
+        if (onBackRef.current) {
+          onBackRef.current();
+          return;
+        }
+
+        if (ionRouter.canGoBack()) {
+          ionRouter.goBack();
+        } else if (exitOnBackRef.current) {
+          promptExitRef.current();   // Show confirmation modal instead of exiting directly
+        }
+      });
+    };
+
+    document.addEventListener('ionBackButton', handler);
 
     return () => {
-      listener.then(l => l.remove());
+      document.removeEventListener('ionBackButton', handler);
     };
-  }, [onBack, exitOnBack]);
+  }, [ionRouter]);
 
   const navigate = (route: string, direction: RouterDirection = 'forward') => {
     const actionMap: Record<RouterDirection, 'push' | 'pop' | 'replace'> = {

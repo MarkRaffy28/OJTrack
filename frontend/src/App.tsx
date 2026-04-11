@@ -22,6 +22,7 @@ import { initAPI } from "@api/api";
 
 import { ActivityProvider } from "@context/activityContext";
 import { AuthProvider, useAuth } from "@context/authContext";
+import { ExitModalProvider } from "@context/exitModalContext"; 
 import { OjtProvider } from "@context/ojtContext";
 import { SupervisorOjtProvider } from "@context/supervisorOjtContext";
 import { ReportProvider } from "@context/reportContext";
@@ -39,7 +40,6 @@ const Reports             = lazy(() => import("@pages/Reports"));
 
 const Dashboard           = lazy(() => import("@pages/student/Dashboard"));
 const DTR                 = lazy(() => import("@pages/student/DTR"));
-const ReportDetail        = lazy(() => import("@pages/student/ReportDetail"));
 const UploadReport        = lazy(() => import("@pages/student/UploadReport"));
 
 const Attendance          = lazy(() => import("@pages/supervisor/Attendance"));
@@ -75,7 +75,6 @@ const AppRoutes: React.FC = () => {
 
         <RoleRoute exact path="/dashboard"            component={Dashboard}            allowedRoles={["student"]}               />
         <RoleRoute exact path="/dtr"                  component={DTR}                  allowedRoles={["student"]}               />
-        <RoleRoute exact path="/report-detail"        component={ReportDetail}         allowedRoles={["student"]}               />
         <RoleRoute exact path="/upload-report"        component={UploadReport}         allowedRoles={["student"]}               />
 
         <RoleRoute exact path="/attendance"           component={Attendance}           allowedRoles={["supervisor"]}            />
@@ -100,7 +99,9 @@ const App: React.FC = () => (
             <SupervisorOjtProvider>
               <ReportProvider>
                 <ActivityProvider>
-                  <AppRoutes />
+                  <ExitModalProvider>
+                    <AppRoutes />
+                  </ExitModalProvider>
                 </ActivityProvider>
               </ReportProvider>
             </SupervisorOjtProvider>

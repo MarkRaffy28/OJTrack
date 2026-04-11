@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { IonPage, IonContent, IonIcon, IonBadge } from '@ionic/react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { IonPage, IonContent, IonIcon, IonBadge, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { useLocation } from 'react-router-dom';
 import {
   personOutline, mailOutline, calendarOutline, shieldCheckmarkOutline, logOutOutline, lockClosedOutline, documentTextOutline,
-  createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline, checkmarkCircleOutline
+  createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline, checkmarkCircleOutline,
+  schoolOutline, statsChartOutline, chevronDownCircleOutline
 } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
 import { useUser, isStudent, isSupervisor } from '@context/userContext';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { useOjtProgress } from '@hooks/useOJtProgress';
 import { formatDate } from '@utils/date';
+import { capitalize } from '@utils/string';
 import BottomNav from '@components/BottomNav';
 import ChangePasswordModal from '@components/ChangePasswordModal';
 import LogoutModal from '@components/LogoutModal';
@@ -19,7 +22,6 @@ import TermsModal from '@components/TermsModal';
 import VerifyEmailModal from '@components/VerifyEmailModal';
 
 function Account() {
-  const history = useHistory();
   const location = useLocation();
   const { currentOjt } = useOjt();
   const { logout } = useAuth();
@@ -31,6 +33,22 @@ function Account() {
   const [showTermsModal, setShowTermsModal]         = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showVerifyModal, setShowVerifyModal]       = useState(false);
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshUser();
+    event.detail.complete();
+  };
+
+  const hasOpenModal = showLogoutModal || showTermsModal || showChangePassword || showVerifyModal;
+
+  const { navigate } = useNavigation(hasOpenModal ? {
+    onBack: () => {
+      if (showLogoutModal) setShowLogoutModal(false);
+      else if (showTermsModal) setShowTermsModal(false);
+      else if (showChangePassword) setShowChangePassword(false);
+      else if (showVerifyModal) setShowVerifyModal(false);
+    }
+  } : {});
 
   useEffect(() => {
     refreshUser();
@@ -75,6 +93,15 @@ function Account() {
     },
   ];
 
+  const ojtDetails = (isStudent(user) && currentOjt) ? [
+    { icon: shieldCheckmarkOutline, label: 'Status',               value: capitalize(currentOjt.status) },
+    { icon: calendarOutline,        label: 'Start Date',           value: currentOjt.startDate ? formatDate(currentOjt.startDate) : '—' },
+    { icon: calendarOutline,        label: 'End Date',             value: currentOjt.endDate ? formatDate(currentOjt.endDate) : '—' },
+    { icon: personOutline,          label: 'Supervisor Name',      value: currentOjt.supervisorName || '—' },
+    { icon: personCircleOutline,    label: 'Supervisor Position',  value: currentOjt.supervisorPosition || '—' },
+    { icon: schoolOutline,          label: 'Office Name',          value: currentOjt.officeName || '—' },
+  ] : [];
+
   return (
     <IonPage>
       <IonContent
@@ -82,7 +109,13 @@ function Account() {
         className="acc-content"
         scrollY={!showLogoutModal && !showTermsModal && !showChangePassword}
       >
-        <div className="acc-container">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
+        <div className="acc-container" style={{ minHeight: '100%', paddingBottom: '100px' }}>
 
           {/* Profile Hero */}
           <div className="acc-profile-card">
@@ -99,7 +132,7 @@ function Account() {
                     <IonIcon icon={personOutline} />
                   </div>
                 )}
-                <button className="acc-avatar-edit" onClick={() => history.push('/edit-account')}>
+                <button className="acc-avatar-edit" onClick={() => navigate('/edit-account')}>
                   <IonIcon icon={createOutline} />
                 </button>
               </div>
@@ -121,18 +154,22 @@ function Account() {
 
           {/* Quick Stats */}
           <div className="acc-stats-card">
-            {isStudent(user) && (
+            {isStudent(user) ? (
               <>
+                <div className="acc-stat">
+                  <p className="acc-stat-val">{currentOjt?.academicYear}</p>
+                  <p className="acc-stat-lbl">Academic Year</p>
+                </div>
+                <div className="acc-stat-div" />
+                <div className="acc-stat">
+                  <p className="acc-stat-val">{currentOjt?.term ? capitalize(currentOjt.term) : '—'}</p>
+                  <p className="acc-stat-lbl">Term</p>
+                </div>
+                <div className="acc-stat-div" />
                 <div className="acc-stat">
                   <p className="acc-stat-val">{user.year} - {user.section}</p>
                   <p className="acc-stat-lbl">Year & Section</p>
                 </div>
-                <div className="acc-stat-div" />
-              </>
-            )}
-
-            {isStudent(user) ? (
-              <>
                 <div className="acc-stat-div" />
                 <div className="acc-stat">
                   <p className="acc-stat-val">{progressPercentage.toFixed(1)}%</p>
@@ -154,11 +191,32 @@ function Account() {
             )}
           </div>
 
+
+          {/* OJT Information (Student only) */}
+          {isStudent(user) && currentOjt && (
+            <div className="acc-section-card">
+              <div className="acc-section-header">
+                <span className="acc-section-title">OJT Information</span>
+              </div>
+              <div className="acc-detail-list">
+                {ojtDetails.map((d, i) => (
+                  <div key={i} className="acc-detail-item">
+                    <div className="acc-detail-icon"><IonIcon icon={d.icon} /></div>
+                    <div className="acc-detail-text">
+                      <p className="acc-detail-lbl">{d.label}</p>
+                      <p className="acc-detail-val">{d.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Profile Info */}
           <div className="acc-section-card">
             <div className="acc-section-header">
               <span className="acc-section-title">Profile Information</span>
-              <button className="acc-edit-btn" onClick={() => history.push('/edit-account')}>
+              <button className="acc-edit-btn" onClick={() => navigate('/edit-account')}>
                 <IonIcon icon={createOutline} /> Edit
               </button>
             </div>

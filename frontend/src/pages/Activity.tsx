@@ -1,22 +1,30 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router';
-import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/react';
-import {  
+import { IonPage, IonContent, IonIcon, IonSpinner, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { 
   logInOutline,  logOutOutline,  documentTextOutline,  cloudUploadOutline,  searchOutline,  closeOutline,  
-  personOutline,  shieldCheckmarkOutline,  keyOutline,  trashOutline,  createOutline,  statsChartOutline, arrowBackOutline 
+  personOutline,  shieldCheckmarkOutline,  keyOutline,  trashOutline,  createOutline,  statsChartOutline, arrowBackOutline,
+  chevronDownCircleOutline
 } from 'ionicons/icons';
 import { useActivity } from '@context/activityContext';
 import { useAuth } from '@context/authContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { formatRelativeDate, formatTime12 } from '@utils/date';
 import BottomNav from '@components/BottomNav';
 import SupervisorBottomNav from '@components/SupervisorBottomNav';
 
 function Activity() {
+  useNavigation();
   const { activities, loadingActivities, getLatestActivities, fetchActivities } = useActivity();
   const { role } = useAuth();
   const location = useLocation();
   const [searchText, setSearchText] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchActivities();
+    event.detail.complete();
+  };
 
   const latestActivities = useMemo(() => getLatestActivities(50), [activities, getLatestActivities]);
 
@@ -67,6 +75,12 @@ function Activity() {
   return (
     <IonPage>
       <IonContent fullscreen className="act-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
         {/* Hero */}
         <div className="act-hero">
           <div className="act-hero-bg" />
@@ -80,7 +94,7 @@ function Activity() {
           </div>
         </div>
 
-        <div className="act-container">
+        <div className="act-container" style={{ minHeight: '100%', paddingBottom: '100px' }}>
 
           <br />
 
@@ -124,7 +138,7 @@ function Activity() {
 
           <div className="act-timeline">
             {loadingActivities && (
-              <div className="act-loading">
+              <div className="act-loading" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IonSpinner name="crescent" />
               </div>
             )}

@@ -89,7 +89,7 @@
   background: #fff;
   border-radius: 20px;
   width: 100%;
-  maxWidth: 380px;
+  max-width: 380px;
   max-height: calc(100dvh - 24px);
   display: flex;
   flex-direction: column;

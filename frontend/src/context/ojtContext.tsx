@@ -9,7 +9,11 @@ interface StudentOjt {
   requiredHours: number;
   renderedHours: number;
   status: "pending" | "ongoing" | "completed" | "dropped";
+  startDate: string | null;
+  endDate: string | null;
   officeName: string;
+  supervisorName: string | null;
+  supervisorPosition: string | null;
 }
 
 interface OjtContextType {

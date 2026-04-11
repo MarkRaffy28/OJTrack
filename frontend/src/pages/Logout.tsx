@@ -7,13 +7,15 @@ function Logout() {
   const ionRouter = useIonRouter();
   
   useEffect(() => {
-    logout();
-
-    ionRouter.push("login");
-  });
+    const performLogout = async () => {
+      await logout();
+      ionRouter.push('/login', 'root', 'replace');
+    };
+    performLogout();
+  }, [logout, ionRouter]);
 
   return (
-    <div>Logout</div>
+    <div>Logging out...</div>
   )
 }
 

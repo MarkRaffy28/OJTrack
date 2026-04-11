@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
+import { useParams } from 'react-router-dom';
+import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import {
   alertCircleOutline, arrowBackOutline, calendarOutline, documentTextOutline, schoolOutline, locationOutline, personOutline,
-  createOutline, checkmarkOutline, closeOutline, warning,
+  createOutline, checkmarkOutline, closeOutline, warning, chevronDownCircleOutline
 } from 'ionicons/icons';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { formatDate } from '@utils/date';
 import { capitalize, ordinal } from '@utils/string';
 import { progressColor, progressTrackBg, progressGlowDot, progressBadgeBg } from '@utils/progress';
@@ -15,13 +16,25 @@ import '@css/Supervisor.css';
 
 function TraineeDetail() {
   const { id } = useParams<{ id: string }>();
-  const history = useHistory();
-  const { allOjts, updateNotes } = useSupervisorOjt();
-
+  
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesDraft, setNotesDraft] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const { navigate, goBack } = useNavigation(editingNotes ? {
+    onBack: () => {
+      setEditingNotes(false);
+      setNotesDraft('');
+      setUpdateError(null);
+    }
+  } : {});
+  const { allOjts, updateNotes, fetchAllOjts } = useSupervisorOjt();
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchAllOjts();
+    event.detail.complete();
+  };
 
   const ojt = allOjts.find(o => o.studentId === parseInt(id));
 
@@ -66,7 +79,7 @@ function TraineeDetail() {
               </div>
               <button 
                 className="sv-notes-btn sv-notes-btn-cancel sv-not-found-btn" 
-                onClick={() => history.push('/trainees')}
+                onClick={() => navigate('/trainees')}
               >
                 <IonIcon icon={arrowBackOutline} />
                 Return to Trainees
@@ -99,12 +112,18 @@ function TraineeDetail() {
   return (
     <IonPage>
       <IonContent fullscreen className="sv-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
 
         {/* Hero */}
         <div className="sv-hero-detail">
           <div className="sv-hero-bg" />
           <div className="sv-hero-inner">
-            <button className="sv-back-btn" onClick={() => history.goBack()}>
+            <button className="sv-back-btn" onClick={() => goBack()}>
               <IonIcon icon={arrowBackOutline} />
               Back
             </button>

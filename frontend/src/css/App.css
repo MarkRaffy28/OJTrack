@@ -88,6 +88,29 @@ ion-spinner.button-spinner {
 }
 
 
+ion-page {
+  background: var(--c-surface-2) !important;
+}
+
+ion-refresher {
+  z-index: 999 !important;
+}
+
+ion-refresher-content {
+  --color: var(--c-purple) !important;
+}
+
+.md ion-refresher-content {
+  background: #ffffff !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  width: 42px !important;
+  height: 42px !important;
+  margin: 10px auto !important;
+  border: 2px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+
 .acc-dash-avatar-wrap {
   position: relative;
   display: inline-block;

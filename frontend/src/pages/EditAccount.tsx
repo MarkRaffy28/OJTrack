@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
+import { useLocation } from 'react-router-dom';
+import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import {
   arrowBackOutline, personOutline, mailOutline, schoolOutline, calendarOutline,
   shieldCheckmarkOutline, callOutline, locationOutline, checkmarkCircleOutline,
   saveOutline, transgenderOutline, alertCircleOutline, personCircleOutline,
-  codeSlashOutline, statsChartOutline,
+  codeSlashOutline, statsChartOutline, chevronDownCircleOutline
 } from 'ionicons/icons';
 import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useUser, isStudent, isSupervisor } from '@context/userContext';
 import { useAuth } from '@context/authContext';
+import { useNavigation } from '@hooks/useNavigation';
 import API from '@api/api';
 import AvatarCropInput from '@components/AvatarCropInput';
 import '@css/EditAccount.css';
@@ -53,10 +54,15 @@ type AvailStatus = 'idle' | 'checking' | 'available' | 'taken';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 function EditAccount() {
-  const history = useHistory();
   const location = useLocation();
+  const { navigate, goBack } = useNavigation();
   const { user, refreshUser } = useUser();
   const { databaseId, token } = useAuth();
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await refreshUser();
+    event.detail.complete();
+  };
 
   const [usernameStatus, setUsernameStatus] = useState<AvailStatus>('idle');
   const [emailStatus,    setEmailStatus]    = useState<AvailStatus>('idle');
@@ -193,7 +199,7 @@ function EditAccount() {
       );
       await refreshUser();
       setSaved(true);
-      setTimeout(() => history.push('/account'), 1800);
+      setTimeout(() => navigate('/account'), 1800);
     } catch (err: any) {
       setServerError(err?.response?.data?.message ?? 'Failed to update profile. Please try again.');
     }
@@ -254,13 +260,19 @@ function EditAccount() {
   return (
     <IonPage>
       <IonContent fullscreen className="ea-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
 
           {/* Hero */}
           <div className="ea-hero">
             <div className="ea-hero-bg" />
             <div className="ea-hero-nav">
-              <button type="button" className="ea-back-btn" onClick={() => history.push('/account')}>
+              <button type="button" className="ea-back-btn" onClick={() => goBack()}>
                 <IonIcon icon={arrowBackOutline} />
               </button>
               <div>

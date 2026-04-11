@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import QRCode from 'qrcode';
-import { IonPage, IonContent, IonIcon, IonModal } from '@ionic/react';
-import { qrCodeOutline, timeOutline, chevronDownOutline, chevronUpOutline, closeOutline, warning, searchOutline, arrowBackOutline } from 'ionicons/icons';
+import { IonPage, IonContent, IonIcon, IonModal, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { qrCodeOutline, timeOutline, chevronDownOutline, chevronUpOutline, closeOutline, warning, searchOutline, arrowBackOutline, chevronDownCircleOutline } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
 import { useUser } from '@context/userContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { todayISO, thisMonthISO } from '@utils/date';
 import { initials } from '@/utils/string';
 import API from '@api/api';
@@ -37,23 +38,34 @@ function Attendance() {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  useNavigation(showQrModal ? {
+    onBack: () => {
+      setShowQrModal(false);
+    }
+  } : {});
+
   const [qrUrl, setQrUrl] = useState<string>("");
   const [qrLoading, setQrLoading] = useState(true);
   const [countdown, setCountdown] = useState(60);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        const response = await API.get(`/attendance/supervisor/${databaseId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setRecords(response.data);
-      } catch (error) {
-        console.error("Failed to fetch supervisor attendance:", error);
-      }
-    };
+  const fetchAttendance = async () => {
+    try {
+      const response = await API.get(`/attendance/supervisor/${databaseId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRecords(response.data);
+    } catch (error) {
+      console.error("Failed to fetch supervisor attendance:", error);
+    }
+  };
 
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchAttendance();
+    event.detail.complete();
+  };
+
+  useEffect(() => {
     if (databaseId && token) {
       fetchAttendance();
     }
@@ -136,6 +148,12 @@ function Attendance() {
   return (
     <IonPage>
       <IonContent fullscreen className="sv-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
 
         {/* Hero */}
         <div className="sv-hero">
@@ -153,7 +171,7 @@ function Attendance() {
           </div>
         </div>
 
-        <div className="sv-body">
+        <div className="sv-body" style={{ minHeight: '100%', paddingBottom: '120px' }}>
           {/* Filter Tabs moved here */}
           <div className="act-filter-row">
             <button 

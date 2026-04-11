@@ -10,9 +10,15 @@ export const getStudentOjts = async (databaseId) => {
         so.required_hours AS requiredHours,
         so.rendered_hours AS renderedHours,
         so.status,
-        o.name AS officeName
+        so.start_date AS startDate,
+        so.end_date AS endDate,
+        o.name AS officeName,
+        CONCAT_WS(' ', su.first_name, su.middle_name, su.last_name, su.extension_name) AS supervisorName,
+        spd.position AS supervisorPosition
       FROM student_ojt so
       JOIN offices o ON so.office_id = o.id
+      LEFT JOIN users su ON so.supervisor_id = su.id
+      LEFT JOIN supervisor_details spd ON su.id = spd.supervisor_id
       WHERE so.student_id = ?
       ORDER BY so.academic_year DESC
     `, 
@@ -21,6 +27,7 @@ export const getStudentOjts = async (databaseId) => {
 
   return rows || null;
 };
+
 
 export const getSupervisorStudentsOjts = async (databaseId) => {
   const [rows] = await db.query(

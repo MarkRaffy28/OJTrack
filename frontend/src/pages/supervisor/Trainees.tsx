@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
-import { useHistory } from 'react-router-dom';
-import { searchOutline, chevronForwardOutline, schoolOutline, arrowBackOutline } from 'ionicons/icons';
+import React, { useState, useMemo, useEffect } from 'react';
+import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
+import { searchOutline, chevronForwardOutline, schoolOutline, arrowBackOutline, chevronDownCircleOutline } from 'ionicons/icons';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
+import { useNavigation } from '@hooks/useNavigation';
 import { capitalize } from '@utils/string';
 import { progressColor } from '@utils/progress';
 import Avatar from '@components/Avatar';
@@ -10,10 +10,15 @@ import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import '@css/supervisor.css';
 
 function Trainees() {
-  const history = useHistory();
-  const { filteredOjts, allOjts, loading, filters, setFilters, uniqueCohorts } = useSupervisorOjt();
+  const { navigate, goBack } = useNavigation();
+  const { filteredOjts, allOjts, loading, filters, setFilters, uniqueCohorts, fetchAllOjts } = useSupervisorOjt();
   const [searchQuery, setSearchQuery] = useState('');
   const [tab, setTab] = useState<'all' | 'active'>('all');
+
+  const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
+    await fetchAllOjts();
+    event.detail.complete();
+  };
 
   const filteredTrainees = useMemo(() => {
     return filteredOjts.filter(t => {
@@ -31,6 +36,12 @@ function Trainees() {
   return (
     <IonPage>
       <IonContent fullscreen className="sv-content">
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
+          <IonRefresherContent 
+            pullingIcon={chevronDownCircleOutline}
+            refreshingSpinner="crescent"
+          />
+        </IonRefresher>
 
         {/* Hero */}
         <div className="sv-hero">
@@ -86,7 +97,7 @@ function Trainees() {
                   <div
                     key={trainee.ojtId}
                     className="sv-trainee-card"
-                    onClick={() => history.push(`/trainee-detail/${trainee.studentId}`)}
+                    onClick={() => navigate(`/trainee-detail/${trainee.studentId}`)}
                   >
                     {/* Left: Avatar */}
                     <div onClick={e => e.stopPropagation()}>

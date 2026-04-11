@@ -1,10 +1,11 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
-import { useLocation, useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import {
   calendar, calendarOutline, home, homeOutline, people, peopleOutline, documentText, documentTextOutline, person, personOutline, 
   statsChart, statsChartOutline, 
 } from 'ionicons/icons';
+import { useNavigation } from '@hooks/useNavigation';
 import "@css/BottomNav.css";
 
 interface BottomNavProps {
@@ -13,7 +14,7 @@ interface BottomNavProps {
 
 function SupervisorBottomNav({ activeTab }: BottomNavProps) {
   const location = useLocation();
-  const history = useHistory();
+  const { navigate } = useNavigation();
 
   const getActiveTab = () => {
     if (activeTab) return activeTab;
@@ -28,10 +29,6 @@ function SupervisorBottomNav({ activeTab }: BottomNavProps) {
   };
 
   const currentActiveTab = getActiveTab();
-
-  const handleNavigation = (route: string) => {
-    history.push(route);
-  };
 
   const navItems = [
     { key: 'home',       route: '/supervisor-dashboard',       iconActive: home,         iconInactive: homeOutline         },
@@ -48,7 +45,10 @@ function SupervisorBottomNav({ activeTab }: BottomNavProps) {
         <div key={item.key} className="nav-slot">
           <button
             className={`nav-btn ${currentActiveTab === item.key ? 'active' : ''}`}
-            onClick={() => handleNavigation(item.route)}
+            onClick={(e) => {
+              e.currentTarget.blur();
+              navigate(item.route);
+            }}
           >
             <IonIcon icon={currentActiveTab === item.key ? item.iconActive : item.iconInactive} />
           </button>
