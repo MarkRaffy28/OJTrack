@@ -119,13 +119,18 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     if (!databaseId || !token) {
       setUser(null);
+      setLoading(false);
       return;
     }
 
-    if (isLoadedFromCache && isConnected && !hasFetched) {
-      fetchUser();
+    if (isLoadedFromCache && !hasFetched) {
+      if (isConnected) {
+        fetchUser();
+      } else {
+        setLoading(false);
+      }
     }
-  }, [databaseId, token, isLoadedFromCache, isConnected, user]);
+  }, [databaseId, token, isLoadedFromCache, isConnected, hasFetched]);
 
   return (
     <UserContext.Provider value={{ user, loading, refreshUser: fetchUser }}>

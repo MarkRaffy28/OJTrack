@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useIonRouter, RouterDirection } from '@ionic/react';
 import { useExitModal } from '@context/exitModalContext';
 
@@ -45,7 +45,7 @@ export const useNavigation = (options: UseNavigationOptions = {}) => {
     };
   }, [ionRouter]);
 
-  const navigate = (route: string, direction: RouterDirection = 'forward') => {
+  const navigate = useCallback((route: string, direction: RouterDirection = 'forward') => {
     const actionMap: Record<RouterDirection, 'push' | 'pop' | 'replace'> = {
       forward : 'push',      // default - forward
       back    : 'pop',       // slide back animation
@@ -54,13 +54,13 @@ export const useNavigation = (options: UseNavigationOptions = {}) => {
     };
 
     ionRouter.push(route, direction, actionMap[direction] ?? 'push');
-  };
+  }, [ionRouter]);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (ionRouter.canGoBack()) {
       ionRouter.goBack();
     }
-  };
+  }, [ionRouter]);
 
   return { navigate, goBack };
 };

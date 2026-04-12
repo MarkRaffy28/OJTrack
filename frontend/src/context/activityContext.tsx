@@ -34,6 +34,7 @@ export const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
+  const [hasTriedFetch, setHasTriedFetch] = useState(false);
 
   const fetchActivities = useCallback(async () => {
     if (!token || !databaseId) return;
@@ -83,18 +84,21 @@ export const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
   useEffect(() => {
     if (!token || !databaseId) {
       setActivities([]);
+      setHasTriedFetch(false);
       return;
     }
 
-    if (isLoadedFromCache) {
+    if (isLoadedFromCache && !hasTriedFetch) {
       if (role === 'student' && !currentOjt?.id) return;
       
-      // Fetch if empty AND connected
-      if (activities.length === 0 && isConnected) {
+      if (isConnected) {
+        setHasTriedFetch(true);
         fetchActivities();
+      } else if (activities.length === 0) {
+        setHasTriedFetch(true);
       }
     }
-  }, [token, databaseId, currentOjt?.id, role, isLoadedFromCache, activities.length, isConnected, fetchActivities]);
+  }, [token, databaseId, isLoadedFromCache, hasTriedFetch, isConnected, role, currentOjt?.id, fetchActivities]);
 
 
   const getLatestActivities = (n: number) => {

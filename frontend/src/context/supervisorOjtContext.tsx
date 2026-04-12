@@ -80,6 +80,7 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
   const [currentOjt, setCurrentOjt] = useState<SupervisorOjt | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
+  const [hasTriedFetch, setHasTriedFetch] = useState(false);
   
   const [filters, setFilters] = useState<FilterOptions>({
     status: "all",
@@ -196,18 +197,18 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
       setAllOjts([]);
       setCurrentOjt(null);
       setDashboardStats(null);
+      setHasTriedFetch(false);
       return;
     }
 
-    if (isLoadedFromCache) {
-      if (allOjts.length === 0 && isConnected) {
+    if (isLoadedFromCache && !hasTriedFetch) {
+      setHasTriedFetch(true);
+      if (isConnected) {
         fetchAllOjts();
-      }
-      if (!dashboardStats && isConnected) {
         fetchDashboardStats();
       }
     }
-  }, [token, databaseId, role, fetchAllOjts, fetchDashboardStats, isLoadedFromCache, allOjts.length, dashboardStats, isConnected]);
+  }, [token, databaseId, role, isLoadedFromCache, hasTriedFetch, isConnected, fetchAllOjts, fetchDashboardStats]);
 
   const selectOjt = (ojtId: number | null) => {
     if (ojtId === null) {

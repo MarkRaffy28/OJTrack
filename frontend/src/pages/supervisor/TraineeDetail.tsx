@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import {
-  alertCircleOutline, arrowBackOutline, calendarOutline, documentTextOutline, schoolOutline, locationOutline, personOutline,
-  createOutline, checkmarkOutline, closeOutline, warning, chevronDownCircleOutline
+  alertCircleOutline, arrowBackOutline, businessOutline, calendarOutline, documentTextOutline, schoolOutline, locationOutline, personOutline,
+  createOutline, checkmarkOutline, closeOutline, warning, chevronDownCircleOutline, shieldCheckmarkOutline, syncOutline,
 } from 'ionicons/icons';
 import { useSupervisorOjt } from '@context/supervisorOjtContext';
 import { useNavigation } from '@hooks/useNavigation';
@@ -94,13 +94,15 @@ function TraineeDetail() {
   const color = progressColor(ojt.progress);
 
   const ojtDetails = [
-    { icon: schoolOutline,       label: 'Office',          value: ojt.officeName },
-    { icon: calendarOutline,     label: 'Academic Year',   value: ojt.academicYear },
-    { icon: calendarOutline,     label: 'Term',            value: capitalize(ojt.term) },
-    { icon: calendarOutline,     label: 'Start Date',      value: ojt.startDate ? formatDate(ojt.startDate) : '—' },
-    { icon: calendarOutline,     label: 'End Date',        value: ojt.endDate ? formatDate(ojt.endDate) : '—' },
-    { icon: documentTextOutline, label: 'Required Hours',  value: `${ojt.requiredHours} hrs` },
-    { icon: documentTextOutline, label: 'Rendered Hours',  value: `${ojt.renderedHours} hrs` },
+    { icon: syncOutline,            label: 'Progress',        value: `${ojt.progress.toFixed(1)}%`            || '—' },
+    { icon: businessOutline,        label: 'Office',          value: ojt.officeName                           || '—' },
+    { icon: calendarOutline,        label: 'Academic Year',   value: ojt.academicYear                         || '—' },
+    { icon: calendarOutline,        label: 'Term',            value: capitalize(ojt.term)                     || '—' },
+    { icon: calendarOutline,        label: 'Start Date',      value: ojt.startDate ? formatDate(ojt.startDate) : '—' },
+    { icon: calendarOutline,        label: 'End Date',        value: ojt.endDate ? formatDate(ojt.endDate)     : '—' },
+    { icon: documentTextOutline,    label: 'Required Hours',  value: `${ojt.requiredHours} hrs`               || '—' },
+    { icon: documentTextOutline,    label: 'Rendered Hours',  value: `${ojt.renderedHours} hrs`               || '—' },
+    { icon: shieldCheckmarkOutline, label: 'Status',          value: capitalize(ojt.status)                   || '—' }
   ];
 
   const studentDetails = [

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import { timeOutline, documentTextOutline, cloudUploadOutline, qrCodeOutline, chevronDownCircleOutline } from 'ionicons/icons';
 import { useOjt } from '@context/ojtContext';
@@ -13,6 +14,7 @@ import RecentActivity from '@components/RecentActivity';
 
 function Dashboard() {
   const { navigate } = useNavigation();
+  const location = useLocation();
   const { ojtRecords, currentOjt, selectedSchoolYear, selectSchoolYear, fetchAllOjts } = useOjt();
   const { user, refreshUser } = useUser();
   const { activities, getLatestActivities, loadingActivities, fetchActivities } = useActivity();
@@ -20,7 +22,8 @@ function Dashboard() {
 
   useEffect(() => {
     fetchActivities();
-  }, [location.pathname]);
+    refreshUser();
+  }, [fetchActivities, refreshUser]);
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
     try {

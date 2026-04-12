@@ -57,9 +57,6 @@ function Login() {
       if (response.data.token) {
         setLoginError("");
         await login(response.data.token);
-        
-        const decoded = JSON.parse(atob(response.data.token.split('.')[1]));
-        performRedirect(decoded.role);
       } 
 
     } catch (error: any) {

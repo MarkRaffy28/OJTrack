@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { IonPage, IonContent, IonIcon, IonBadge, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import { useLocation } from 'react-router-dom';
 import {
-  personOutline, mailOutline, calendarOutline, shieldCheckmarkOutline, logOutOutline, lockClosedOutline, documentTextOutline,
-  createOutline, chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline, checkmarkCircleOutline,
-  schoolOutline, statsChartOutline, chevronDownCircleOutline
+  personOutline, mailOutline, calendarOutline, shieldCheckmarkOutline, logOutOutline, lockClosedOutline, documentTextOutline, createOutline, 
+  chevronForwardOutline, transgenderOutline, personCircleOutline, locationOutline, checkmarkCircleOutline, statsChartOutline, chevronDownCircleOutline,
+  businessOutline, syncOutline
 } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
@@ -74,11 +74,11 @@ function Account() {
   const confirmLogout = () => { setIsLoggingOut(true); };
 
   const details = [
-    { icon: personCircleOutline,    label: 'Username',         value: user?.username                 || '—' },
-    { icon: shieldCheckmarkOutline, label: isStudent(user) ? 'Student ID' : 'Employee ID', value: user?.userId   || '—' },
-    { icon: calendarOutline,        label: 'Birthday',         value: formatDate(user?.birthDate || '') },
-    { icon: transgenderOutline,     label: 'Gender',           value: user?.gender                   || '—' },
-    { icon: locationOutline,        label: 'Address',          value: user?.address                  || '—' },
+    { icon: personCircleOutline,    label: 'Username',         value: user?.username                               || '—' },
+    { icon: shieldCheckmarkOutline, label: isStudent(user) ? 'Student ID' : 'Employee ID', value: user?.userId     || '—' },
+    { icon: calendarOutline,        label: 'Birthday',         value: user?.birthDate ? formatDate(user?.birthDate) : '—' },
+    { icon: transgenderOutline,     label: 'Gender',           value: user?.gender                                 || '—' },
+    { icon: locationOutline,        label: 'Address',          value: user?.address                                || '—' },
     { 
       icon: mailOutline,            
       label: 'Email Address',    
@@ -94,12 +94,13 @@ function Account() {
   ];
 
   const ojtDetails = (isStudent(user) && currentOjt) ? [
-    { icon: shieldCheckmarkOutline, label: 'Status',               value: capitalize(currentOjt.status) },
+    { icon: syncOutline,            label: 'Progress',             value: `${progressPercentage}%`                               || '—' },
+    { icon: shieldCheckmarkOutline, label: 'Status',               value: capitalize(currentOjt.status)                          || '—' },
     { icon: calendarOutline,        label: 'Start Date',           value: currentOjt.startDate ? formatDate(currentOjt.startDate) : '—' },
-    { icon: calendarOutline,        label: 'End Date',             value: currentOjt.endDate ? formatDate(currentOjt.endDate) : '—' },
-    { icon: personOutline,          label: 'Supervisor Name',      value: currentOjt.supervisorName || '—' },
-    { icon: personCircleOutline,    label: 'Supervisor Position',  value: currentOjt.supervisorPosition || '—' },
-    { icon: schoolOutline,          label: 'Office Name',          value: currentOjt.officeName || '—' },
+    { icon: calendarOutline,        label: 'End Date',             value: currentOjt.endDate ? formatDate(currentOjt.endDate)     : '—' },
+    { icon: personOutline,          label: 'Supervisor Name',      value: currentOjt.supervisorName                              || '—' },
+    { icon: personCircleOutline,    label: 'Supervisor Position',  value: currentOjt.supervisorPosition                          || '—' },
+    { icon: businessOutline,        label: 'Office Name',          value: currentOjt.officeName                                  || '—' },
   ] : [];
 
   return (
@@ -169,11 +170,6 @@ function Account() {
                 <div className="acc-stat">
                   <p className="acc-stat-val">{user.year} - {user.section}</p>
                   <p className="acc-stat-lbl">Year & Section</p>
-                </div>
-                <div className="acc-stat-div" />
-                <div className="acc-stat">
-                  <p className="acc-stat-val">{progressPercentage.toFixed(1)}%</p>
-                  <p className="acc-stat-lbl">OJT Progress</p>
                 </div>
               </>
             ) : (

@@ -14,7 +14,7 @@ import '@css/Supervisor.css';
 
 function SupervisorDashboard() {
   const { navigate } = useNavigation();
-  const { user } = useUser();
+  const { user, refreshUser } = useUser();
   const { dashboardStats, stats, loading, fetchDashboardStats, setFilters, filters, allOjts, uniqueCohorts } = useSupervisorOjt();
   const { activities, loadingActivities, fetchActivities } = useActivity();
   const location = useLocation();
@@ -40,6 +40,7 @@ function SupervisorDashboard() {
 
   useEffect(() => {
     fetchActivities();
+    refreshUser();
   }, [location.pathname, fetchActivities]);
 
 
