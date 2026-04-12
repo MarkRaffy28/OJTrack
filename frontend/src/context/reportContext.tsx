@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, FC, ReactNode } from 'react';
+import { Preferences } from '@capacitor/preferences';
 import { useAuth } from './authContext';
 import { useOjt } from './ojtContext';
+import { useNetwork } from './networkContext';
 import API from '@api/api';
 
 export interface ReportAttachment {
@@ -49,32 +51,58 @@ interface ReportContextValue {
   deleteReport: (id: number) => Promise<void>;
 } 
 
-const ReportContext = createContext<ReportContextValue>({
-  reports: [],
-  loadingReports: false,
-  fetchReports: async () => {},
-  updateReport: async () => {},
-  updateReportStatus: async () => {},
-  deleteReport: async () => {},
-});
+const ReportContext = createContext<ReportContextValue | null>(null);
+
+const CACHE_KEY_PREFIX = "cached_reports_";
 
 export const ReportProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, role, databaseId } = useAuth();
   const { currentOjt } = useOjt();
+  const { isConnected } = useNetwork();
 
   const [reports, setReports] = useState<Report[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
+
+  const getCacheKey = useCallback(() => {
+    if (!databaseId) return null;
+    if (role === 'student' && currentOjt?.id) return `${CACHE_KEY_PREFIX}student_${currentOjt.id}`;
+    if (role === 'supervisor') return `${CACHE_KEY_PREFIX}supervisor_${databaseId}`;
+    return null;
+  }, [role, databaseId, currentOjt?.id]);
+
+  const saveToCache = useCallback(async (data: Report[]) => {
+    const key = getCacheKey();
+    if (key) {
+      await Preferences.set({ key, value: JSON.stringify(data) });
+    }
+  }, [getCacheKey]);
+
+  useEffect(() => {
+    const loadCache = async () => {
+      const key = getCacheKey();
+      if (!key) {
+        setIsLoadedFromCache(true);
+        return;
+      }
+      try {
+        const { value } = await Preferences.get({ key });
+        if (value) {
+          setReports(JSON.parse(value));
+        }
+      } catch (err) {
+        console.error("Failed to load reports cache", err);
+      } finally {
+        setIsLoadedFromCache(true);
+      }
+    };
+    loadCache();
+  }, [getCacheKey]);
 
   const fetchReports = useCallback(async () => {
     if (!token) return;
-
-    if (role === 'student' && !currentOjt?.id) {
-      return;
-    }
-
-    if (role === 'supervisor' && !databaseId) {
-      return;
-    }
+    if (role === 'student' && !currentOjt?.id) return;
+    if (role === 'supervisor' && !databaseId) return;
 
     setLoadingReports(true);
     try {
@@ -85,14 +113,12 @@ export const ReportProvider: FC<{ children: ReactNode }> = ({ children }) => {
         endpoint = `/reports/supervisor/${databaseId}`;
       }
 
-      if (!endpoint) return;
-
       const res = await API.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const rawReports = res.data.data;
-      const reports: Report[] = rawReports.map((r: any) => {
+      const rawReports = res.data.data || [];
+      const mappedReports: Report[] = rawReports.map((r: any) => {
         if (r.studentProfilePicture?.data) {
           const uint8Array = new Uint8Array(r.studentProfilePicture.data);
           const decodedString = new TextDecoder().decode(uint8Array);
@@ -100,92 +126,95 @@ export const ReportProvider: FC<{ children: ReactNode }> = ({ children }) => {
         }
         return r;
       });
-      setReports(reports);
+
+      setReports(mappedReports);
+      await saveToCache(mappedReports);
 
     } catch (error) {
-      console.error("Fetch error:", error);
+      console.error("Fetch reports error:", error);
     } finally {
       setLoadingReports(false);
     }
-  }, [currentOjt?.id, token, role, databaseId]);
+  }, [token, role, databaseId, currentOjt?.id, saveToCache]);
 
-  // Auto-fetch when context changes
   useEffect(() => {
-    if (token && ((role === 'student' && currentOjt?.id) || (role === 'supervisor' && databaseId))) {
-      fetchReports();
+    if (!token || !databaseId) {
+      setReports([]);
+      return;
     }
-  }, [currentOjt?.id, token, role, databaseId, fetchReports]);
+
+    if (isLoadedFromCache) {
+      const isStudentReady = role === 'student' && currentOjt?.id;
+      const isSupervisorReady = role === 'supervisor';
+
+      if ((isStudentReady || isSupervisorReady) && reports.length === 0 && isConnected) {
+        fetchReports();
+      }
+    }
+  }, [token, databaseId, role, currentOjt?.id, isLoadedFromCache, reports.length, fetchReports, isConnected]);
 
   const updateReport = useCallback(async (id: number, payload: UpdateReportPayload) => {
-    try {
-      const formData = new FormData();
-      formData.append('ojtId', String(payload.ojtId));
-      formData.append('type', payload.type);
-      formData.append('reportDate', payload.reportDate);
-      formData.append('title', payload.title ?? '');
-      formData.append('content', payload.content);
+    const formData = new FormData();
+    formData.append('ojtId', String(payload.ojtId));
+    formData.append('type', payload.type);
+    formData.append('reportDate', payload.reportDate);
+    formData.append('title', payload.title ?? '');
+    formData.append('content', payload.content);
 
-      // Send existing attachments the user wants to keep
-      if (payload.existingAttachments) {
-        formData.append('existingAttachments', JSON.stringify(payload.existingAttachments));
-      }
-
-      if (payload.files) {
-        payload.files.forEach(file => {
-          formData.append('attachments', file);
-        });
-      }
-
-      await API.patch(`/reports/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Refresh from server to get accurate updated data
-      await fetchReports();
-
-    } catch (error) {
-      console.error("Update error:", error);
-      throw error;
+    if (payload.existingAttachments) {
+      formData.append('existingAttachments', JSON.stringify(payload.existingAttachments));
     }
+
+    if (payload.files) {
+      payload.files.forEach(file => formData.append('attachments', file));
+    }
+
+    await API.patch(`/reports/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await fetchReports();
   }, [token, fetchReports]);
 
   const deleteReport = useCallback(async (id: number) => {
-    try {
-      await API.delete(`/reports/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    await API.delete(`/reports/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      setReports(prev => prev.filter(r => r.id !== id));
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      throw error;
-    }
-  }, [token]);
+    const updated = reports.filter(r => r.id !== id);
+    setReports(updated);
+    await saveToCache(updated);
+  }, [token, reports, saveToCache]);
 
   const updateReportStatus = useCallback(async (id: number, status: 'approved' | 'rejected' | 'pending', feedback?: string) => {
-    try {
-      await API.patch(`/reports/${id}/status`, { status, feedback }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    await API.patch(`/reports/${id}/status`, { status, feedback }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      setReports(prev => prev.map(r => r.id === id ? { ...r, status, feedback: feedback || r.feedback } : r));
-    } catch (error) {
-      console.error("Status update error:", error);
-      throw error;
-    }
-  }, [token]);
+    const updated = reports.map(r => r.id === id ? { ...r, status, feedback: feedback || r.feedback } : r);
+    setReports(updated);
+    await saveToCache(updated);
+  }, [token, reports, saveToCache]);
 
   return (
-    <ReportContext.Provider
-      value={{ reports, loadingReports, fetchReports, updateReport, updateReportStatus, deleteReport }}
-    >
+    <ReportContext.Provider value={{
+      reports,
+      loadingReports,
+      fetchReports,
+      updateReport,
+      updateReportStatus,
+      deleteReport
+    }}>
       {children}
     </ReportContext.Provider>
   );
 };
 
-export const useReport = () => useContext(ReportContext);
+export const useReport = () => {
+  const context = useContext(ReportContext);
+  if (!context) throw new Error("useReport must be used inside ReportProvider");
+  return context;
+};

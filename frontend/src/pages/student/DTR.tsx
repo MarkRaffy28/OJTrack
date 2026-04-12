@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IonPage, IonContent, IonIcon, IonToast, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
 import { CapacitorBarcodeScanner, CapacitorBarcodeScannerTypeHint } from '@capacitor/barcode-scanner';
+import { Camera } from '@capacitor/camera';
 import { calendarOutline, checkmarkCircleOutline, qrCodeOutline, scanOutline, refreshOutline, closeCircle, chevronDownCircleOutline } from 'ionicons/icons';
 import { useAuth } from '@context/authContext';
 import { useOjt } from '@context/ojtContext';
@@ -102,6 +103,16 @@ function DTR() {
     if (!user?.databaseId || !currentOjt?.id) return;
     try {
       setScanning(true);
+
+      const perms = await Camera.checkPermissions();
+      if (perms.camera !== 'granted') {
+          const request = await Camera.requestPermissions();
+          if (request.camera !== 'granted') {
+              showToast('error', 'Camera access is required to scan QR codes. Please enable it in your device settings.');
+              setScanning(false);
+              return;
+          }
+      }
 
       const result = await CapacitorBarcodeScanner.scanBarcode({
         hint: CapacitorBarcodeScannerTypeHint.ALL,

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, FC, ReactNode } from "react";
+import { Preferences } from "@capacitor/preferences";
 import { useAuth } from "./authContext";
+import { useNetwork } from "./networkContext";
 import API from "@api/api";
 
 interface StudentOjt {
@@ -27,19 +29,17 @@ interface OjtContextType {
 
 const OjtContext = createContext<OjtContextType | null>(null);
 
+const CACHE_KEY = "cached_ojt_records";
+
 export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, databaseId, role } = useAuth();
+  const { isConnected } = useNetwork();
 
   const [ojtRecords, setOjtRecords] = useState<StudentOjt[]>([]);
   const [currentOjt, setCurrentOjt] = useState<StudentOjt | null>(null);
   const [selectedSchoolYear, setSelectedSchoolYear] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (token && databaseId && role === "student") {
-      fetchAllOjts();
-    }
-  }, [token, databaseId, role]);
+  const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
 
   const fetchAllOjts = async () => {
     if (!token || role !== "student") return;
@@ -55,11 +55,24 @@ export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       setOjtRecords(records);
 
+      let latest: StudentOjt | null = null;
+      let year: string | null = null;
+
       if (records.length > 0) {
-        const latest = records[0];
+        latest = records[0];
         setCurrentOjt(latest);
-        setSelectedSchoolYear(latest.academicYear);
+        year = latest.academicYear;
+        setSelectedSchoolYear(year);
       }
+
+      await Preferences.set({
+        key: CACHE_KEY,
+        value: JSON.stringify({
+          records,
+          current: latest,
+          selectedYear: year
+        })
+      });
 
     } catch (err) {
       console.error("Failed to fetch OJTs", err);
@@ -67,6 +80,41 @@ export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadCache = async () => {
+      try {
+        const { value } = await Preferences.get({ key: CACHE_KEY });
+        if (value) {
+          const cached = JSON.parse(value);
+          setOjtRecords(cached.records || []);
+          setCurrentOjt(cached.current || null);
+          setSelectedSchoolYear(cached.selectedYear || null);
+        }
+      } catch (err) {
+        console.error("Failed to load OJT cache", err);
+      } finally {
+        setIsLoadedFromCache(true);
+      }
+    };
+    loadCache();
+  }, []);
+
+  useEffect(() => {
+    if (!token || !databaseId || role !== "student") {
+      setOjtRecords([]);
+      setCurrentOjt(null);
+      setSelectedSchoolYear(null);
+      return;
+    }
+
+    if (isLoadedFromCache) {
+      if (ojtRecords.length === 0 && isConnected) {
+        fetchAllOjts();
+      }
+    }
+  }, [token, databaseId, role, isLoadedFromCache, isConnected, ojtRecords.length]);
+
 
   const selectSchoolYear = (year: string) => {
     const record = ojtRecords.find(r => r.academicYear === year);

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, FC, ReactNode } from "react";
+import { Preferences } from "@capacitor/preferences";
 import { useAuth } from "./authContext";
+import { useNetwork } from "./networkContext";
 import API from "@api/api";
 
 export interface SupervisorOjt {
@@ -66,13 +68,18 @@ interface SupervisorOjtContextType {
 
 const SupervisorOjtContext = createContext<SupervisorOjtContextType | null>(null);
 
+const CACHE_KEY_OJTS = "cached_supervisor_ojts";
+const CACHE_KEY_STATS = "cached_supervisor_dashboard_stats";
+
 export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { token, databaseId, role } = useAuth();
+  const { isConnected } = useNetwork();
   
   const [allOjts, setAllOjts] = useState<SupervisorOjt[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentOjt, setCurrentOjt] = useState<SupervisorOjt | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
   
   const [filters, setFilters] = useState<FilterOptions>({
     status: "all",
@@ -80,6 +87,29 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
     term: "all",
     search: "",
   });
+
+  useEffect(() => {
+    const loadCache = async () => {
+      try {
+        const [ojtsRes, statsRes] = await Promise.all([
+          Preferences.get({ key: CACHE_KEY_OJTS }),
+          Preferences.get({ key: CACHE_KEY_STATS })
+        ]);
+        
+        if (ojtsRes.value) {
+          setAllOjts(JSON.parse(ojtsRes.value));
+        }
+        if (statsRes.value) {
+          setDashboardStats(JSON.parse(statsRes.value));
+        }
+      } catch (err) {
+        console.error("Failed to load supervisor OJT cache", err);
+      } finally {
+        setIsLoadedFromCache(true);
+      }
+    };
+    loadCache();
+  }, []);
 
   const fetchAllOjts = useCallback(async () => {
     if (!token || !databaseId || role !== "supervisor") return;
@@ -103,6 +133,11 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
         return ojt;
       });
       setAllOjts(ojts);
+
+      await Preferences.set({
+        key: CACHE_KEY_OJTS,
+        value: JSON.stringify(ojts)
+      });
 
       if (ojts.length > 0) {
         let latestOjt = ojts[0];
@@ -145,6 +180,11 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
         headers: { Authorization: `Bearer ${token}` }
       });
       setDashboardStats(response.data);
+
+      await Preferences.set({
+        key: CACHE_KEY_STATS,
+        value: JSON.stringify(response.data)
+      });
       
     } catch (err) {
       console.error("Failed to fetch dashboard stats:", err);
@@ -152,11 +192,22 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
   }, [token, databaseId, role]);
 
   useEffect(() => {
-    if (token && databaseId && role === "supervisor") {
-      fetchAllOjts();
-      fetchDashboardStats();
+    if (!token || !databaseId || role !== "supervisor") {
+      setAllOjts([]);
+      setCurrentOjt(null);
+      setDashboardStats(null);
+      return;
     }
-  }, [token, databaseId, role, fetchAllOjts, fetchDashboardStats]);
+
+    if (isLoadedFromCache) {
+      if (allOjts.length === 0 && isConnected) {
+        fetchAllOjts();
+      }
+      if (!dashboardStats && isConnected) {
+        fetchDashboardStats();
+      }
+    }
+  }, [token, databaseId, role, fetchAllOjts, fetchDashboardStats, isLoadedFromCache, allOjts.length, dashboardStats, isConnected]);
 
   const selectOjt = (ojtId: number | null) => {
     if (ojtId === null) {
@@ -185,14 +236,20 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
         { databaseId, notes }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setAllOjts(prev =>
-        prev.map(o => o.ojtId === ojtId ? { ...o, supervisorNotes: notes } : o)
-      );
+      
+      const updatedOjts = allOjts.map(o => o.ojtId === ojtId ? { ...o, supervisorNotes: notes } : o);
+      setAllOjts(updatedOjts);
+
+      await Preferences.set({
+        key: CACHE_KEY_OJTS,
+        value: JSON.stringify(updatedOjts)
+      });
+
     } catch (err) {
       console.error("Failed to update supervisor notes:", err);
       throw err;
     }
-  }, [token]);
+  }, [token, allOjts, databaseId]);
 
   const filteredOjts = useMemo(() => {
     return allOjts.filter(ojt => {

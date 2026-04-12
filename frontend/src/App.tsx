@@ -24,9 +24,11 @@ import { ActivityProvider } from "@context/activityContext";
 import { AuthProvider, useAuth } from "@context/authContext";
 import { ExitModalProvider } from "@context/exitModalContext"; 
 import { OjtProvider } from "@context/ojtContext";
-import { SupervisorOjtProvider } from "@context/supervisorOjtContext";
+import { NetworkProvider } from "@context/networkContext";
 import { ReportProvider } from "@context/reportContext";
+import { SupervisorOjtProvider } from "@context/supervisorOjtContext";
 import { UserProvider } from "@context/userContext";
+import NetworkAlert from "@components/NetworkAlert";
 import RoleRoute from "@components/RoleRoute";
 
 const Register            = lazy(() => import("@pages/Register"));
@@ -93,21 +95,24 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
-      <AuthProvider>
-        <UserProvider>
-          <OjtProvider>
-            <SupervisorOjtProvider>
-              <ReportProvider>
-                <ActivityProvider>
-                  <ExitModalProvider>
-                    <AppRoutes />
-                  </ExitModalProvider>
-                </ActivityProvider>
-              </ReportProvider>
-            </SupervisorOjtProvider>
-          </OjtProvider>
-        </UserProvider>
-      </AuthProvider>
+      <NetworkProvider>
+        <NetworkAlert />
+        <AuthProvider>
+          <UserProvider>
+            <OjtProvider>
+              <SupervisorOjtProvider>
+                <ReportProvider>
+                  <ActivityProvider>
+                    <ExitModalProvider>
+                      <AppRoutes />
+                    </ExitModalProvider>
+                  </ActivityProvider>
+                </ReportProvider>
+              </SupervisorOjtProvider>
+            </OjtProvider>
+          </UserProvider>
+        </AuthProvider>
+      </NetworkProvider>
     </IonReactRouter>
   </IonApp>
 );

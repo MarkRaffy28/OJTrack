@@ -1,0 +1,82 @@
+.network-alert-modal::part(content) {
+  height: fit-content;
+  width: 90%;
+  max-width: 380px;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+}
+
+.network-alert-modal {
+  --backdrop-opacity: 0.6;
+}
+
+.network-alert-modal-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  background: #ffffff;
+}
+
+.network-alert-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b5f77;
+  font-size: 20px;
+  padding: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.network-alert-close-btn:hover {
+  opacity: 1;
+}
+
+.alert-icon-container {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(251, 191, 36, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.alert-icon {
+  font-size: 52px;
+}
+
+.network-alert-modal-inner h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 12px;
+}
+
+.network-alert-modal-inner p {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #6b5f77;
+  margin: 0 0 32px;
+}
+
+.network-retry-btn {
+  --background: #fbbf24;
+  --background-activated: #d97706;
+  --background-hover: #f59e0b;
+  --color: #fff;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  font-weight: 700;
+  margin: 0;
+  width: 100%;
+}

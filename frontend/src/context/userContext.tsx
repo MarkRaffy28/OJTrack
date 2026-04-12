@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, FC, ReactNode } from 'react';
+import { Preferences } from '@capacitor/preferences';
 import { useAuth } from './authContext';
+import { useNetwork } from './networkContext';
 import API from '@api/api';
 
 interface BaseUser {
@@ -50,14 +52,35 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | null>(null);
 
+const CACHE_KEY = "cached_user_profile";
+
 export const isStudent = (user: User | null): user is StudentUser => user?.role === 'student';
 export const isSupervisor = (user: User | null): user is SupervisorUser => user?.role === 'supervisor';
 export const isAdmin = (user: User | null): user is AdminUser => user?.role === 'admin';
 
 export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { databaseId, token, role } = useAuth();
+  const { isConnected } = useNetwork();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
+  const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
+
+  useEffect(() => {
+    const loadCache = async () => {
+      try {
+        const { value } = await Preferences.get({ key: CACHE_KEY });
+        if (value) {
+          setUser(JSON.parse(value));
+        }
+      } catch (err) {
+        console.error("Failed to load user cache", err);
+      } finally {
+        setIsLoadedFromCache(true);
+      }
+    };
+    loadCache();
+  }, []);
 
   const fetchUser = async () => {
     if (!databaseId || !token) {
@@ -79,18 +102,30 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
         data.profilePicture = decodedString;
       }
       setUser(data);
+      setHasFetched(true);
+
+      await Preferences.set({
+        key: CACHE_KEY,
+        value: JSON.stringify(data)
+      });
 
     } catch (error) {
       console.error('Failed to fetch user', error);
-      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUser();
-  }, [databaseId, token]);
+    if (!databaseId || !token) {
+      setUser(null);
+      return;
+    }
+
+    if (isLoadedFromCache && isConnected && !hasFetched) {
+      fetchUser();
+    }
+  }, [databaseId, token, isLoadedFromCache, isConnected, user]);
 
   return (
     <UserContext.Provider value={{ user, loading, refreshUser: fetchUser }}>

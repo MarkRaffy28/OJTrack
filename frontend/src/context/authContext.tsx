@@ -39,14 +39,23 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const logout = async () => {
     clearLogoutTimer();
 
-    // Fire-and-forget logout activity logging on the backend
     if (token && databaseId) {
       API.post("/auth/logout", { databaseId }).catch((err) => {
         console.warn("Logout activity log failed:", err);
       });
     }
 
-    await Preferences.remove({ key: 'auth_token' });
+    const keysToRemove = [
+      'auth_token',
+      'cached_activities',
+      'cached_ojt_records',
+      'cached_supervisor_ojts',
+      'cached_supervisor_dashboard_stats',
+      'cached_user_profile'
+    ];
+
+    await Promise.all(keysToRemove.map(key => Preferences.remove({ key })));
+    
     setToken(null);
     setDatabaseId(null);
     setRole(null);
