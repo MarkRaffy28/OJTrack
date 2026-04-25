@@ -19,8 +19,16 @@ export const deleteReportSchema = z.object({
   reportId: z.coerce.number().int().positive(),
 });
 
+export const getReportDetailSchema = z.object({
+  reportId: z.coerce.number().int().positive(),
+});
+
 export const getReportsSchema = z.object({
   ojtId: z.coerce.number().int().positive(),
+});
+
+export const getSupervisorReportsSchema = z.object({
+  supervisorId: z.coerce.number().int().positive(),
 });
 
 export const updateReportSchema = z.object({
@@ -36,10 +44,6 @@ export const updateReportSchema = z.object({
     originalName: z.string(),
     size: z.number()
   })).nullable().optional(),
-});
-
-export const getSupervisorReportsSchema = z.object({
-  supervisorId: z.coerce.number().int().positive(),
 });
 
 export const updateReportStatusSchema = z.object({

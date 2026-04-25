@@ -17,7 +17,6 @@ import API from '@api/api';
 import AvatarCropInput from '@components/AvatarCropInput';
 import '@css/EditAccount.css';
 
-// ── Zod schema ────────────────────────────────────────────────────────────────
 const schema = z.object({
   username: z
     .string()
@@ -35,7 +34,6 @@ const schema = z.object({
   contactNumber: z.string().regex(/^09\d{9}$/, 'Must be 11 digits starting with 09'),
   email:         z.email('Enter a valid email address'),
   address:       z.string().min(10, 'At least 10 characters'),
-  // Locked — passthrough only, no user-facing validation
   studentId:     z.string().optional(),
   year:          z.string().optional(),
   program:       z.string().optional(),
@@ -49,10 +47,8 @@ const schema = z.object({
 
 type EditAccountForm = z.infer<typeof schema>;
 
-// ── Availability status ───────────────────────────────────────────────────────
 type AvailStatus = 'idle' | 'checking' | 'available' | 'taken';
 
-// ── Component ─────────────────────────────────────────────────────────────────
 function EditAccount() {
   const location = useLocation();
   const { navigate, goBack } = useNavigation();
@@ -69,18 +65,16 @@ function EditAccount() {
   const [serverError,    setServerError]    = useState('');
   const [saved,          setSaved]          = useState(false);
 
-  // Held outside of form state so effects can compare without re-triggering
   const originalUsername = React.useRef('');
   const originalEmail    = React.useRef('');
 
-  // ── RHF setup ──────────────────────────────────────────────────────────────
   const {
     register,
     control,
     handleSubmit,
     watch,
     reset,
-    formState: { errors, isSubmitting, isValid, touchedFields },
+    formState: { errors, isSubmitting, isValid, touchedFields, isDirty },
   } = useForm<EditAccountForm>({
     resolver: zodResolver(schema),
     mode: 'onBlur',
@@ -93,9 +87,9 @@ function EditAccount() {
     },
   });
 
-  // ── Seed from user context ──────────────────────────────────────────────────
   useEffect(() => {
-    if (!user) return;
+    if (!user || isDirty) return;
+
     const vals: EditAccountForm = {
       username:       user.username        ?? '',
       firstName:      user.firstName       ?? '',
@@ -117,16 +111,16 @@ function EditAccount() {
       officeName:     isSupervisor(user) ? user.officeName : '',
       profilePicture: user.profilePicture  ?? null,
     };
+
     reset(vals);
     originalUsername.current = vals.username;
     originalEmail.current    = vals.email;
-  }, [user, reset]);
+  }, [user, reset, isDirty]);
 
   useEffect(() => {
     setSaved(false);
   }, [location.pathname])
 
-  // ── Availability — username ─────────────────────────────────────────────────
   const checkUsername = async (username: string) => {
     const val = username?.trim() ?? '';
     if (!val || val.length < 3 || !/^[a-zA-Z0-9_]+$/.test(val)) {
@@ -147,7 +141,6 @@ function EditAccount() {
     return () => clearTimeout(t);
   }
 
-  // ── Availability — email ────────────────────────────────────────────────────
   const checkEmail = async (email: string) => {
     const val = email?.trim() ?? '';
     if (!val || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
@@ -168,7 +161,6 @@ function EditAccount() {
     return () => clearTimeout(t);
   }
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
   const onSubmit = async (data: EditAccountForm) => {
     if (usernameStatus === 'taken' || emailStatus === 'taken') return;
     setServerError('');
@@ -205,7 +197,6 @@ function EditAccount() {
     }
   };
 
-  // ── UI helpers ──────────────────────────────────────────────────────────────
   const inputClass = (name: keyof EditAccountForm, avail?: AvailStatus) => {
     const touched  = touchedFields[name];
     const hasError = !!errors[name] || avail === 'taken';
@@ -241,7 +232,6 @@ function EditAccount() {
     usernameStatus === 'checking' || emailStatus === 'checking' ||
     !isValid;
 
-  // ── Success screen ──────────────────────────────────────────────────────────
   if (saved) {
     return (
       <IonPage>
@@ -256,7 +246,6 @@ function EditAccount() {
     );
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <IonPage>
       <IonContent fullscreen className="ea-content">
@@ -266,9 +255,8 @@ function EditAccount() {
             refreshingSpinner="crescent"
           />
         </IonRefresher>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
 
-          {/* Hero */}
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="ea-hero">
             <div className="ea-hero-bg" />
             <div className="ea-hero-nav">
@@ -291,8 +279,6 @@ function EditAccount() {
           </div>
 
           <div className="ea-container">
-
-            {/* Personal Information */}
             <div className="ea-section">
               <p className="ea-section-label">Personal Information</p>
 
@@ -560,7 +546,6 @@ function EditAccount() {
               </div>
             )}
 
-            {/* Server error */}
             {serverError && (
               <div className="ea-server-error">
                 <IonIcon icon={alertCircleOutline} />
@@ -568,7 +553,6 @@ function EditAccount() {
               </div>
             )}
 
-            {/* Save */}
             <button
               type="submit"
               className={`ea-save-btn ${!submitDisabled ? 'ea-save-ready' : ''} ${isSubmitting ? 'ea-save-loading' : ''}`}

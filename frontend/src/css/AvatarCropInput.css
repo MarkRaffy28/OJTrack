@@ -103,6 +103,8 @@
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid #f0f0f0;
+  z-index: 10;
+  position: relative;
 }
 
 .ea-cropper-title-group {
@@ -153,6 +155,7 @@
   align-items: center;
   padding: 24px 16px;
   background: #f8f9fa;
+  overflow: hidden; /* Contains the massive box-shadow of the circle */
 }
 
 .ea-cropper-viewport {
@@ -218,6 +221,8 @@
   gap: 12px;
   border-top: 1px solid #f0f0f0;
   background: #fff;
+  z-index: 10;
+  position: relative;
 }
 
 .ea-cropper-btn {

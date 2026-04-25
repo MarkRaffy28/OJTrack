@@ -35,6 +35,8 @@ function Login() {
       navigate("/dashboard", "root");
     } else if (userRole === "supervisor") {
       navigate("/supervisor-dashboard", "root");
+    } else if (userRole === "admin") {
+      navigate("/admin-dashboard", "root");
     }
   };
 
@@ -64,6 +66,8 @@ function Login() {
 
       if (error.response && error.response.status === 401) {
         setLoginError(error.response.data?.message || "Invalid username or password.");
+      } else if (error.response && error.response.status === 404) {
+        setLoginError("Invalid username or password.");
       } else {
         setLoginError(error.message);
       }

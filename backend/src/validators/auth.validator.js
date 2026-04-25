@@ -15,6 +15,10 @@ export const baseUserSchema = z.object({
   email: z.email("Invalid email address")
 });
 
+export const adminRegistrationSchema = baseUserSchema.extend({ 
+  adminId: z.string().min(1, "Admin ID is required"),
+});
+
 export const loginSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
   password: z.string().min(1, "Password is required"),
@@ -25,7 +29,7 @@ export const logoutSchema = z.object({
 });
 
 export const registrationSchema = z.object({
-  role: z.enum(["student", "supervisor"]),
+  role: z.enum(["student", "supervisor", "admin"]),
 });
 
 export const resetPasswordSchema = z.object({

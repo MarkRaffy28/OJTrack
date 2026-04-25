@@ -4,8 +4,7 @@ import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, Refres
 import { 
   documentTextOutline, downloadOutline, eyeOutline, addOutline, calendarOutline, checkmarkCircleOutline, timeOutline, searchOutline, 
   closeOutline, printOutline, createOutline, trashOutline, closeCircleOutline, alertCircleOutline, saveOutline, cloudUploadOutline, 
-  attachOutline, banOutline, documentOutline, checkmarkOutline, arrowBackOutline, chevronDownCircleOutline,
-  personOutline
+  attachOutline, banOutline, documentOutline, checkmarkOutline, arrowBackOutline, chevronDownCircleOutline, personOutline,
 } from "ionicons/icons";
 import { getMediaUrl } from "@api/api";
 import { useAuth } from "@context/authContext";
@@ -13,10 +12,7 @@ import { useReport, Report, ReportAttachment } from "@context/reportContext";
 import { useNavigation } from "@hooks/useNavigation";
 import { formatDate, formatDateForInput } from "@utils/date";
 import { capitalize } from "@utils/string";
-import { Capacitor } from '@capacitor/core';
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
-import { Share } from '@capacitor/share';
-
+import { useDownload } from "@hooks/useDownload";
 import Avatar from "@components/Avatar";
 import BottomNav from "@components/BottomNav";
 import Lightbox from "@components/Lightbox";
@@ -28,7 +24,6 @@ import "@css/Supervisor.css";
 
 const MAX_FILES = 10;
 
-/* ── Edit modal state ──────────────────────────────────────────────────── */
 interface EditState {
   id: number;
   ojtId: number;
@@ -59,6 +54,7 @@ function Reports() {
   const [deleteTarget, setDeleteTarget] = useState<Report | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isEditingFeedback, setIsEditingFeedback] = useState(false);
+  const { downloadReport } = useDownload();
   const [feedbackText, setFeedbackText] = useState("");
 
   const handleRefresh = async (event: CustomEvent<RefresherEventDetail>) => {
@@ -68,19 +64,23 @@ function Reports() {
 
   const hasOpenModal = viewState || editState || deleteTarget || selectedImage;
 
-  const { navigate, goBack } = useNavigation(hasOpenModal ? {
-    onBack: () => {
-      if (selectedImage) setSelectedImage(null);
-      else if (editState) closeEdit();
-      else if (deleteTarget) setDeleteTarget(null);
-      else if (isEditingFeedback) setIsEditingFeedback(false);
-      else if (viewState) {
-        setViewState(null);
-        setFeedbackText("");
-        setIsEditingFeedback(false);
-      }
-    }
-  } : {});
+  const { navigate, goBack } = useNavigation(
+    hasOpenModal
+      ? {
+          onBack: () => {
+            if (selectedImage) setSelectedImage(null);
+            else if (editState) closeEdit();
+            else if (deleteTarget) setDeleteTarget(null);
+            else if (isEditingFeedback) setIsEditingFeedback(false);
+            else if (viewState) {
+              setViewState(null);
+              setFeedbackText("");
+              setIsEditingFeedback(false);
+            }
+          },
+        }
+      : {},
+  );
 
   const [imgExpanded, setImgExpanded] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -138,80 +138,6 @@ function Reports() {
     fetchReports();
   }, [location.pathname]);
 
-  /* ── Download ─────────────────────────────────────────────────────────── */
-  const handleDownloadReport = async (report: Report) => {
-    const reportTitle = (report.title ?? "report").replace(/[^a-z0-9]/gi, "_");
-    const content = [
-      `REPORT: ${report.title ?? "Untitled"}`,
-      `TYPE: ${capitalize(report.type)}`,
-      `DATE: ${formatDate(report.reportDate)}`,
-      `STATUS: ${capitalize(report.status)}`,
-      ``,
-      `CONTENT`,
-      `------------`,
-      report.content,
-      ``,
-      `ATTACHMENTS`,
-      `------------`,
-      report.attachments && report.attachments.length > 0
-        ? report.attachments.map((a) => a.originalName).join(", ")
-        : "No attachments.",
-    ].join("\n");
-
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const fileName = `${reportTitle}.txt`;
-        const result = await Filesystem.writeFile({
-          path: fileName,
-          data: content,
-          directory: Directory.Cache,
-          encoding: Encoding.UTF8
-        });
-        await Share.share({
-          title: report.title ?? 'Activity Report',
-          text: `Report submission details for ${report.title}`,
-          url: result.uri,
-          dialogTitle: 'Save or Share Report',
-        });
-      } catch (e) {
-        console.error("Native share/download failed", e);
-      }
-      return;
-    }
-
-    const blob = new Blob([content], { type: "text/plain" });
-
-    // Try web native share
-    if (navigator.share) {
-      try {
-        const file = new File([blob], `${reportTitle}.txt`, { type: "text/plain" });
-        await navigator.share({
-          files: [file],
-          title: report.title ?? "Activity Report",
-          text: `Activity Report: ${report.title ?? "Untitled"}`
-        });
-        return;
-      } catch (err) {
-        console.log("Native share cancelled/failed", err);
-      }
-    }
-
-    // Fallback to standard download
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${reportTitle}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownloadFile = (url: string) => {
-    window.open(url, "_blank");
-  };
-
-  /* ── Edit handlers ────────────────────────────────────────────────────── */
   const openEdit = (report: Report) => {
     if (report.status === "approved") return;
     setEditState({
@@ -247,9 +173,7 @@ function Reports() {
 
     const previews = incoming.map((f) => ({
       file: f,
-      preview: f.type.startsWith("image/")
-        ? URL.createObjectURL(f)
-        : undefined,
+      preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
     }));
 
     setEditState((s) =>
@@ -303,7 +227,6 @@ function Reports() {
     closeEdit();
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (editState) {
@@ -314,7 +237,6 @@ function Reports() {
     };
   }, [editState]);
 
-  /* ── Delete handlers ──────────────────────────────────────────────────── */
   const confirmDelete = (report: Report) => {
     if (report.status === "approved") return;
     setDeleteTarget(report);
@@ -332,22 +254,31 @@ function Reports() {
     <IonPage>
       <IonContent fullscreen className="rp-content">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh} mode="md">
-          <IonRefresherContent 
+          <IonRefresherContent
             pullingIcon={chevronDownCircleOutline}
             refreshingSpinner="crescent"
           />
         </IonRefresher>
-        {/* Hero */}
+
         <div className="rp-hero">
           <div className="rp-hero-bg" />
           <div className="rp-hero-inner">
-            <h1 className="rp-hero-title">{isSupervisor ? "Activity Reports" : "Your Reports"}</h1>
-            <p className="rp-hero-sub">{isSupervisor ? "Review and manage trainee reports" : "Manage and track all submissions"}</p>
+            <h1 className="rp-hero-title">
+              {isSupervisor ? "Activity Reports" : "Your Reports"}
+            </h1>
+            <p className="rp-hero-sub">
+              {isSupervisor
+                ? "Review and manage trainee reports"
+                : "Manage and track all submissions"}
+            </p>
           </div>
         </div>
 
-        <div className="rp-container" style={{ minHeight: '100%', paddingBottom: '120px' }}>
-          {/* Stats Row */} <br />
+        <div
+          className="rp-container"
+          style={{ minHeight: "100%", paddingBottom: "120px" }}
+        >
+        <br />
           <div className="rp-stats-row">
             <div className="rp-stat-card rp-stat-total">
               <IonIcon icon={documentTextOutline} className="rp-stat-icon" />
@@ -370,19 +301,21 @@ function Reports() {
               <span className="rp-stat-lbl">Rejected</span>
             </div>
           </div>
-          {/* Filter Tabs */}
+
           <div className="rp-filter-row">
             {filters.map((f) => (
               <button
                 key={f}
-                className={`rp-filter-btn ${selectedFilter === f ? "rp-filter-active" : ""}`}
+                className={`rp-filter-btn ${
+                  selectedFilter === f ? "rp-filter-active" : ""
+                }`}
                 onClick={() => setSelectedFilter(f)}
               >
                 {capitalize(f)}
               </button>
             ))}
           </div>
-          {/* Search */}
+
           <div className="rp-search-wrap">
             <IonIcon icon={searchOutline} className="rp-search-icon" />
             <input
@@ -401,15 +334,24 @@ function Reports() {
               </button>
             )}
           </div>
-          {/* List Header */}
+
           <div className="rp-list-header">
             <span className="rp-list-title">All Reports</span>
             <span className="rp-list-count">{filtered.length} items</span>
           </div>
-          {/* Report Cards */}
+
           <div className="rp-list">
             {loadingReports ? (
-              <div className="rp-loading-state" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+              <div
+                className="rp-loading-state"
+                style={{
+                  minHeight: "60vh",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <span className="rp-spinner-large" />
                 <p>Loading reports...</p>
               </div>
@@ -419,10 +361,15 @@ function Reports() {
                   <IonIcon icon={searchOutline} />
                 </div>
                 <p className="sv-no-results-text">No reports found</p>
-                <p className="sv-no-results-sub">Try adjusting your filters or search query</p>
-                <button 
+                <p className="sv-no-results-sub">
+                  Try adjusting your filters or search query
+                </p>
+                <button
                   className="sv-back-button"
-                  onClick={() => { setSearchText(""); setSelectedFilter("all"); }}
+                  onClick={() => {
+                    setSearchText("");
+                    setSelectedFilter("all");
+                  }}
                 >
                   <IonIcon icon={arrowBackOutline} />
                   Clear all filters
@@ -445,19 +392,32 @@ function Reports() {
                       )}
                       <div className="sv-report-header-info">
                         {isSupervisor && report.studentName ? (
-                          <span className="sv-report-student">{report.studentName}</span>
+                          <span className="sv-report-student">
+                            {report.studentName}
+                          </span>
                         ) : (
                           <span className="rp-card-title-premium">
                             {report.title || "Untitled Report"}
                           </span>
                         )}
                         <div className="rp-card-chips-row">
-                          <span className="rp-status-chip" style={{ color: cfg?.color, background: cfg?.bg, border: `1px solid ${cfg?.color}` }}>
-                            <IonIcon icon={cfg?.icon} className="rp-icon-margin" />
+                          <span
+                            className="rp-status-chip"
+                            style={{
+                              color: cfg?.color,
+                              background: cfg?.bg,
+                              border: `1px solid ${cfg?.color}`,
+                            }}
+                          >
+                            <IonIcon
+                              icon={cfg?.icon}
+                              className="rp-icon-margin"
+                            />
                             {capitalize(report.status)}
                           </span>
                           <span className="rp-type-chip">
-                            <IonIcon icon={documentTextOutline} /> {capitalize(report.type)}
+                            <IonIcon icon={documentTextOutline} />{" "}
+                            {capitalize(report.type)}
                           </span>
                         </div>
                       </div>
@@ -481,7 +441,6 @@ function Reports() {
                       )}
                     </div>
 
-                    {/* Meta */}
                     <div className="sv-report-meta">
                       <span className="sv-report-meta-item">
                         <IonIcon icon={calendarOutline} />
@@ -489,7 +448,6 @@ function Reports() {
                       </span>
                     </div>
 
-                    {/* Description */}
                     <div className="sv-report-desc-block">
                       <div className="sv-report-desc-title">
                         <IonIcon icon={documentOutline} /> Report Description
@@ -497,12 +455,16 @@ function Reports() {
                       <p className="sv-report-desc-text">{report.content}</p>
                     </div>
 
-                    {/* Attachment button */}
-                    {report.attachments && report.attachments.length > 0 && (
+                    {report.attachments &&
+                      report.attachments.length > 0 &&
                       report.attachments.map((att, idx) => {
-                        const isImg = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                        const thumbUrl = isImg ? getMediaUrl(att.path) : undefined;
-                        
+                        const isImg = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(
+                          att.filename,
+                        );
+                        const thumbUrl = isImg
+                          ? getMediaUrl(att.path)
+                          : undefined;
+
                         return (
                           <button
                             key={idx}
@@ -510,14 +472,22 @@ function Reports() {
                               if (isImg) {
                                 setSelectedImage(thumbUrl!);
                               } else {
-                                handleDownloadFile(getMediaUrl(att.path));
+                                downloadReport(getMediaUrl(att.path), att.originalName);
                               }
                             }}
                             className="rp-attachment-btn-wrapper"
                           >
-                            {/* Filename bar */}
-                            <div className={`rp-attachment-filename-bar ${isImg ? 'rp-attachment-radius-img rp-border-bottom-none' : 'rp-attachment-radius-all'}`}>
-                              <IonIcon icon={documentOutline} className="rp-attachment-icon-premium" />
+                            <div
+                              className={`rp-attachment-filename-bar ${
+                                isImg
+                                  ? "rp-attachment-radius-img rp-border-bottom-none"
+                                  : "rp-attachment-radius-all"
+                              }`}
+                            >
+                              <IonIcon
+                                icon={documentOutline}
+                                className="rp-attachment-icon-premium"
+                              />
                               <span className="rp-attachment-filename-text">
                                 {att.originalName}
                               </span>
@@ -526,7 +496,6 @@ function Reports() {
                               </span>
                             </div>
 
-                            {/* Thumbnail strip */}
                             {isImg && thumbUrl && (
                               <div className="rp-attachment-thumb-strip">
                                 <ServerImage
@@ -538,31 +507,55 @@ function Reports() {
                             )}
                           </button>
                         );
-                      })
-                    )}
+                      })}
 
-                    {/* Actions */}
                     <div className="unified-sv-report-actions">
-                      <button className="unified-sv-btn unified-sv-btn-view" onClick={() => { setViewState(report); setFeedbackText(report.feedback || ""); setIsEditingFeedback(false); }}>
-                        <IonIcon icon={eyeOutline} /> {isSupervisor && report.status !== 'pending' ? 'View Details' : 'View'}
+                      <button
+                        className="unified-sv-btn unified-sv-btn-view"
+                        onClick={() => {
+                          setViewState(report);
+                          setFeedbackText(report.feedback || "");
+                          setIsEditingFeedback(false);
+                        }}
+                      >
+                        <IonIcon icon={eyeOutline} />{" "}
+                        {isSupervisor && report.status !== "pending"
+                          ? "View Details"
+                          : "View"}
                       </button>
 
                       {!isSupervisor ? (
                         <>
-                          <button className="unified-sv-btn unified-sv-btn-print" onClick={() => printReport(report)}>
+                          <button
+                            className="unified-sv-btn unified-sv-btn-print"
+                            onClick={() => printReport(report)}
+                          >
                             <IonIcon icon={printOutline} /> Print
                           </button>
-                          <button className="unified-sv-btn unified-sv-btn-dl" onClick={() => handleDownloadReport(report)}>
+                          <button
+                            className="unified-sv-btn unified-sv-btn-dl"
+                            onClick={() => downloadReport(report)}
+                          >
                             <IonIcon icon={downloadOutline} /> Download
                           </button>
                         </>
                       ) : (
-                        report.status === 'pending' && (
+                        report.status === "pending" && (
                           <>
-                            <button className="unified-sv-btn unified-sv-btn-approve" onClick={() => updateReportStatus(report.id, 'approved')}>
+                            <button
+                              className="unified-sv-btn unified-sv-btn-approve"
+                              onClick={() =>
+                                updateReportStatus(report.id, "approved")
+                              }
+                            >
                               <IonIcon icon={checkmarkCircleOutline} /> Approve
                             </button>
-                            <button className="unified-sv-btn unified-sv-btn-reject" onClick={() => updateReportStatus(report.id, 'rejected')}>
+                            <button
+                              className="unified-sv-btn unified-sv-btn-reject"
+                              onClick={() =>
+                                updateReportStatus(report.id, "rejected")
+                              }
+                            >
                               <IonIcon icon={closeCircleOutline} /> Reject
                             </button>
                           </>
@@ -576,54 +569,66 @@ function Reports() {
           </div>
         </div>
 
-        {/* FAB */}
         {!isSupervisor && (
-        <div className="rp-fab-wrap">
-          <button
-            className="rp-fab"
-            onClick={() => navigate("/upload-report")}
-          >
-            <IonIcon icon={addOutline} />
-            <span>Upload Report</span>
-          </button>
-        </div>
-      )}
+          <div className="rp-fab-wrap">
+            <button
+              className="rp-fab"
+              onClick={() => navigate("/upload-report")}
+            >
+              <IonIcon icon={addOutline} />
+              <span>Upload Report</span>
+            </button>
+          </div>
+        )}
       </IonContent>
 
-            
-      {/* ── VIEW MODAL (BOTTOM SHEET) ────────────────────────────────────── */}
       {viewState && (
-        <div className="premium-modal-overlay" onClick={() => { setViewState(null); setFeedbackText(""); setIsEditingFeedback(false); }}>
-          <div className="premium-modal-sheet" onClick={e => e.stopPropagation()}>
-            
-            {/* Handle */}
+        <div
+          className="premium-modal-overlay"
+          onClick={() => {
+            setViewState(null);
+            setFeedbackText("");
+            setIsEditingFeedback(false);
+          }}
+        >
+          <div
+            className="premium-modal-sheet"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="premium-modal-handle-wrap">
               <div className="premium-modal-handle" />
             </div>
 
-            {/* Sheet header */}
             <div className="premium-sheet-header">
               <div className="premium-sheet-header-left">
                 <div className="premium-sheet-icon-wrap">
-                  <IonIcon icon={documentTextOutline} style={{ color: '#fff', fontSize: 20 }} />
+                  <IonIcon
+                    icon={documentTextOutline}
+                    style={{ color: "#fff", fontSize: 20 }}
+                  />
                 </div>
                 <div>
                   <p className="premium-sheet-header-title">
                     {viewState.title || "Activity Report"}
                   </p>
                   <p className="premium-sheet-header-subtitle">
-                    #RPT-{String(viewState.id).padStart(4, '0')}
+                    #RPT-{String(viewState.id).padStart(4, "0")}
                   </p>
                 </div>
               </div>
-              <button onClick={() => { setViewState(null); setFeedbackText(""); setIsEditingFeedback(false); }} className="premium-sheet-close">
+              <button
+                onClick={() => {
+                  setViewState(null);
+                  setFeedbackText("");
+                  setIsEditingFeedback(false);
+                }}
+                className="premium-sheet-close"
+              >
                 <IonIcon icon={closeOutline} />
               </button>
             </div>
 
-            {/* Scrollable content */}
             <div className="premium-scroll-content">
-              
               {isSupervisor && viewState.studentName && (
                 <div className="trainee-profile-card">
                   <div className="trainee-profile-info">
@@ -634,56 +639,67 @@ function Reports() {
                       style={{ width: 46, height: 46 }}
                     />
                     <div>
-                      <p className="trainee-name-big">{viewState.studentName}</p>
+                      <p className="trainee-name-big">
+                        {viewState.studentName}
+                      </p>
                       <p className="trainee-label-small">OJT Trainee</p>
                     </div>
                   </div>
-                  <span className="status-badge-premium" style={{
-                    color: statusConfig[viewState.status]?.color, 
-                    background: statusConfig[viewState.status]?.bg, 
-                    border: `1.5px solid ${statusConfig[viewState.status]?.color}`, 
-                  }}>
+                  <span
+                    className="status-badge-premium"
+                    style={{
+                      color: statusConfig[viewState.status]?.color,
+                      background: statusConfig[viewState.status]?.bg,
+                      border: `1.5px solid ${
+                        statusConfig[viewState.status]?.color
+                      }`,
+                    }}
+                  >
                     {capitalize(viewState.status)}
                   </span>
                 </div>
               )}
 
-              {/* Report Type (Added for Supervisor View Mode) */}
               <div className="mb-14">
-                <p className="detail-section-label">
-                  Report Type
-                </p>
+                <p className="detail-section-label">Report Type</p>
                 <div className="report-type-pill">
-                  <IonIcon icon={documentTextOutline} className="rp-icon-margin" />
+                  <IonIcon
+                    icon={documentTextOutline}
+                    className="rp-icon-margin"
+                  />
                   {capitalize(viewState.type)} Submission
                 </div>
               </div>
 
-              {/* Date */}
               <div className="mb-14">
-                <p className="detail-section-label">
-                  Date
-                </p>
+                <p className="detail-section-label">Date</p>
                 <div className="date-card-premium">
                   <div className="date-icon-label-wrap">
-                    <IonIcon icon={calendarOutline} className="date-icon-small" />
-                    <span className="date-label-tiny">
-                      Date Submitted
-                    </span>
+                    <IonIcon
+                      icon={calendarOutline}
+                      className="date-icon-small"
+                    />
+                    <span className="date-label-tiny">Date Submitted</span>
                   </div>
-                  <p className="date-val-text">{formatDate(viewState.reportDate)}</p>
+                  <p className="date-val-text">
+                    {formatDate(viewState.reportDate)}
+                  </p>
                 </div>
               </div>
 
-              {/* Reviewer Feedback Section */}
               <div className="feedback-container">
                 <div className="feedback-header-row">
                   <p className="feedback-label feedback-label-no-margin">
-                    {viewState.status === 'pending' ? 'Provide Feedback (Optional)' : 'Reviewer Feedback'}
+                    {viewState.status === "pending"
+                      ? "Provide Feedback (Optional)"
+                      : "Reviewer Feedback"}
                   </p>
                   {isSupervisor && !isEditingFeedback && (
-                    <button 
-                      onClick={() => { setIsEditingFeedback(true); setFeedbackText(viewState.feedback || ""); }}
+                    <button
+                      onClick={() => {
+                        setIsEditingFeedback(true);
+                        setFeedbackText(viewState.feedback || "");
+                      }}
                       className="sv-edit-btn"
                     >
                       <IonIcon icon={createOutline} /> Edit
@@ -703,7 +719,10 @@ function Reports() {
                     <div className="sv-notes-actions" style={{ marginTop: 10 }}>
                       <button
                         className="sv-notes-btn sv-notes-btn-cancel"
-                        onClick={() => { setIsEditingFeedback(false); setFeedbackText(viewState.feedback || ""); }}
+                        onClick={() => {
+                          setIsEditingFeedback(false);
+                          setFeedbackText(viewState.feedback || "");
+                        }}
                       >
                         <IonIcon icon={closeOutline} /> Cancel
                       </button>
@@ -713,9 +732,15 @@ function Reports() {
                         onClick={async () => {
                           setSavingFeedback(true);
                           try {
-                            await updateReportStatus(viewState.id, viewState.status, feedbackText);
+                            await updateReportStatus(
+                              viewState.id,
+                              viewState.status,
+                              feedbackText,
+                            );
                             setIsEditingFeedback(false);
-                            setViewState(prev => prev ? { ...prev, feedback: feedbackText } : null);
+                            setViewState((prev) =>
+                              prev ? { ...prev, feedback: feedbackText } : null,
+                            );
                           } catch (err) {
                             console.error("Failed to save feedback:", err);
                           } finally {
@@ -723,24 +748,31 @@ function Reports() {
                           }
                         }}
                       >
-                        <IonIcon icon={checkmarkOutline} /> 
-                        {savingFeedback ? 'Saving...' : 'Save'}
+                        <IonIcon icon={checkmarkOutline} />
+                        {savingFeedback ? "Saving..." : "Save"}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="date-card-premium">
-                    {viewState.status !== 'pending' && (
+                    {viewState.status !== "pending" && (
                       <>
                         <div className="feedback-reviewer-row">
-                          <IonIcon icon={personOutline} style={{ fontSize: 13, color: '#5f0076' }} />
+                          <IonIcon
+                            icon={personOutline}
+                            style={{ fontSize: 13, color: "#5f0076" }}
+                          />
                           <span className="feedback-reviewer-name">
-                            Reviewed By: {viewState.reviewerName || 'Supervisor'}
+                            Reviewed By:{" "}
+                            {viewState.reviewerName || "Supervisor"}
                           </span>
                         </div>
                         {viewState.reviewedAt && (
                           <div className="feedback-review-date">
-                            <IonIcon icon={timeOutline} style={{ fontSize: 13, color: '#9e92ab' }} />
+                            <IonIcon
+                              icon={timeOutline}
+                              style={{ fontSize: 13, color: "#9e92ab" }}
+                            />
                             <span className="feedback-date-text">
                               On: {formatDate(viewState.reviewedAt)}
                             </span>
@@ -749,31 +781,35 @@ function Reports() {
                       </>
                     )}
                     <div className="feedback-content-card">
-                      <p className="feedback-text-main" style={{ fontStyle: viewState.feedback ? 'normal' : 'italic' }}>
-                        {viewState.feedback || 'No additional feedback provided.'}
+                      <p
+                        className="feedback-text-main"
+                        style={{
+                          fontStyle: viewState.feedback ? "normal" : "italic",
+                        }}
+                      >
+                        {viewState.feedback ||
+                          "No additional feedback provided."}
                       </p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Description */}
               <div className="mb-14">
-                <p className="detail-section-label">
-                  Report Content
-                </p>
+                <p className="detail-section-label">Report Content</p>
                 <div className="report-content-card">
                   <p className="report-content-text">{viewState.content}</p>
                 </div>
               </div>
 
-              {/* Attached Files */}
               <div style={{ marginBottom: 6 }}>
                 <p className="detail-section-label">
                   Attached Documentation ({viewState.attachments?.length || 0})
                 </p>
                 {viewState.attachments?.map((att, i) => {
-                  const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
+                  const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(
+                    att.filename,
+                  );
                   const fileUrl = getMediaUrl(att.path);
 
                   return (
@@ -784,18 +820,28 @@ function Reports() {
                             src={fileUrl}
                             alt={att.originalName}
                             className="attachment-image-main"
-                            onClick={() => { setImgExpanded(true); setSelectedImage(fileUrl); }}
+                            onClick={() => {
+                              setImgExpanded(true);
+                              setSelectedImage(fileUrl);
+                            }}
                           />
                         </div>
                       ) : (
-                        <button 
-                          onClick={() => handleDownloadFile(fileUrl)} 
+                        <button
+                          onClick={() =>
+                            downloadReport(fileUrl, att.originalName)
+                          }
                           className="attachment-file-pill"
                         >
                           <div className="attachment-file-icon-box">
-                            <IonIcon icon={documentOutline} style={{ fontSize: 16, color: '#5f0076' }} />
+                            <IonIcon
+                              icon={documentOutline}
+                              style={{ fontSize: 16, color: "#5f0076" }}
+                            />
                           </div>
-                          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                          <div
+                            style={{ flex: 1, minWidth: 0, textAlign: "left" }}
+                          >
                             <p className="attachment-file-name-text">
                               {att.originalName}
                             </p>
@@ -809,35 +855,75 @@ function Reports() {
                   );
                 })}
               </div>
-
             </div>
 
-            {/* Action buttons */}
             <div className="premium-modal-footer">
-              <button className="unified-sv-btn unified-sv-btn-print footer-btn-half" onClick={() => printReport(viewState)}>
+              <button
+                className="unified-sv-btn unified-sv-btn-print footer-btn-half"
+                onClick={() => printReport(viewState)}
+              >
                 <IonIcon icon={printOutline} style={{ fontSize: 18 }} /> Print
               </button>
               <button
                 className="unified-sv-btn unified-sv-btn-dl footer-btn-half"
-                onClick={() => handleDownloadReport(viewState)}
+                onClick={() => downloadReport(viewState)}
               >
-                <IonIcon icon={downloadOutline} style={{ fontSize: 18 }} /> Download
+                <IonIcon icon={downloadOutline} style={{ fontSize: 18 }} />{" "}
+                Download
               </button>
 
-              {isSupervisor && viewState.status === 'pending' && (
+              {isSupervisor && viewState.status === "pending" && (
                 <>
-                  <button className="unified-sv-btn unified-sv-btn-approve footer-btn-half" onClick={() => { updateReportStatus(viewState.id, 'approved', feedbackText); setViewState(null); setFeedbackText(""); }}>
-                    <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 18 }} /> Approve
+                  <button
+                    className="unified-sv-btn unified-sv-btn-approve footer-btn-half"
+                    onClick={() => {
+                      updateReportStatus(
+                        viewState.id,
+                        "approved",
+                        feedbackText,
+                      );
+                      setViewState(null);
+                      setFeedbackText("");
+                    }}
+                  >
+                    <IonIcon
+                      icon={checkmarkCircleOutline}
+                      style={{ fontSize: 18 }}
+                    />{" "}
+                    Approve
                   </button>
-                  <button className="unified-sv-btn unified-sv-btn-reject footer-btn-half" onClick={() => { updateReportStatus(viewState.id, 'rejected', feedbackText); setViewState(null); setFeedbackText(""); }}>
-                    <IonIcon icon={closeCircleOutline} style={{ fontSize: 18 }} /> Reject
+                  <button
+                    className="unified-sv-btn unified-sv-btn-reject footer-btn-half"
+                    onClick={() => {
+                      updateReportStatus(
+                        viewState.id,
+                        "rejected",
+                        feedbackText,
+                      );
+                      setViewState(null);
+                      setFeedbackText("");
+                    }}
+                  >
+                    <IonIcon
+                      icon={closeCircleOutline}
+                      style={{ fontSize: 18 }}
+                    />{" "}
+                    Reject
                   </button>
                 </>
               )}
-              
+
               {isSupervisor && (
-                <button className="unified-sv-btn unified-sv-btn-delete footer-btn-full" onClick={() => { setDeleteTarget(viewState); setViewState(null); setFeedbackText(""); }}>
-                  <IonIcon icon={trashOutline} style={{ fontSize: 18 }} /> Delete
+                <button
+                  className="unified-sv-btn unified-sv-btn-delete footer-btn-full"
+                  onClick={() => {
+                    setDeleteTarget(viewState);
+                    setViewState(null);
+                    setFeedbackText("");
+                  }}
+                >
+                  <IonIcon icon={trashOutline} style={{ fontSize: 18 }} />{" "}
+                  Delete
                 </button>
               )}
             </div>
@@ -845,23 +931,37 @@ function Reports() {
         </div>
       )}
 
-      {/* ── EDIT MODAL (BOTTOM SHEET) ──────────────────────────────────────────────────── */}
-      {/* ── EDIT MODAL (BOTTOM SHEET) ──────────────────────────────────────────────────── */}
       {editState && (
-        <div className="premium-modal-overlay" onClick={() => { closeEdit(); setIsSaving(false); }}>
-          <div className="premium-modal-sheet" onClick={e => e.stopPropagation()}>
-            {/* Handle */}
+        <div
+          className="premium-modal-overlay"
+          onClick={() => {
+            closeEdit();
+            setIsSaving(false);
+          }}
+        >
+          <div
+            className="premium-modal-sheet"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="premium-modal-handle-wrap">
               <div className="premium-modal-handle" />
             </div>
 
-            {/* Sheet header */}
             <div className="premium-sheet-header">
               <div className="premium-sheet-header-left">
-                <IonIcon icon={createOutline} style={{ color: '#5f0076', fontSize: 24 }} />
+                <IonIcon
+                  icon={createOutline}
+                  style={{ color: "#5f0076", fontSize: 24 }}
+                />
                 <h2 className="premium-sheet-header-title">Edit Report</h2>
               </div>
-              <button onClick={() => { closeEdit(); setIsSaving(false); }} className="premium-sheet-close">
+              <button
+                onClick={() => {
+                  closeEdit();
+                  setIsSaving(false);
+                }}
+                className="premium-sheet-close"
+              >
                 <IonIcon icon={closeOutline} />
               </button>
             </div>
@@ -873,23 +973,31 @@ function Reports() {
                 <input
                   className="rp-field-input"
                   value={editState.title}
-                  onChange={(e) => setEditState((s) => s && { ...s, title: e.target.value })}
+                  onChange={(e) =>
+                    setEditState((s) => s && { ...s, title: e.target.value })
+                  }
                   maxLength={80}
                   placeholder="Report title"
                 />
               </div>
 
-              {/* Type + Date row */}
               <div className="rp-field-row">
                 <div className="rp-field">
                   <label className="rp-field-label">Type</label>
                   <select
                     className="rp-field-select"
                     value={editState.type}
-                    onChange={(e) => setEditState((s) => s && { ...s, type: e.target.value as Report["type"] })}
+                    onChange={(e) =>
+                      setEditState(
+                        (s) =>
+                          s && { ...s, type: e.target.value as Report["type"] },
+                      )
+                    }
                   >
                     {REPORT_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -899,45 +1007,98 @@ function Reports() {
                     type="date"
                     className="rp-field-input"
                     value={editState.reportDate}
-                    onChange={(e) => setEditState((s) => s && { ...s, reportDate: e.target.value })}
+                    onChange={(e) =>
+                      setEditState(
+                        (s) => s && { ...s, reportDate: e.target.value },
+                      )
+                    }
                   />
                 </div>
               </div>
 
-              {/* Content */}
               <div className="rp-field">
                 <label className="rp-field-label">Content</label>
                 <textarea
                   className="rp-field-textarea"
                   value={editState.content}
-                  onChange={(e) => setEditState((s) => s && { ...s, content: e.target.value })}
+                  onChange={(e) =>
+                    setEditState((s) => s && { ...s, content: e.target.value })
+                  }
                   rows={5}
                   maxLength={2000}
                   placeholder="Report content"
                 />
-                <span className="rp-field-count">{editState.content.length}/2000</span>
+                <span className="rp-field-count">
+                  {editState.content.length}/2000
+                </span>
               </div>
 
               <div className="rp-field">
-                <label className="rp-field-label">Attachments ({editState.existingAttachments.length + editState.newFiles.length}/{MAX_FILES})</label>
-                
+                <label className="rp-field-label">
+                  Attachments (
+                  {editState.existingAttachments.length +
+                    editState.newFiles.length}
+                  /{MAX_FILES})
+                </label>
+
                 {editState.existingAttachments.length > 0 && (
                   <div className="rp-edit-file-list">
                     {editState.existingAttachments.map((att, i) => {
-                      const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(att.filename);
-                      const thumbUrl = isImage ? getMediaUrl(att.path) : undefined;
+                      const isImage = /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(
+                        att.filename,
+                      );
+                      const thumbUrl = isImage
+                        ? getMediaUrl(att.path)
+                        : undefined;
                       return (
-                        <div key={`existing-${i}`} className="rp-edit-file-item" onClick={() => thumbUrl && setSelectedImage(thumbUrl)} style={{ cursor: thumbUrl ? 'pointer' : 'default' }}>
+                        <div
+                          key={`existing-${i}`}
+                          className="rp-edit-file-item"
+                          onClick={() => thumbUrl && setSelectedImage(thumbUrl)}
+                          style={{ cursor: thumbUrl ? "pointer" : "default" }}
+                        >
                           {thumbUrl ? (
-                            <ServerImage src={thumbUrl} alt={att.originalName} className="rp-edit-file-thumb" />
+                            <ServerImage
+                              src={thumbUrl}
+                              alt={att.originalName}
+                              className="rp-edit-file-thumb"
+                            />
                           ) : (
-                            <div className="rp-edit-file-icon-wrap"><IonIcon icon={attachOutline} /></div>
+                            <div className="rp-edit-file-icon-wrap">
+                              <IonIcon icon={attachOutline} />
+                            </div>
                           )}
-                          <div className="rp-edit-file-info" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <span className="rp-edit-file-name">{att.originalName}</span>
-                            {thumbUrl && <span style={{ fontSize: '10px', color: 'var(--c-text-muted)', marginTop: '-2px' }}>Tap to view</span>}
+                          <div
+                            className="rp-edit-file-info"
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              flexDirection: "column",
+                            }}
+                          >
+                            <span className="rp-edit-file-name">
+                              {att.originalName}
+                            </span>
+                            {thumbUrl && (
+                              <span
+                                style={{
+                                  fontSize: "10px",
+                                  color: "var(--c-text-muted)",
+                                  marginTop: "-2px",
+                                }}
+                              >
+                                Tap to view
+                              </span>
+                            )}
                           </div>
-                          <button className="rp-edit-file-remove" onClick={(e) => { e.stopPropagation(); removeExistingAttachment(i); }} title="Remove attachment">
+                          <button
+                            className="rp-edit-file-remove"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeExistingAttachment(i);
+                            }}
+                            title="Remove attachment"
+                          >
                             <IonIcon icon={trashOutline} />
                           </button>
                         </div>
@@ -949,17 +1110,56 @@ function Reports() {
                 {editState.newFilePreviews.length > 0 && (
                   <div className="rp-edit-file-list" style={{ marginTop: 8 }}>
                     {editState.newFilePreviews.map((item, i) => (
-                      <div key={`new-${i}`} className="rp-edit-file-item rp-edit-file-new" onClick={() => item.preview && setSelectedImage(item.preview)} style={{ cursor: item.preview ? 'pointer' : 'default' }}>
+                      <div
+                        key={`new-${i}`}
+                        className="rp-edit-file-item rp-edit-file-new"
+                        onClick={() =>
+                          item.preview && setSelectedImage(item.preview)
+                        }
+                        style={{ cursor: item.preview ? "pointer" : "default" }}
+                      >
                         {item.preview ? (
-                          <img src={item.preview} alt={item.file.name} className="rp-edit-file-thumb" />
+                          <img
+                            src={item.preview}
+                            alt={item.file.name}
+                            className="rp-edit-file-thumb"
+                          />
                         ) : (
-                          <div className="rp-edit-file-icon-wrap"><IonIcon icon={attachOutline} /></div>
+                          <div className="rp-edit-file-icon-wrap">
+                            <IonIcon icon={attachOutline} />
+                          </div>
                         )}
-                        <div className="rp-edit-file-info" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                          <span className="rp-edit-file-name">{item.file.name}</span>
-                          {item.preview && <span style={{ fontSize: '10px', color: 'var(--c-text-muted)', marginTop: '-2px' }}>Tap to view</span>}
+                        <div
+                          className="rp-edit-file-info"
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                          }}
+                        >
+                          <span className="rp-edit-file-name">
+                            {item.file.name}
+                          </span>
+                          {item.preview && (
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                color: "var(--c-text-muted)",
+                                marginTop: "-2px",
+                              }}
+                            >
+                              Tap to view
+                            </span>
+                          )}
                         </div>
-                        <button className="rp-edit-file-remove" onClick={(e) => { e.stopPropagation(); removeNewFile(i); }} title="Remove file">
+                        <button
+                          className="rp-edit-file-remove"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeNewFile(i);
+                          }}
+                          title="Remove file"
+                        >
                           <IonIcon icon={trashOutline} />
                         </button>
                       </div>
@@ -967,28 +1167,60 @@ function Reports() {
                   </div>
                 )}
 
-                {editState.existingAttachments.length + editState.newFiles.length < MAX_FILES && (
-                  <button className="rp-edit-add-files-btn" onClick={() => editFileRef.current?.click()}>
+                {editState.existingAttachments.length +
+                  editState.newFiles.length <
+                  MAX_FILES && (
+                  <button
+                    className="rp-edit-add-files-btn"
+                    onClick={() => editFileRef.current?.click()}
+                  >
                     <IonIcon icon={cloudUploadOutline} /> Add Files
                   </button>
                 )}
-                <input ref={editFileRef} type="file" multiple accept="image/*,.pdf,.doc,.docx" style={{ display: "none" }} onChange={(e) => { addEditFiles(e.target.files); e.target.value = ""; }} />
+                <input
+                  ref={editFileRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    addEditFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
               </div>
             </div>
 
             <div className="premium-edit-footer">
-              <button onClick={() => { closeEdit(); setIsSaving(false); }} className="premium-edit-btn btn-cancel-premium">
+              <button
+                onClick={() => {
+                  closeEdit();
+                  setIsSaving(false);
+                }}
+                className="premium-edit-btn btn-cancel-premium"
+              >
                 Cancel
               </button>
-              <button onClick={handleSaveEdit} disabled={isSaving || !editState.content.trim()} className="premium-edit-btn btn-save-premium">
-                {isSaving ? <><span className="rp-btn-spinner" /> Saving…</> : <><IonIcon icon={saveOutline} /> Save Changes</>}
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSaving || !editState.content.trim()}
+                className="premium-edit-btn btn-save-premium"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="rp-btn-spinner" /> Saving…
+                  </>
+                ) : (
+                  <>
+                    <IonIcon icon={saveOutline} /> Save Changes
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── DELETE CONFIRMATION MODAL ────────────────────────────────────── */}
       {deleteTarget && (
         <div className="rp-modal-overlay" onClick={() => setDeleteTarget(null)}>
           <div
@@ -1045,17 +1277,17 @@ function Reports() {
         </div>
       )}
 
-      {/* Image Lightbox */}
       {selectedImage && (
-        <Lightbox 
-          src={selectedImage} 
-          onClose={() => setSelectedImage(null)} 
-        />
+        <Lightbox src={selectedImage} onClose={() => setSelectedImage(null)} />
       )}
 
-      {isSupervisor ? <SupervisorBottomNav activeTab="reports" /> : <BottomNav activeTab="reports" />}
+      {isSupervisor ? (
+        <SupervisorBottomNav activeTab="reports" />
+      ) : (
+        <BottomNav activeTab="reports" />
+      )}
     </IonPage>
   );
-};
+}
 
 export default Reports;

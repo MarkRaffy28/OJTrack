@@ -13,11 +13,11 @@ import SupervisorBottomNav from '@components/SupervisorBottomNav';
 import '@css/Supervisor.css';
 
 function SupervisorDashboard() {
-  const { navigate } = useNavigation();
-  const { user, refreshUser } = useUser();
-  const { dashboardStats, stats, loading, fetchDashboardStats, setFilters, filters, allOjts, uniqueCohorts } = useSupervisorOjt();
-  const { activities, loadingActivities, fetchActivities } = useActivity();
   const location = useLocation();
+  const { activities, loadingActivities, fetchActivities } = useActivity();
+  const { navigate } = useNavigation();
+  const { dashboardStats, stats, loading, fetchDashboardStats, setFilters, filters, allOjts, uniqueCohorts } = useSupervisorOjt();
+  const { user, refreshUser } = useUser();
 
   const handleSearch = (e: any) => {
     setFilters({ ...filters, search: e.detail.value || "" });
@@ -41,7 +41,7 @@ function SupervisorDashboard() {
   useEffect(() => {
     fetchActivities();
     refreshUser();
-  }, [location.pathname, fetchActivities]);
+  }, [location.pathname, fetchActivities, refreshUser]);
 
 
   return (
@@ -98,24 +98,22 @@ function SupervisorDashboard() {
         </div>
 
         <div className="sv-body" style={{ minHeight: '80vh', paddingBottom: '100px' }}>
-
-          {/* Quick Stats Grid */}
           <div className="sv-stats-grid">
-            <div className="sv-stat-card sv-stat-purple" onClick={() => navigate('/manage-trainees')}>
+            <div className="sv-stat-card sv-stat-purple" onClick={() => navigate('/trainees')}>
               <div className="sv-stat-icon-wrap">
                 <IonIcon icon={peopleOutline} />
               </div>
               <p className="sv-stat-num">{stats.total}</p>
               <p className="sv-stat-lbl">Trainees</p>
             </div>
-            <div className="sv-stat-card sv-stat-amber" onClick={() => navigate('/review-reports')}>
+            <div className="sv-stat-card sv-stat-amber" onClick={() => navigate('/reports')}>
               <div className="sv-stat-icon-wrap">
                 <IonIcon icon={documentTextOutline} />
               </div>
               <p className="sv-stat-num">{dashboardStats?.pendingReports || 0}</p>
               <p className="sv-stat-lbl">Pending</p>
             </div>
-            <div className="sv-stat-card sv-stat-green" onClick={() => navigate('/attendance-logs')}>
+            <div className="sv-stat-card sv-stat-green" onClick={() => navigate('/attendance')}>
               <div className="sv-stat-icon-wrap">
                 <IonIcon icon={personOutline} />
               </div>
@@ -124,7 +122,6 @@ function SupervisorDashboard() {
             </div>
           </div>
 
-          {/* Progress Overview Card */}
           <div className="sv-card">
             <div className="sv-card-header">
               <div>
@@ -154,7 +151,6 @@ function SupervisorDashboard() {
             </div>
           </div>
 
-          {/* Quick Actions Grid */}
           <div className="sv-section-header">
             <span className="sv-section-title">Quick Actions</span>
           </div>
@@ -177,7 +173,6 @@ function SupervisorDashboard() {
             </button>
           </div>
 
-          {/* Recent Student Activity */}
           <div className="sv-section-header">
             <span className="sv-section-title">Recent Activity</span>
             <button className="sv-view-all" onClick={() => navigate('/activity')}>View All</button>

@@ -84,6 +84,31 @@
   margin: 0;
 }
 
+.btn-logs-link {
+  margin-left: auto;
+  background: var(--c-surface-2);
+  border: 1px solid var(--border-light);
+  color: var(--c-purple);
+  padding: 8px 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logs-link:hover {
+  background: var(--c-purple-soft);
+  border-color: var(--c-purple-soft);
+}
+
+.btn-logs-link ion-icon {
+  font-size: 16px;
+}
+
 /* ─── QR Scan Card ──────────────────────────────────────────────────────────── */
 
 .dtr-scan-card {

@@ -35,10 +35,12 @@ export const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
   const [hasTriedFetch, setHasTriedFetch] = useState(false);
+  const isLoadingRef = React.useRef(false);
 
   const fetchActivities = useCallback(async () => {
-    if (!token || !databaseId) return;
+    if (!token || !databaseId || isLoadingRef.current) return;
 
+    isLoadingRef.current = true;
     setLoadingActivities(true);
     try {
       const params: any = { databaseId, role };
@@ -61,6 +63,7 @@ export const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } catch (err) {
       console.error("Failed to fetch activities", err);
     } finally {
+      isLoadingRef.current = false;
       setLoadingActivities(false);
     }
   }, [token, databaseId, role, currentOjt?.id]);
@@ -105,8 +108,12 @@ export const ActivityProvider: FC<{ children: ReactNode }> = ({ children }) => {
     return activities.slice(0, n);
   };
 
+  const value = React.useMemo(() => ({
+    activities, getLatestActivities, loadingActivities, fetchActivities
+  }), [activities, getLatestActivities, loadingActivities, fetchActivities]);
+
   return (
-    <ActivityContext.Provider value={{ activities, getLatestActivities, loadingActivities, fetchActivities }}>
+    <ActivityContext.Provider value={value}>
       {children}
     </ActivityContext.Provider>
   );

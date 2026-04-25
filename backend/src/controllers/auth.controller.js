@@ -4,11 +4,13 @@ import { createSaveSendOTP, verifyOTP } from "../helpers/otp.helper.js";
 import { ensureUnique, ensureUserExists } from "../helpers/user.helper.js";
 import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
-import { createStudentUser, createSupervisorUser, markEmailVerified, resetUserPassword } from "../models/auth.model.js";
+import { createAdminUser, createStudentUser, createSupervisorUser, markEmailVerified, resetUserPassword } from "../models/auth.model.js";
+import { createOjtRecord } from "../models/ojt.model.js";
+import { getSettings } from "../models/settings.model.js";
 import { findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername } from "../models/user.model.js";
 import { 
-  loginSchema, logoutSchema, registrationSchema, resetPasswordSchema, sendEmailVerificationOTPSchema, sendForgotPasswordOTPSchema, 
-  studentRegistrationSchema, supervisorRegistrationSchema, verifyEmailOTPSchema 
+  adminRegistrationSchema, loginSchema, logoutSchema, registrationSchema, resetPasswordSchema, sendEmailVerificationOTPSchema, 
+  sendForgotPasswordOTPSchema, studentRegistrationSchema, supervisorRegistrationSchema, verifyEmailOTPSchema 
 } from "../validators/auth.validator.js";
 
 
@@ -83,6 +85,9 @@ export const registerController = async (req, res) => {
   } else if (role === "supervisor") {
     data = validate(res, supervisorRegistrationSchema, req.body);
     if (!data) return;
+  } else if (role === "admin") {
+    data = validate(res, adminRegistrationSchema, req.body);
+    if (!data) return;
   } else {
     return res.status(400).json({ message: "Invalid role" });
   }
@@ -95,11 +100,45 @@ export const registerController = async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
-  const createFn = role === "student" ? createStudentUser : createSupervisorUser;
+  const createFn = role === "student" ? createStudentUser : role === "supervisor" ? createSupervisorUser : createAdminUser;
   const newUserId = await createFn({ ...data, password: hashedPassword });
 
+  if (role === "student") {
+    const settings = await getSettings();
+    const ay = settings['current_academic_year'];
+    const term = settings['current_term'];
+    const yearKey = `year_${data.year}`;
+    const reqHours = settings[`${yearKey}_required_hours`] || 0;
+    const sDate = settings[`${yearKey}_start_date`] || null;
+    const eDate = settings[`${yearKey}_end_date`] || null;
+
+    if (ay && term) {
+      await createOjtRecord({
+        studentId: newUserId,
+        academicYear: ay,
+        term: term,
+        requiredHours: reqHours,
+        startDate: sDate,
+        endDate: eDate,
+        status: 'pending'
+      });
+    }
+  }
+
+  let actorId = newUserId;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      if (decoded && decoded.id) actorId = decoded.id;
+    } catch (err) {
+      // ignore
+    }
+  }
+
   await logActivityController({
-    databaseId: newUserId,
+    databaseId: actorId,
     action: "REGISTER",
     targetType: "USER",
     targetId: newUserId,

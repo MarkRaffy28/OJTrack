@@ -177,7 +177,7 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
     if (!token || !databaseId || role !== "supervisor") return;
 
     try {
-      const response = await API.get(`/supervisor/dashboard/${databaseId}`, {
+      const response = await API.get(`/users/supervisor/${databaseId}/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDashboardStats(response.data);
@@ -310,25 +310,44 @@ export const SupervisorOjtProvider: FC<{ children: ReactNode }> = ({ children })
     });
   }, [allOjts]);
 
+  const value = useMemo(() => ({
+    allOjts,
+    filteredOjts,
+    currentOjt,
+    loading,
+    filters,
+    stats,
+    dashboardStats,
+    availableAcademicYears,
+    availableTerms,
+    uniqueCohorts,
+    setFilters,
+    fetchAllOjts,
+    fetchDashboardStats,
+    selectOjt,
+    resetFilters,
+    updateNotes,
+  }), [
+    allOjts,
+    filteredOjts,
+    currentOjt,
+    loading,
+    filters,
+    stats,
+    dashboardStats,
+    availableAcademicYears,
+    availableTerms,
+    uniqueCohorts,
+    setFilters,
+    fetchAllOjts,
+    fetchDashboardStats,
+    selectOjt,
+    resetFilters,
+    updateNotes,
+  ]);
+
   return (
-    <SupervisorOjtContext.Provider value={{
-      allOjts,
-      filteredOjts,
-      currentOjt,
-      loading,
-      filters,
-      stats,
-      dashboardStats,
-      availableAcademicYears,
-      availableTerms,
-      uniqueCohorts,
-      setFilters,
-      fetchAllOjts,
-      fetchDashboardStats,
-      selectOjt,
-      resetFilters,
-      updateNotes,
-    }}>
+    <SupervisorOjtContext.Provider value={value}>
       {children}
     </SupervisorOjtContext.Provider>
   );

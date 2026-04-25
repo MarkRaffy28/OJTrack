@@ -12,10 +12,18 @@ export const ActivityActions = [
   "SUBMIT_REPORT",
   "TIME_IN",
   "TIME_OUT",
-  "UPDATE_SUPERVISOR_NOTES"
+  "UPDATE_SUPERVISOR_NOTES",
+  "CREATE_OFFICE",
+  "UPDATE_OFFICE",
+  "DELETE_OFFICE",
+  "UPDATE_SETTINGS",
+  "DELETE_TRAINEE",
+  "ASSIGN_SUPERVISOR",
+  "EDIT_USER",
+  "EVALUATE_REPORT"
 ];
 
-export const ActivityTargetTypes = ["REPORT", "PROFILE", "DTR", "USER", "OJT"];
+export const ActivityTargetTypes = ["REPORT", "PROFILE", "DTR", "USER", "OJT", "OFFICE", "SYSTEM"];
 
 export const logActivitySchema = z.object({
   databaseId: z.coerce.number().int().positive(),

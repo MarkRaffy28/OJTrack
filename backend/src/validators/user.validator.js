@@ -31,13 +31,26 @@ export const checkUsernameSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
 });
 
-export const getProfileSchema = z.object({
-  role: z.enum(["student", "supervisor"]),
+export const deleteUserRecordSchema = z.object({
   databaseId: z.coerce.number().int().positive(),
 });
 
+export const getAdminDashboardSchema = z.object({
+  databaseId: z.coerce.number().int().positive(),
+  cohort: z.string().optional(),
+});
+
+export const getProfileSchema = z.object({
+  role: z.enum(["student", "supervisor", "admin"]),
+  databaseId: z.coerce.number().int().positive(),
+});
+
+export const supervisorStatsSchema = z.object({
+  supervisorId: z.coerce.number().int().positive(),
+});                                                                                                                                                               
+
 export const updateProfileSchema = z.object({
-  role: z.enum(["student", "supervisor"]),
+  role: z.enum(["student", "supervisor", "admin"]),
   databaseId: z.coerce.number().int().positive(),
 });
 
@@ -53,6 +66,10 @@ export const updateSupervisorProfileSchema = baseUserSchema.extend({
   employeeId: z.string().min(1, "Employee ID is required"),
   officeId: z.coerce.number().int().positive(),
   position: z.string().min(1, "Position is required"),
+});
+
+export const updateAdminProfileSchema = baseUserSchema.extend({
+  adminId: z.string().min(1, "Admin ID is required"),
 });
 
 export const updateUserPasswordSchema = z.object({

@@ -3,8 +3,11 @@ import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { deleteFiles } from "../utils/storage.util.js";
 import { getStudentOjts } from "../models/ojt.model.js";
-import { createReport, getReports, updateReport, deleteReport, getReportById, getSupervisorReports, updateReportStatus } from "../models/report.model.js";
-import { createReportSchema, deleteReportSchema, getReportsSchema, updateReportSchema, getSupervisorReportsSchema, updateReportStatusSchema } from "../validators/report.validator.js";
+import { 
+  createReport, deleteReport, getAllReportsAdmin, getReportById, getReportByIdAdmin, getReports, getSupervisorReports, updateReport, 
+  updateReportStatus
+} from "../models/report.model.js";
+import { createReportSchema, deleteReportSchema, getReportDetailSchema, getReportsSchema, getSupervisorReportsSchema, updateReportSchema, updateReportStatusSchema } from "../validators/report.validator.js";
 
 
 export const createReportController = async (req, res) => {
@@ -56,7 +59,7 @@ export const deleteReportController = async (req, res) => {
   await deleteReport(reportId);
 
   await logActivityController({
-    databaseId: report.student_id,
+    databaseId: req.user?.id || report.student_id,
     ojtId: report.ojt_id,
     action: "DELETE_REPORT",
     targetType: "REPORT",
@@ -71,6 +74,33 @@ export const deleteReportController = async (req, res) => {
   res.status(200).json({ message: "OJT report deleted successfully" });
 };
 
+export const getAdminReportsController = async (req, res) => {
+  const reports = await getAllReportsAdmin();
+  if (!reports) return;
+
+  res.status(200).json({
+    message: "Admin reports fetched successfully",
+    data: reports
+  });
+};
+
+export const getReportDetailController = async (req, res) => {
+  const data = validate(res, getReportDetailSchema, req.params);
+  if (!data) return;
+
+  const { reportId } = data;
+  const report = await getReportByIdAdmin(reportId);
+  
+  if (!report) {
+    return res.status(404).json({ message: "Report not found" });
+  }
+
+  res.status(200).json({
+    message: "Report details fetched successfully",
+    data: report
+  });
+};
+
 export const getReportsController = async (req, res) => {
   const data = validate(res, getReportsSchema, req.params);
   if (!data) return;
@@ -82,6 +112,21 @@ export const getReportsController = async (req, res) => {
 
   res.status(200).json({
     message: "OJT reports fetched successfully",
+    data: reports
+  });
+};
+
+export const getSupervisorReportsController = async (req, res) => {
+  const data = validate(res, getSupervisorReportsSchema, req.params);
+  if (!data) return;
+
+  const { supervisorId } = data;
+  
+  const reports = await getSupervisorReports(supervisorId);
+  if (!reports) return;
+
+  res.status(200).json({
+    message: "Supervisor reports fetched successfully",
     data: reports
   });
 };
@@ -144,21 +189,6 @@ export const updateReportController = async (req, res) => {
   });
 };
 
-export const getSupervisorReportsController = async (req, res) => {
-  const data = validate(res, getSupervisorReportsSchema, req.params);
-  if (!data) return;
-
-  const { supervisorId } = data;
-  
-  const reports = await getSupervisorReports(supervisorId);
-  if (!reports) return;
-
-  res.status(200).json({
-    message: "Supervisor reports fetched successfully",
-    data: reports
-  });
-};
-
 export const updateReportStatusController = async (req, res) => {
   const data = validate(res, updateReportStatusSchema, { ...req.params, ...req.body });
   if (!data) return;
@@ -171,12 +201,12 @@ export const updateReportStatusController = async (req, res) => {
   await updateReportStatus(reportId, status, req.user.id, feedback);
 
   await logActivityController({
-    databaseId: report.student_id,
+    databaseId: req.user.id,
     ojtId: report.ojt_id,
-    action: "UPDATE_REPORT",
+    action: "EVALUATE_REPORT",
     targetType: "REPORT",
     targetId: reportId,
-    description: `Report marked as ${status} by supervisor`
+    description: `Marked a report as ${status}`
   });
 
   res.status(200).json({

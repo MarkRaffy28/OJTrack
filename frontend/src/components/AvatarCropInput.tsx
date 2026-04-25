@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { IonIcon } from '@ionic/react';
 import { cameraOutline, trashOutline, closeOutline, checkmarkOutline } from 'ionicons/icons';
 import Avatar from './Avatar';
 import '@css/AvatarCropInput.css';
 
-const CROP_SIZE = 248; // viewport square size in px
+const CROP_SIZE = 248;
 
 interface CropState { x: number; y: number; scale: number; }
 
@@ -25,7 +26,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
   const viewportRef  = useRef<HTMLDivElement>(null);
   const lastTouchDist = useRef<number>(0);
 
-  // ── Wheel zoom — must be non-passive to call preventDefault ──────────────
   useEffect(() => {
     if (!isCropping) return;
     const el = viewportRef.current;
@@ -44,7 +44,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
     return () => el.removeEventListener('wheel', handler);
   }, [isCropping]);
 
-  // ── File pick ────────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -58,7 +57,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
     e.target.value = '';
   };
 
-  // ── Center image once natural dimensions are known ───────────────────────
   const handleImageLoad = useCallback(() => {
     const img = cropImgRef.current;
     if (!img) return;
@@ -68,7 +66,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
     setCropState({ x, y, scale });
   }, []);
 
-  // ── Drag ─────────────────────────────────────────────────────────────────
   const onDragStart = useCallback((clientX: number, clientY: number) => {
     setIsDragging(true);
     dragStart.current = { mx: clientX, my: clientY, cx: cropState.x, cy: cropState.y };
@@ -87,7 +84,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
     dragStart.current = null;
   }, []);
 
-  // ── Apply crop ───────────────────────────────────────────────────────────
   const applyCrop = useCallback(() => {
     const img = cropImgRef.current;
     if (!img || !rawImageSrc) return;
@@ -117,7 +113,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
         onChange={handleFileChange}
       />
 
-      {/* ── Avatar preview ── */}
       <div className="ea-hero-avatar-area">
         <div className="ea-avatar-wrap">
           {value ? (
@@ -142,12 +137,9 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
         )}
       </div>
 
-      {/* ── Crop overlay ── */}
-      {isCropping && rawImageSrc && (
+      {isCropping && rawImageSrc && createPortal(
         <div className="ea-cropper-overlay">
           <div className="ea-cropper-modal">
-
-            {/* Header */}
             <div className="ea-cropper-header">
               <div className="ea-cropper-title-group">
                 <div className="ea-cropper-icon-badge">
@@ -163,7 +155,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
               </button>
             </div>
 
-            {/* Viewport */}
             <div className="ea-cropper-viewport-container">
               <div
                 ref={viewportRef}
@@ -238,7 +229,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
               </div>
             </div>
 
-            {/* Zoom slider */}
             <div className="ea-cropper-zoom-row">
               <span className="ea-cropper-zoom-label">–</span>
               <input
@@ -258,7 +248,6 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
               <span className="ea-cropper-zoom-label">+</span>
             </div>
 
-            {/* Actions */}
             <div className="ea-cropper-actions">
               <button type="button" className="ea-cropper-btn ea-cropper-btn--cancel" onClick={cancelCrop}>
                 Cancel
@@ -269,7 +258,8 @@ function AvatarCropInput({ value, onChange }: AvatarCropInputProps) {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

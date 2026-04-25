@@ -1,4 +1,4 @@
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   username VARCHAR(100) NOT NULL UNIQUE,
@@ -24,22 +24,25 @@ CREATE TABLE users (
   password_reset_expires TIMESTAMP NULL,
 
   role ENUM('student','supervisor','admin') NOT NULL,
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
+  
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE offices (
+CREATE TABLE IF NOT EXISTS offices (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   name VARCHAR(150) NOT NULL, 
   address VARCHAR(255),
   contact_email VARCHAR(150), 
   contact_phone VARCHAR(20),  
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE table student_details (
+CREATE TABLE IF NOT EXISTS student_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   student_id INT NOT NULL UNIQUE,
@@ -51,7 +54,7 @@ CREATE table student_details (
   FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE supervisor_details (
+CREATE TABLE IF NOT EXISTS supervisor_details (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   supervisor_id INT NOT NULL UNIQUE,
@@ -62,12 +65,12 @@ CREATE TABLE supervisor_details (
   FOREIGN KEY (office_id) REFERENCES offices(id) ON DELETE CASCADE
 );
 
-CREATE TABLE student_ojt (
+CREATE TABLE IF NOT EXISTS student_ojt (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   student_id INT NOT NULL,
   supervisor_id INT DEFAULT NULL,
-  office_id INT NOT NULL,
+  office_id INT,
 
   academic_year VARCHAR(20) NOT NULL,
   term ENUM('1st', '2nd', 'Summer') NOT NULL,
@@ -77,6 +80,7 @@ CREATE TABLE student_ojt (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   supervisor_notes TEXT NULL,
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -88,12 +92,12 @@ CREATE TABLE student_ojt (
   INDEX idx_student (student_id),
   INDEX idx_supervisor (supervisor_id),
   INDEX idx_office (office_id),
-  INDEX idx_school_year_term (school_year, term),
+  INDEX idx_academic_year_term (academic_year, term),
   INDEX idx_status (status),
-  INDEX idx_student_year_status (student_id, school_year, status)
+  INDEX idx_student_year_status (student_id, academic_year, status)
 );
 
-CREATE TABLE attendance (
+CREATE TABLE IF NOT EXISTS attendance (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   student_id INT NOT NULL UNIQUE,
@@ -109,7 +113,7 @@ CREATE TABLE attendance (
   FOREIGN KEY (ojt_id) REFERENCES student_ojt(id) ON DELETE CASCADE
 );
 
-CREATE TABLE reports (
+CREATE TABLE IF NOT EXISTS reports (
   id INT PRIMARY KEY AUTO_INCREMENT,
 
   student_id INT NOT NULL,
@@ -125,6 +129,7 @@ CREATE TABLE reports (
   reviewed_by INT NULL,
   reviewed_at TIMESTAMP NULL,
   feedback TEXT NULL,
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
 
   FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (ojt_id) REFERENCES student_ojt(id) ON DELETE CASCADE,
@@ -133,15 +138,14 @@ CREATE TABLE reports (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE activity (
+CREATE TABLE IF NOT EXISTS activity (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
   database_id INT NOT NULL,
   ojt_id INT NULL,
 
-  action VARCHAR(50) NOT NULL, -- LOGIN, CREATE_REPORT, TIME_IN, TIME_OUT, etc.
-  target_type VARCHAR(50) NULL, -- REPORT, PROFILE, DTR
-  target_id INT NULL,
+  action VARCHAR(50) NOT NULL,
+  target_type VARCHAR(50) NULL,
   description TEXT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -154,3 +158,21 @@ CREATE TABLE activity (
   INDEX idx_created_at (created_at),
   INDEX idx_action (action)
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  setting_key VARCHAR(100) NOT NULL UNIQUE,
+  setting_value VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+  ('current_academic_year', '2023-2024'),
+  ('current_term', '1st'),
+  ('year_2_required_hours', '300'),
+  ('year_2_start_date', '2024-01-01'),
+  ('year_2_end_date', '2024-05-31'),
+  ('year_4_required_hours', '600'),
+  ('year_4_start_date', '2024-01-01'),
+  ('year_4_end_date', '2024-05-31');

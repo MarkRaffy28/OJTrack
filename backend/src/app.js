@@ -8,7 +8,7 @@ import officeRoutes from "./routes/office.route.js";
 import ojtsRoutes from "./routes/ojts.route.js";
 import reportRoutes from "./routes/report.route.js";
 import userRoutes from "./routes/user.route.js";
-import supervisorRoutes from "./routes/supervisor.route.js";
+import settingsRoutes from "./routes/settings.route.js";
 
 const app = express();
 const apiRouter = express.Router();
@@ -28,7 +28,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use("/uploads", (req, res, next) => {
   res.set("Access-Control-Allow-Origin", "*");
@@ -44,7 +45,7 @@ apiRouter.use("/offices", officeRoutes);
 apiRouter.use("/ojts", ojtsRoutes);
 apiRouter.use("/reports", reportRoutes);
 apiRouter.use("/users", userRoutes);
-apiRouter.use("/supervisor", supervisorRoutes);
+apiRouter.use("/settings", settingsRoutes);
 
 app.use("/api", apiRouter);
 

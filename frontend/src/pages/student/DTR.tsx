@@ -10,6 +10,7 @@ import { useNavigation } from '@hooks/useNavigation';
 import { formatDate, formatTime12, todayISO } from '@utils/date';
 import API from '@api/api';
 import BottomNav from '@components/BottomNav';
+import LockedOjtScreen from '@components/LockedOjtScreen';
 import '@css/DTR.css';
 
 interface AttendanceRecord {
@@ -44,11 +45,10 @@ const calcTotalHours = (r: AttendanceRecord) => {
 };
 
 function DTR() {
-  useNavigation(); 
-
-  const { token }      = useAuth();
+  const { token } = useAuth();
+  const { navigate } = useNavigation(); 
   const { currentOjt } = useOjt();
-  const { user }       = useUser();
+  const { user } = useUser();
 
   const [selectedDate] = useState<string>(new Date().toISOString());
   const [attendance, setAttendance] = useState<AttendanceRecord>({
@@ -147,6 +147,26 @@ function DTR() {
     }
   };
 
+  if (currentOjt?.status === 'completed') {
+    return (
+      <IonPage>
+        <IonContent fullscreen>
+          <LockedOjtScreen type="completed" backPath="/dashboard" />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  if (!currentOjt?.officeName) {
+    return (
+      <IonPage>
+        <IonContent fullscreen>
+          <LockedOjtScreen type="unassigned" backPath="/dashboard" />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
   return (
     <IonPage>
       <IonContent fullscreen className="dtr-content">
@@ -157,7 +177,6 @@ function DTR() {
           />
         </IonRefresher>
 
-        {/* Hero */}
         <div className="dtr-hero">
           <div className="dtr-hero-bg" />
           <div className="dtr-hero-inner">
@@ -167,8 +186,6 @@ function DTR() {
         </div>
 
         <div className="dtr-container">
-
-          {/* Date */}
           <div className="dtr-card dtr-date-card">
             <div className="dtr-card-icon-wrap dtr-icon-date">
               <IonIcon icon={calendarOutline} />
@@ -177,9 +194,12 @@ function DTR() {
               <p className="dtr-card-label">Date</p>
               <p className="dtr-card-value">{formatDate(selectedDate)}</p>
             </div>
+            <button className="btn-logs-link" onClick={() => navigate('/attendance-logs')}>
+              <IonIcon icon={calendarOutline} />
+              <span>History</span>
+            </button>
           </div>
 
-          {/* QR Scan Card */}
           <div className="dtr-scan-card">
             <div className="dtr-scan-graphic">
               <div className={`dtr-scan-ring ${scanning ? 'dtr-scan-ring--active' : ''}`}>
@@ -225,7 +245,6 @@ function DTR() {
             </button>
           </div>
 
-          {/* Summary */}
           <div className="dtr-summary-card">
             <div className="dtr-summary-header">
               <IonIcon icon={checkmarkCircleOutline} className="dtr-summary-icon" />
@@ -256,7 +275,6 @@ function DTR() {
                 </div>
               ))}
 
-              {/* Total */}
               {(() => {
                 const hasTotal = !!(attendance.morningTimeIn && attendance.morningTimeOut);
                 return (
@@ -271,7 +289,6 @@ function DTR() {
               })()}
             </div>
           </div>
-
         </div>
 
         <IonToast

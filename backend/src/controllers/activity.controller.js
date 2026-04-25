@@ -1,7 +1,7 @@
 import { ensureUserExists } from "../helpers/user.helper.js";
 import { fetchOrFail } from "../helpers/resource.helper.js";
 import { validate } from "../helpers/validate.helper.js";
-import { getStudentActivities, logActivity } from "../models/activity.model.js";
+import { getActivities, logActivity } from "../models/activity.model.js";
 import { findUserByDatabaseId } from "../models/user.model.js";
 import { logActivitySchema, getActivitiesSchema } from "../validators/activity.validator.js";
 
@@ -13,8 +13,12 @@ export const getActivitiesController = async (req, res) => {
   const { databaseId, ojtId } = data;
 
   if (!await ensureUserExists(res, findUserByDatabaseId, databaseId)) return;
+  
+  if (Number(req.user?.id) !== Number(databaseId)) {
+    return res.status(403).json({ message: "Unauthorized access to activities" });
+  }
 
-  const activities = await fetchOrFail(res, getStudentActivities, [databaseId], "Activities not found");
+  const activities = await fetchOrFail(res, getActivities, [databaseId], "Activities not found");
   if (!activities) return;
 
   const filteredActivities = ojtId 

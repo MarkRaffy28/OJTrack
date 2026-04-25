@@ -1,8 +1,8 @@
 import React from 'react';
 import { IonIcon, IonSpinner } from '@ionic/react';
 import {  
-  logInOutline,  logOutOutline,  cloudUploadOutline,  personOutline,  shieldCheckmarkOutline,  
-  keyOutline,  trashOutline,  createOutline,  timeOutline 
+  logInOutline,  logOutOutline,  cloudUploadOutline,  personOutline,  shieldCheckmarkOutline, keyOutline,  trashOutline,  
+  createOutline,  timeOutline, businessOutline, settingsOutline, personRemoveOutline, peopleOutline, checkmarkDoneOutline
 } from 'ionicons/icons';
 import { formatRelativeDate, formatTime12 } from '@utils/date';
 
@@ -22,17 +22,25 @@ interface RecentActivityProps {
 }
 
 const typeConfig: Record<string, { icon: string; color: string; bg: string; label: string; badge: string }> = {
-  'TIME_IN':        { icon: logInOutline,          color: '#34d399', bg: 'rgba(52,211,153,0.15)',  label: 'Time In',      badge: 'badge-success' },
-  'TIME_OUT':       { icon: logOutOutline,         color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Time Out',     badge: 'badge-danger' },
-  'SUBMIT_REPORT':  { icon: cloudUploadOutline,    color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       badge: 'badge-blue' },
-  'CREATE_REPORT':  { icon: cloudUploadOutline,    color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       badge: 'badge-blue' },
-  'UPDATE_REPORT':  { icon: createOutline,         color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Update',       badge: 'badge-blue' },
-  'DELETE_REPORT':  { icon: trashOutline,          color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Delete',       badge: 'badge-danger' },
-  'LOGIN':          { icon: personOutline,         color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', label: 'Login',        badge: 'badge-purple' },
-  'LOGOUT':         { icon: personOutline,         color: '#ec4899', bg: 'rgba(236,72,153,0.15)',  label: 'Logout',       badge: 'badge-pink' },
-  'REGISTER':       { icon: shieldCheckmarkOutline, color: '#10b981', bg: 'rgba(16,185,129,0.15)', label: 'Register',     badge: 'badge-success' },
-  'UPDATE_PROFILE': { icon: personOutline,         color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  label: 'Profile',      badge: 'badge-orange' },
-  'UPDATE_PASSWORD':{ icon: keyOutline,            color: '#6366f1', bg: 'rgba(99,102,241,0.15)',  label: 'Password',     badge: 'badge-indigo' },
+  'TIME_IN':        { icon: logInOutline,           color: '#34d399', bg: 'rgba(52,211,153,0.15)',  label: 'Time In',      badge: 'badge-success' },
+  'TIME_OUT':       { icon: logOutOutline,          color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Time Out',     badge: 'badge-danger'  },
+  'SUBMIT_REPORT':  { icon: cloudUploadOutline,     color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       badge: 'badge-blue'    },
+  'CREATE_REPORT':  { icon: cloudUploadOutline,     color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Report',       badge: 'badge-blue'    },
+  'UPDATE_REPORT':  { icon: createOutline,          color: '#60a5fa', bg: 'rgba(96,165,250,0.15)',  label: 'Update',       badge: 'badge-blue'    },
+  'DELETE_REPORT':  { icon: trashOutline,           color: '#f87171', bg: 'rgba(248,113,113,0.15)', label: 'Delete',       badge: 'badge-danger'  },
+  'LOGIN':          { icon: personOutline,          color: '#a78bfa', bg: 'rgba(167,139,250,0.15)', label: 'Login',        badge: 'badge-purple'  },
+  'LOGOUT':         { icon: personOutline,          color: '#ec4899', bg: 'rgba(236,72,153,0.15)',  label: 'Logout',       badge: 'badge-pink'    },
+  'REGISTER':       { icon: shieldCheckmarkOutline, color: '#10b981', bg: 'rgba(16,185,129,0.15)',  label: 'Register',     badge: 'badge-success' },
+  'UPDATE_PROFILE': { icon: personOutline,          color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  label: 'Profile',      badge: 'badge-orange'  },
+  'UPDATE_PASSWORD':{ icon: keyOutline,             color: '#6366f1', bg: 'rgba(99,102,241,0.15)',  label: 'Password',     badge: 'badge-indigo'  },
+  'CREATE_OFFICE':  { icon: businessOutline,        color: '#10b981', bg: 'rgba(16,185,129,0.15)',  label: 'New Office',   badge: 'badge-success' },
+  'UPDATE_OFFICE':  { icon: businessOutline,        color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  label: 'Edit Office',  badge: 'badge-orange'  },
+  'DELETE_OFFICE':  { icon: trashOutline,           color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   label: 'Drop Office',  badge: 'badge-danger'  },
+  'UPDATE_SETTINGS':{ icon: settingsOutline,        color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)',  label: 'Settings',     badge: 'badge-purple'  },
+  'DELETE_TRAINEE': { icon: personRemoveOutline,    color: '#ef4444', bg: 'rgba(239,68,68,0.15)',   label: 'Drop User',    badge: 'badge-danger'  },
+  'ASSIGN_SUPERVISOR':{icon: peopleOutline,         color: '#3b82f6', bg: 'rgba(59,130,246,0.15)',  label: 'Assign Sup',   badge: 'badge-blue'    },
+  'EDIT_USER':      { icon: createOutline,          color: '#f59e0b', bg: 'rgba(245,158,11,0.15)',  label: 'Edit User',    badge: 'badge-orange'  },
+  'EVALUATE_REPORT':{ icon: checkmarkDoneOutline,   color: '#10b981', bg: 'rgba(16,185,129,0.15)',  label: 'Evaluate',     badge: 'badge-success' },
 };
 
 const RecentActivity: React.FC<RecentActivityProps> = ({ activities, loading, maxItems = 5 }) => {
@@ -40,7 +48,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ activities, loading, ma
 
   return (
     <div className="activity-feed">
-      {loading && (
+      {loading && activities.length === 0 && (
         <div className="dash-loading">
           <IonSpinner name="crescent" />
         </div>

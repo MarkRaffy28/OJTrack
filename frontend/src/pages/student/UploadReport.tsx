@@ -10,6 +10,7 @@ import { useOjt } from "@context/ojtContext";
 import { useReport } from "@context/reportContext";
 import { useNavigation } from "@hooks/useNavigation";
 import API from "@api/api";
+import LockedOjtScreen from "@components/LockedOjtScreen";
 import "@css/UploadReport.css";
 
 const MAX_FILES = 10;
@@ -45,9 +46,9 @@ function UploadReport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { token, databaseId } = useAuth();
+  const { navigate } = useNavigation();
   const { currentOjt } = useOjt();
   const { fetchReports } = useReport();
-  const { navigate } = useNavigation();
 
   const [reportDate, setReportDate] = useState("");
   const [reportTitle, setReportTitle] = useState("");
@@ -162,10 +163,9 @@ function UploadReport() {
 
     try {
       const formData = new FormData();
-      // Append as strings — backend should use z.coerce.number() or parse from body
       formData.append("studentId", String(databaseId));
       formData.append("ojtId", String(currentOjt.id));
-      formData.append("type", selectedType); // already lowercase, matches enum
+      formData.append("type", selectedType);
       formData.append("reportDate", reportDate);
       formData.append("title", reportTitle.trim());
       formData.append("content", content.trim());
@@ -213,6 +213,26 @@ function UploadReport() {
     );
   }
 
+  if (currentOjt?.status === 'completed') {
+    return (
+      <IonPage>
+        <IonContent fullscreen>
+          <LockedOjtScreen type="completed" backPath="/reports" />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  if (!currentOjt?.officeName) {
+    return (
+      <IonPage>
+        <IonContent fullscreen>
+          <LockedOjtScreen type="unassigned" backPath="/reports" />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
   return (
     <IonPage>
       <IonContent fullscreen className="ur-content">
@@ -234,7 +254,6 @@ function UploadReport() {
         </div>
 
         <div className="ur-container">
-          {/* Report Type Selector */}
           <div className="ur-section">
             <div className="ur-section-label">
               <IonIcon icon={documentTextOutline} />
@@ -253,7 +272,6 @@ function UploadReport() {
             </div>
           </div>
 
-          {/* Date Picker */}
           <div className="ur-section">
             <div className="ur-section-label">
               <IonIcon icon={calendarOutline} />
@@ -270,7 +288,6 @@ function UploadReport() {
             </div>
           </div>
 
-          {/* Title */}
           <div className="ur-section">
             <div className="ur-section-label">
               <IonIcon icon={createOutline} />
@@ -298,7 +315,6 @@ function UploadReport() {
             <span className="ur-char-count">{reportTitle.length}/255</span>
           </div>
 
-          {/* Content */}
           <div className="ur-section">
             <div className="ur-section-label">
               <IonIcon icon={documentTextOutline} />
@@ -315,7 +331,6 @@ function UploadReport() {
             <span className="ur-char-count">{content.length}/2000</span>
           </div>
 
-          {/* File Upload */}
           <div className="ur-section">
             <div className="ur-section-label">
               <IonIcon icon={imagesOutline} />

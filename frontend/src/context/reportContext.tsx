@@ -199,15 +199,17 @@ export const ReportProvider: FC<{ children: ReactNode }> = ({ children }) => {
     await saveToCache(updated);
   }, [token, reports, saveToCache]);
 
+  const value = React.useMemo(() => ({
+    reports,
+    loadingReports,
+    fetchReports,
+    updateReport,
+    updateReportStatus,
+    deleteReport
+  }), [reports, loadingReports, fetchReports, updateReport, updateReportStatus, deleteReport]);
+
   return (
-    <ReportContext.Provider value={{
-      reports,
-      loadingReports,
-      fetchReports,
-      updateReport,
-      updateReportStatus,
-      deleteReport
-    }}>
+    <ReportContext.Provider value={value}>
       {children}
     </ReportContext.Provider>
   );

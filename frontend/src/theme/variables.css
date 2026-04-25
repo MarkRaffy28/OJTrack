@@ -1185,6 +1185,10 @@ body, ion-app, ion-content {
 .qa-report  .qa-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
 .qa-report  .qa-label { color: #2563eb; }
 
+.qa-logs    { background: rgba(139, 92, 246, 0.1); }
+.qa-logs    .qa-icon { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+.qa-logs    .qa-label { color: #6d28d9; }
+
 .qa-activity{ background: rgba(251,191,36,0.1); }
 .qa-activity .qa-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .qa-activity .qa-label { color: #d97706; }

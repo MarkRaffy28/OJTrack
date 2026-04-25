@@ -4,12 +4,13 @@ import { ensureUniqueField, ensureUserExists } from "../helpers/user.helper.js";
 import { validate } from "../helpers/validate.helper.js";
 import { logActivityController } from "./activity.controller.js";
 import { 
-  findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, getStudentProfile, getSupervisorProfile, updateStudentUserProfile,
-  updateSupervisorUserProfile, updateUserPassword
+  deleteUserRecord, findUserByDatabaseId, findUserByEmail, findUserByUserId, findUserByUsername, getAdminDashboardStats, getAdminProfile, 
+  getAdminRecentActivities, getAllAdmins, getAllSupervisors, getStudentProfile, getSupervisorProfile, getSupervisorStats, updateStudentUserProfile, 
+  updateSupervisorUserProfile, updateUserPassword, updateAdminUserProfile
 } from "../models/user.model.js";
 import { 
-  checkEmailSchema, checkExistenceSchema, checkUserIdSchema, checkUsernameSchema, getProfileSchema, updateProfileSchema, updateStudentProfileSchema,
-  updateSupervisorProfileSchema, updateUserPasswordSchema 
+  deleteUserRecordSchema, checkEmailSchema, checkExistenceSchema, checkUserIdSchema, checkUsernameSchema, getAdminDashboardSchema, getProfileSchema, supervisorStatsSchema, updateProfileSchema,
+  updateStudentProfileSchema, updateSupervisorProfileSchema, updateUserPasswordSchema, updateAdminProfileSchema
 } from "../validators/user.validator.js";
 
 
@@ -58,6 +59,56 @@ export const checkExistenceController = async (req, res) => {
   return res.status(400).json({ message: "Provide email, userId or username" });
 };
 
+export const deleteTraineeController = async (req, res) => {
+  const data = validate(res, deleteUserRecordSchema, req.params);
+  if (!data) return;
+
+  const { databaseId } = data;
+
+  const success = await deleteUserRecord(databaseId);
+  if (!success) return res.status(404).json({ message: "User not found" });
+
+  await logActivityController({
+    databaseId: req.user?.id || Number(databaseId),
+    action: "DELETE_TRAINEE",
+    targetType: "USER",
+    targetId: Number(databaseId),
+    description: "Trainee deleted successfully"
+  });
+
+  res.status(200).json({ message: "Trainee deleted successfully" });
+};
+
+export const getAdminDashboardController = async (req, res) => {
+  const data = validate(res, getAdminDashboardSchema, { ...req.params, ...req.query });
+  if (!data) return;
+
+  const { databaseId, cohort } = data;
+
+  if (req.user?.role !== "admin" || Number(req.user?.id) !== Number(databaseId)) {
+    return res.status(403).json({ message: "Unauthorized access to admin dashboard" });
+  }
+
+  const [stats, recentActivities] = await Promise.all([
+    getAdminDashboardStats(cohort),
+    getAdminRecentActivities(5),
+  ]);
+
+  return res.status(200).json({
+    stats: {
+      totalTrainees: Number(stats?.totalTrainees || 0),
+      pendingReports: Number(stats?.pendingReports || 0),
+      presentToday: Number(stats?.presentToday || 0),
+    },
+    recentActivities,
+  });
+};
+
+export const getAllAdminsController = async (req, res) => {
+  const admins = await getAllAdmins();
+  res.status(200).json(admins);
+};
+
 export const getProfileController = async (req, res) => {
   const data = validate(res, getProfileSchema, req.params);
   if (!data) return;
@@ -67,16 +118,37 @@ export const getProfileController = async (req, res) => {
   if (role === "student") {
     const user = await fetchOrFail(res, getStudentProfile, [databaseId], "User not found");
     if (!user) return;
-
     return res.status(200).json(user);
+
   } else if (role === "supervisor") {
     const user = await fetchOrFail(res, getSupervisorProfile, [databaseId], "User not found");
     if (!user) return;
-
+    return res.status(200).json(user);
+    
+  } else if (role === "admin") {
+    const user = await fetchOrFail(res, getAdminProfile, [databaseId], "User not found");
+    if (!user) return;
     return res.status(200).json(user);
   }
 
   return res.status(400).json({ message: "Provide role and databaseId" });
+};
+
+export const getAllSupervisorsController = async (req, res) => {
+  const supervisors = await getAllSupervisors();
+  res.status(200).json(supervisors);
+};
+
+export const getSupervisorStatsController = async (req, res) => {
+  const data = validate(res, supervisorStatsSchema, req.params);
+  if (!data) return;
+
+  const { supervisorId } = data;
+
+  const stats = await fetchOrFail(res, getSupervisorStats, [supervisorId], "No stats found");
+  if (!stats) return;
+
+  res.status(200).json(stats);
 };
 
 export const updateUserProfileController = async (req, res) => {
@@ -95,6 +167,10 @@ export const updateUserProfileController = async (req, res) => {
     data = validate(res, updateSupervisorProfileSchema, req.body);
     if (!data) return;
     identifierUserId = data.employeeId;
+  } else if (role === "admin") {
+    data = validate(res, updateAdminProfileSchema, req.body);
+    if (!data) return;
+    identifierUserId = data.adminId;
   } else {
     return res.status(400).json({ message: "Invalid role" });
   }
@@ -108,18 +184,28 @@ export const updateUserProfileController = async (req, res) => {
   if (!(await ensureUniqueField(res, findUserByEmail, email, user.email_address, user.id, "Email"))) return;
   if (!(await ensureUniqueField(res, findUserByUserId, identifierUserId, user.user_id, user.id, "User ID"))) return;
 
+  const emailChanged = email !== user.email_address;
   if (role === "student") {
-    await updateStudentUserProfile(data, databaseId);
+    await updateStudentUserProfile(data, databaseId, emailChanged);
+  } else if (role === "supervisor") {
+    await updateSupervisorUserProfile(data, databaseId, emailChanged);
+  } else if (role === "admin") {
+    await updateAdminUserProfile(data, databaseId, emailChanged);
   } else {
-    await updateSupervisorUserProfile(data, databaseId);
+    return res.status(400).json({ message: "Invalid role" });
   }
 
+  const actorId = req.user?.id || Number(databaseId);
+  const isSelf = Number(actorId) === Number(databaseId);
+
   await logActivityController({
-    databaseId: Number(databaseId),
-    action: "UPDATE_PROFILE",
+    databaseId: actorId,
+    action: isSelf ? "UPDATE_PROFILE" : "EDIT_USER",
     targetType: "USER",
     targetId: Number(databaseId),
-    description: `${role.charAt(0).toUpperCase() + role.slice(1)} profile updated successfully`
+    description: isSelf 
+      ? `${role.charAt(0).toUpperCase() + role.slice(1)} profile updated successfully` 
+      : `Updated profile details for user`
   });
 
   res.status(200).json({ message: "User profile updated successfully" });

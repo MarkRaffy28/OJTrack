@@ -23,33 +23,6 @@ export const formatDateForInput = (dateString: string) => {
   return new Date(dateString).toISOString().split("T")[0];
 };
 
-export const formatTime12 = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-};
-
-export const getGreeting = () => {
-  const hour = new Date().getHours();
-
-  if (hour >= 5 && hour < 12) return "Good Morning";
-  else if (hour >= 12 && hour < 18) return "Good Afternoon";
-  else if (hour >= 18 && hour < 22) return "Good Evening";
-  else return "Good Night";
-};
-
-export const todayISO = () => {
-  return new Date().toISOString().split('T')[0];
-};
-
-export const thisMonthISO = () => {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-};
-
 export const formatRelativeDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
@@ -74,4 +47,63 @@ export const formatRelativeDate = (dateString: string) => {
     day: 'numeric',
     year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
   });
+};
+
+export const formatTime12 = (timeString: string) => {
+  if (!timeString) return '';
+  
+  // Handle HH:MM:SS or HH:MM formats from MySQL TIME columns
+  if (timeString.includes(':') && !timeString.includes('-') && !timeString.includes('T')) {
+    const [h, m] = timeString.split(':');
+    const date = new Date();
+    date.setHours(parseInt(h), parseInt(m), 0);
+    return date.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  const date = new Date(timeString);
+  if (isNaN(date.getTime())) return timeString; // Return as is if still invalid
+
+  return date.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+export const getGreeting = () => {
+  const hour = new Date().getHours();
+
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  else if (hour >= 12 && hour < 18) return "Good Afternoon";
+  else if (hour >= 18 && hour < 22) return "Good Evening";
+  else return "Good Night";
+};
+
+export const getDateTime12 = () => {
+  const date = new Date();
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).replace('-', ',')
+    .replace(',', ', ')
+    .replace(',  ', ', ')
+    .replace(/(\d{4}),/, '$1 |');
+};
+
+export const todayISO = () => {
+  return new Date().toISOString().split('T')[0];
+};
+
+export const thisMonthISO = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 };

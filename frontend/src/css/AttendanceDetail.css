@@ -1,0 +1,297 @@
+.admin-attendance-detail {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.btn-back-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  color: var(--ink-2);
+}
+.btn-back-circle:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand-glow);
+  color: var(--brand);
+  transform: translateX(-3px);
+}
+.btn-back-circle ion-icon {
+  font-size: 20px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  margin-top: 24px;
+  animation: slideUp 0.4s var(--ease) both;
+}
+
+/* Profile Card */
+.profile-card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+  height: fit-content;
+}
+.profile-card-banner {
+  height: 110px;
+  background: linear-gradient(
+    135deg,
+    var(--brand-dark) 0%,
+    var(--brand-mid) 55%,
+    #c752f0 100%
+  );
+  position: relative;
+}
+.profile-card-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.profile-avatar-wrap {
+  position: relative;
+  padding: 0 28px;
+  margin-top: -42px;
+  margin-bottom: 20px;
+}
+.profile-avatar-lg {
+  width: 90px !important;
+  height: 90px !important;
+  border: 4px solid var(--surface);
+  box-shadow: 0 8px 24px rgba(95, 0, 118, 0.35);
+  border-radius: 50% !important;
+}
+.profile-body {
+  padding: 0 28px 28px;
+}
+.profile-name {
+  font-family: "Syne", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.25;
+  margin-top: 4px;
+}
+.profile-trainee-id {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.profile-divider {
+  height: 1px;
+  background: var(--rule);
+  margin: 24px 0;
+}
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+@media (max-width: 769px) {
+  .profile-meta {
+    flex-direction: row;
+  }
+}
+.meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.meta-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--brand);
+  border: 1px solid rgba(95, 0, 118, 0.05);
+}
+.meta-icon-wrap ion-icon {
+  font-size: 18px;
+}
+.meta-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin-bottom: 2px;
+}
+.meta-val {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Detail Card */
+.details-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+}
+.detail-card-head {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(var(--brand-rgb), 0.02);
+}
+.detail-card-head-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-md);
+  background: var(--brand-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+}
+.detail-card-head-icon ion-icon {
+  font-size: 18px;
+}
+.detail-card-head-title {
+  font-family: "Syne", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.detail-card-body {
+  padding: 24px;
+}
+
+/* Time Summary */
+.time-summary-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 24px;
+}
+.time-summary-block {
+  text-align: center;
+}
+.time-summary-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+.time-summary-val {
+  font-family: "Syne", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--brand);
+}
+.time-summary-arrow {
+  font-size: 24px;
+  color: var(--rule);
+}
+
+.hours-progress-wrap {
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+.hours-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.hours-val {
+  color: var(--brand);
+  font-weight: 800;
+}
+.hours-progress-track {
+  height: 10px;
+  background: var(--bg);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+}
+.hours-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand), #c752f0);
+  border-radius: 5px;
+  transition: width 0.6s var(--ease);
+}
+
+/* Timeline */
+.simple-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.timeline-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.timeline-node {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg);
+  border: 1.5px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  color: var(--ink-3);
+  transition: all 0.3s var(--ease);
+}
+.node-active {
+  background: var(--brand-soft);
+  border-color: var(--brand);
+  color: var(--brand);
+  box-shadow: 0 0 12px rgba(95, 0, 118, 0.1);
+}
+.timeline-node ion-icon {
+  font-size: 20px;
+}
+.timeline-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.timeline-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+@media (max-width: 900px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .simple-timeline {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}

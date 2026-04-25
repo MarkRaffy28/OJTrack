@@ -6,11 +6,12 @@
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
-  align-items: flex-end;          /* sheet slides up from bottom on mobile */
+  align-items: center;
   justify-content: center;
   z-index: 9999;
   animation: lm-fade-in 0.2s ease;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding: 24px 16px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px));
 }
 
 @keyframes lm-fade-in {
@@ -18,29 +19,16 @@
   to   { opacity: 1; }
 }
 
-/* Center on larger screens */
-@media (min-width: 480px) {
-  .lm-overlay { align-items: center; }
-}
-
 /* ── Container ── */
 .lm-container {
   background: #ffffff;
-  border-radius: 28px 28px 0 0;
-  padding: 32px 28px 36px;
+  border-radius: 28px;
+  padding: 36px 32px 40px;
   width: 100%;
   max-width: 420px;
   position: relative;
   animation: lm-slide-up 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 -8px 40px rgba(95, 0, 118, 0.18);
-}
-
-@media (min-width: 480px) {
-  .lm-container {
-    border-radius: 28px;
-    padding: 36px 32px 40px;
-    box-shadow: 0 20px 60px rgba(95, 0, 118, 0.22);
-  }
+  box-shadow: 0 20px 60px rgba(95, 0, 118, 0.22);
 }
 
 @keyframes lm-slide-up {
@@ -49,23 +37,7 @@
 }
 
 .lm-container--loading {
-  /* Slight pulse when loading */
   animation: lm-slide-up 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-/* ── Drag handle (mobile sheet indicator) ── */
-.lm-container::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 36px; height: 4px;
-  border-radius: 100px;
-  background: #e4dcea;
-}
-@media (min-width: 480px) {
-  .lm-container::before { display: none; }
 }
 
 /* ── Close button ── */

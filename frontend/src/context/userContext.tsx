@@ -82,7 +82,7 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
     loadCache();
   }, []);
 
-  const fetchUser = async () => {
+  const fetchUser = React.useCallback(async () => {
     if (!databaseId || !token) {
       setUser(null);
       setLoading(false);
@@ -114,7 +114,7 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [databaseId, token, role]);
 
   useEffect(() => {
     if (!databaseId || !token) {
@@ -130,10 +130,14 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setLoading(false);
       }
     }
-  }, [databaseId, token, isLoadedFromCache, isConnected, hasFetched]);
+  }, [databaseId, token, isLoadedFromCache, isConnected, hasFetched, fetchUser]);
+
+  const value = React.useMemo(() => ({
+    user, loading, refreshUser: fetchUser
+  }), [user, loading, fetchUser]);
 
   return (
-    <UserContext.Provider value={{ user, loading, refreshUser: fetchUser }}>
+    <UserContext.Provider value={value}>
       {children}
     </UserContext.Provider>
   );

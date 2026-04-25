@@ -13,7 +13,7 @@ interface StudentOjt {
   status: "pending" | "ongoing" | "completed" | "dropped";
   startDate: string | null;
   endDate: string | null;
-  officeName: string;
+  officeName: string | null;
   supervisorName: string | null;
   supervisorPosition: string | null;
 }
@@ -41,7 +41,7 @@ export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [isLoadedFromCache, setIsLoadedFromCache] = useState(false);
 
-  const fetchAllOjts = async () => {
+  const fetchAllOjts = React.useCallback(async () => {
     if (!token || role !== "student") return;
 
     setLoading(true);
@@ -79,7 +79,7 @@ export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, role, databaseId]);
 
   useEffect(() => {
     const loadCache = async () => {
@@ -113,19 +113,23 @@ export const OjtProvider: FC<{ children: ReactNode }> = ({ children }) => {
         fetchAllOjts();
       }
     }
-  }, [token, databaseId, role, isLoadedFromCache, isConnected, ojtRecords.length]);
+  }, [token, databaseId, role, isLoadedFromCache, isConnected, ojtRecords.length, fetchAllOjts]);
 
 
-  const selectSchoolYear = (year: string) => {
+  const selectSchoolYear = React.useCallback((year: string) => {
     const record = ojtRecords.find(r => r.academicYear === year);
     if (!record) return;
 
     setSelectedSchoolYear(year);
     setCurrentOjt(record);
-  };
+  }, [ojtRecords]);
+
+  const value = React.useMemo(() => ({
+    ojtRecords, currentOjt, selectedSchoolYear, loading, fetchAllOjts, selectSchoolYear
+  }), [ojtRecords, currentOjt, selectedSchoolYear, loading, fetchAllOjts, selectSchoolYear]);
 
   return (
-    <OjtContext.Provider value={{ ojtRecords, currentOjt, selectedSchoolYear, loading, fetchAllOjts, selectSchoolYear }}>
+    <OjtContext.Provider value={value}>
       {children}
     </OjtContext.Provider>
   );

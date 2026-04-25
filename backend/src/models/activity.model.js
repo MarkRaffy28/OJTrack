@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
 
-export const getStudentActivities = async (databaseId) => {
+export const getActivities = async (databaseId) => {
   const [rows] = await db.query(
     `
       SELECT 

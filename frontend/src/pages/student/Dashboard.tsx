@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { IonPage, IonContent, IonIcon, IonSelect, IonSelectOption, IonRefresher, IonRefresherContent, RefresherEventDetail } from '@ionic/react';
-import { timeOutline, documentTextOutline, cloudUploadOutline, qrCodeOutline, chevronDownCircleOutline } from 'ionicons/icons';
+import { documentTextOutline, cloudUploadOutline, qrCodeOutline, chevronDownCircleOutline, calendarOutline } from 'ionicons/icons';
 import { useOjt } from '@context/ojtContext';
 import { useUser } from '@context/userContext';
 import { useActivity } from '@context/activityContext';
@@ -13,12 +13,12 @@ import BottomNav from '@components/BottomNav';
 import RecentActivity from '@components/RecentActivity';
 
 function Dashboard() {
-  const { navigate } = useNavigation();
   const location = useLocation();
-  const { ojtRecords, currentOjt, selectedSchoolYear, selectSchoolYear, fetchAllOjts } = useOjt();
-  const { user, refreshUser } = useUser();
   const { activities, getLatestActivities, loadingActivities, fetchActivities } = useActivity();
+  const { navigate } = useNavigation();
+  const { ojtRecords, currentOjt, selectedSchoolYear, selectSchoolYear, fetchAllOjts } = useOjt();
   const { requiredHours, renderedHours, remainingHours, progressPercentage } = useOjtProgress(currentOjt);
+  const { user, refreshUser } = useUser();
 
   useEffect(() => {
     fetchActivities();
@@ -132,9 +132,9 @@ function Dashboard() {
               <div className="qa-icon"><IonIcon icon={cloudUploadOutline} /></div>
               <span className="qa-label">New Report</span>
             </button>
-            <button className="qa-card qa-activity" onClick={() => navigate('/activity')}>
-              <div className="qa-icon"><IonIcon icon={timeOutline} /></div>
-              <span className="qa-label">Activities</span>
+            <button className="qa-card qa-logs" onClick={() => navigate('/attendance-logs')}>
+              <div className="qa-icon"><IonIcon icon={calendarOutline} /></div>
+              <span className="qa-label">Attendance</span>
             </button>
             <button className="qa-card qa-dtr" onClick={() => navigate('/reports')}>
               <div className="qa-icon"><IonIcon icon={documentTextOutline} /></div>

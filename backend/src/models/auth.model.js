@@ -1,5 +1,19 @@
 import { db } from "../config/db.js";
 
+export const createAdminUser = async (data) => {
+  const { 
+    username, password, profilePicture, firstName, middleName, lastName, extensionName, adminId, birthDate, gender, address,
+    contactNumber, email
+  } = data;
+
+  const [userResult] = await db.query(
+    "INSERT INTO users(username, password, profile_picture, first_name, middle_name, last_name, extension_name, user_id, birth_date, gender, address, contact_number, email_address, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [username, password, profilePicture, firstName, middleName, lastName, extensionName, adminId, birthDate, gender, address, contactNumber, email, 'admin']
+  );
+
+  return userResult.insertId;
+};
+
 export const createStudentUser = async (data) => {
   const { 
     username, password, profilePicture, firstName, middleName, lastName, extensionName, studentId, birthDate, gender, address, 
