@@ -1,10 +1,10 @@
+import { Appearance } from "react-native";
 import { MD3Theme } from "react-native-paper";
 import { create } from "zustand";
 
 import { SettingsStorage } from "@/storage/settings.storage";
-import { ThemeMode } from "@/types/theme.types"
-import { Appearance } from "react-native";
 import { createTheme } from "@/theme";
+import { ThemeMode } from "@/types/theme.types";
 
 type SettingsStore = {
   mode: ThemeMode;
@@ -14,7 +14,7 @@ type SettingsStore = {
 
   hydrate: () => Promise<void>;
   reset: () => Promise<void>;
-}
+};
 
 const DEFAULT_MODE: ThemeMode = "system";
 
@@ -24,7 +24,7 @@ const resolveMode = (mode: ThemeMode): "light" | "dark" => {
   const system = Appearance.getColorScheme() ?? "light";
 
   return system === "dark" ? "dark" : "light";
-}
+};
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   mode: DEFAULT_MODE,
@@ -35,7 +35,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
     set({
       mode,
-      theme: createTheme(resolveMode(mode))
+      theme: createTheme(resolveMode(mode)),
     });
   },
 
@@ -44,7 +44,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
     set({
       mode,
-      theme: createTheme(resolveMode(mode))
+      theme: createTheme(resolveMode(mode)),
     });
   },
 
@@ -53,7 +53,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
     set({
       mode: DEFAULT_MODE,
-      theme: createTheme(resolveMode(DEFAULT_MODE))
+      theme: createTheme(resolveMode(DEFAULT_MODE)),
     });
-  }
+  },
 }));

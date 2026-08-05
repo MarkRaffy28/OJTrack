@@ -1,0 +1,13 @@
+{
+  "name": "ojtrack-workspace",
+  "private": true,
+  "scripts": {
+    "app": "cd app && npx expo start",
+    "backend": "cd backend && php artisan serve --host=0.0.0.0 --port=8000",
+    "dev": "concurrently \"npm run app\" \"npm run backend\"",
+    "git:staged": "git staged --diff > staged.diff"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

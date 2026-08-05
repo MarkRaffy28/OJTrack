@@ -2,30 +2,70 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
-{
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+class User extends Authenticatable {
+  /** @use HasFactory<UserFactory> */
+  use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+  protected $fillable = [
+    'username',
+    'password',
+    'profile_picture',
+    'first_name',
+    'middle_name',
+    'last_name',
+    'extension_name',
+    'user_id',
+    'birth_date',
+    'gender',
+    'address',
+    'contact_number',
+    'email',
+    'role',
+  ];
+
+  protected $hidden = [
+    'password',
+    'remember_token',
+  ];
+
+  /**
+   * Get the attributes that should be cast.
+   *
+   * @return array<string, string>
+   */
+  protected function casts(): array {
+    return [
+      'birth_date' => 'date',
+      'email_verified_at' => 'datetime',
+      'password' => 'hashed',
+    ];
+  }
+
+  public function getFullNameAttribute(): string {
+    return trim(implode(' ', array_filter([
+      $this->first_name,
+      $this->middle_name,
+      $this->last_name,
+      $this->extension_name,
+    ])));
+  }
+
+  public function studentDetail(): HasOne {
+    return $this->hasOne(StudentDetail::class);
+  }
+
+  public function instructorDetail(): HasOne {
+    return $this->hasOne(InstructorDetail::class);
+  }
+
+  public function supervisorDetail(): HasOne {
+    return $this->hasOne(SupervisorDetail::class);
+  }
 }

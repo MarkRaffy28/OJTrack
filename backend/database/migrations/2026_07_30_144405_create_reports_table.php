@@ -17,7 +17,7 @@ return new class extends Migration {
         ->cascadeOnDelete();
 
       $table->foreignId('ojt_id')
-        ->constrained('student_ojt')
+        ->constrained('student_ojts')
         ->cascadeOnDelete();
 
       $table->enum('type', [
