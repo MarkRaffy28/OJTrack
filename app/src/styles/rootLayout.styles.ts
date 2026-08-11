@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 import { StatusBarStyle } from "expo-status-bar";
 import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 
-import { useTheme } from "@/store/settings.selectors";
+import { useTheme } from "@/store/settings.store";
 
 export const useRootLayoutStyles = () => {
   const theme = useTheme();

@@ -1,19 +1,25 @@
 import { useState } from "react";
 import { HelperText, TextInput, TextInputProps } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
-import { AnyFieldApi } from "@tanstack/react-form";
+
+import { useFieldContext } from "@/form/context";
 
 interface Props extends Omit<
   TextInputProps,
   "value" | "onChangeText" | "onBlur" | "error"
 > {
-  field: AnyFieldApi;
   label: string;
   icon: IconSource;
   secure?: boolean;
 }
 
-export function FormField({ field, label, icon, secure, ...props }: Props) {
+export function FormField({ label, icon, secure, ...props }: Props) {
+  const field = useFieldContext();
+
+  if (!field) {
+    throw new Error("useFieldContext must be used within a Form");
+  }
+
   const {
     value,
     meta: { errors, isTouched },
@@ -29,6 +35,7 @@ export function FormField({ field, label, icon, secure, ...props }: Props) {
         {...props}
         mode="outlined"
         label={label}
+        placeholder={props.placeholder ?? `Enter ${label}`}
         value={String(value ?? "")}
         onChangeText={field.handleChange}
         onBlur={field.handleBlur}

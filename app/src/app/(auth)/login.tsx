@@ -1,37 +1,31 @@
-import { useState } from "react";
 import { View } from "react-native";
-import { Text } from "react-native-paper";
-import { useForm } from "@tanstack/react-form";
+import { router } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/api";
-import { Form } from "@/components/Form";
-import { SafeView } from "@/components/UI/SafeView";
+import { SafeView } from "@/components/ui/SafeView";
+import { useAppForm } from "@/form/context";
 import { LoginRequestSchema } from "@/schemas/auth.schema";
-import { useAuthStore } from "@/store/auth.store";
-import { useTheme } from "@/store/settings.selectors";
-import { getApiErrorMessage } from "@/utils/api";
+import { useLogin } from "@/store/auth.store";
+import { getApiErrorMessage } from "@/utils/api.util";
 
 export default function LoginScreen() {
-  const theme = useTheme();
-
-  const [error, setError] = useState("");
-
-  const login = useAuthStore((s) => s.login);
+  const login = useLogin();
 
   const mutation = useMutation({
     mutationFn: api.login,
     onSuccess: async (session) => {
       await login(session);
 
-      console.info("Logged in");
-    },
-    onError: (error) => {
-      setError(getApiErrorMessage(error));
+      if (session.user.status === "pre_activated") {
+        router.push("/complete-registration");
+      } else {
+        router.push("/");
+      }
     },
   });
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {
       identifier: "",
       password: "",
@@ -41,48 +35,52 @@ export default function LoginScreen() {
       onSubmit: LoginRequestSchema,
     },
     onSubmit: async ({ value }) => {
-      mutation.mutate(value);
+      try {
+        await mutation.mutateAsync(value);
+      } catch (error) {
+        form.setErrorMap({ onSubmit: getApiErrorMessage(error) });
+      }
     },
   });
 
   return (
     <SafeView>
-      <View>
-        <form.Field name="identifier">
-          {(field) => (
-            <Form.Field
-              field={field}
-              label="Identifier"
-              placeholder="User ID, Username or Email"
-              maxLength={100}
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="username"
-              textContentType="username"
-              icon="key-outline"
-            />
-          )}
-        </form.Field>
+      <form.AppForm>
+        <View>
+          <form.AppField name="identifier">
+            {(field) => (
+              <field.Field
+                label="Identifier"
+                placeholder="User ID, Username or Email"
+                maxLength={100}
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="username"
+                textContentType="username"
+                icon="key-outline"
+              />
+            )}
+          </form.AppField>
 
-        <form.Field name="password">
-          {(field) => (
-            <Form.Field
-              field={field}
-              label="Password"
-              placeholder="Password"
-              autoCapitalize="none"
-              autoComplete="password"
-              textContentType="password"
-              icon="lock-outline"
-              secure
-            />
-          )}
-        </form.Field>
+          <form.AppField name="password">
+            {(field) => (
+              <field.Field
+                label="Password"
+                placeholder="Password"
+                autoCapitalize="none"
+                autoComplete="password"
+                textContentType="password"
+                icon="lock-outline"
+                secure
+              />
+            )}
+          </form.AppField>
 
-        <Text style={{ color: theme.colors.error }}>{error}</Text>
+          <form.ErrorMessage />
 
-        <Form.Button form={form}>Login</Form.Button>
-      </View>
+          <form.Submit>Login</form.Submit>
+        </View>
+      </form.AppForm>
     </SafeView>
   );
 }

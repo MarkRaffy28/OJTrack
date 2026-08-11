@@ -29,12 +29,15 @@ return new class extends Migration {
       $table->enum('gender', ['Male', 'Female', 'Other']);
 
       $table->string('address', 255);
-      $table->string('contact_number', 20);
+      $table->string('contact_number', 15);
 
       $table->string('email', 100)->unique();
       $table->timestamp('email_verified_at')->nullable();
 
       $table->enum('role', ['student', 'instructor', 'supervisor', 'admin']);
+
+      $table->enum('status', ['pre_activated', 'active', 'suspended'])->default('pre_activated');
+      $table->timestamp('activated_at')->nullable();
 
       $table->rememberToken();
       $table->timestamps();

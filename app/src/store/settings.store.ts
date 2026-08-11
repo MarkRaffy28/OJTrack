@@ -57,3 +57,5 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     });
   },
 }));
+
+export const useTheme = () => useSettingsStore((s) => s.theme);

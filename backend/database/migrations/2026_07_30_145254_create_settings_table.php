@@ -13,7 +13,7 @@ return new class extends Migration {
       $table->id();
 
       $table->string('setting_key', 100)->unique();
-      $table->json('setting_value');
+      $table->text('setting_value');
 
       $table->timestamps();
     });

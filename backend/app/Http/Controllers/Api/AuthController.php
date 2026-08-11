@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterStudentRequest;
+use App\Http\Requests\Auth\RegisterSupervisorRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +27,27 @@ class AuthController extends Controller {
       'access_token' => $result['access_token'],
       'token_type' => $result['token_type'],
       'user' => new UserResource($result['user']),
+    ]);
+  }
+
+  public function registerStudent(RegisterStudentRequest $request): JsonResponse {
+    $user = $this->authService->registerStudent(
+      $request->user(),
+      $request->validated(),
+    );
+
+    return response()->json([
+      'user' => new UserResource($user),
+    ]);
+  }
+  public function registerSupervisor(RegisterSupervisorRequest $request): JsonResponse {
+    $user = $this->authService->registerSupervisor(
+      $request->user(),
+      $request->validated(),
+    );
+
+    return response()->json([
+      'user' => new UserResource($user),
     ]);
   }
 

@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/store/auth.store";
 import axios from "axios";
 
 export const api = axios.create({
@@ -9,6 +10,16 @@ export const api = axios.create({
   timeout: 10000,
 });
 
+api.interceptors.request.use((config) => {
+  const session = useAuthStore.getState().session;
+
+  if (session?.access_token && config.url !== "/auth/login") {
+    config.headers.Authorization = `${session.token_type} ${session.access_token}`;
+  }
+
+  return config;
+});
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -18,6 +29,7 @@ api.interceptors.response.use(
       console.log("Status:", error.response?.status);
       console.log("Method:", error.config?.method?.toUpperCase());
       console.log("URL:", error.config?.url);
+      console.log("Headers:", error.config?.headers);
       console.log("Request:", error.config?.data);
       console.log("Response:", error.response?.data);
 

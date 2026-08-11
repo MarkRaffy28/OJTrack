@@ -39,6 +39,9 @@ class UserResource extends JsonResource {
 
       'role' => $this->role,
 
+      'status' => $this->status,
+      'activated_at' => $this->activated_at,
+
       'student_detail' => $this->when(
         $this->role === 'student',
         fn() => StudentDetailResource::make($this->studentDetail),

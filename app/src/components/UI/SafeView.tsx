@@ -3,7 +3,7 @@ import { StyleProp, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
 
-import { useTheme } from "@/store/settings.selectors";
+import { useTheme } from "@/store/settings.store";
 import { useAppStyles } from "@/styles/app.styles";
 
 interface Props extends ComponentProps<typeof SafeAreaView> {

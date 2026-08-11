@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder {
   public function run(): void {
+    // Get existing office
+    $office = Office::where('name', 'ISPSC Sta. Maria Campus')
+      ->firstOrFail();
+
     // Admin
     User::create([
       'username' => 'admin',
@@ -57,6 +61,28 @@ class UserSeeder extends Seeder {
       'program' => 'BSIT',
       'major' => 'Web Development',
       'section' => 'A',
+    ]);
+
+    // Supervisor
+    $supervisor = User::create([
+      'username' => 'supervisor',
+      'password' => Hash::make('password'),
+      'first_name' => 'Maria',
+      'middle_name' => null,
+      'last_name' => 'Santos',
+      'extension_name' => null,
+      'user_id' => 'SUP-0001',
+      'birth_date' => '1985-03-15',
+      'gender' => 'Female',
+      'address' => 'Sta. Maria, Ilocos Sur',
+      'contact_number' => '09123456789',
+      'email' => 'supervisor@ojtrack.test',
+      'role' => 'supervisor',
+    ]);
+
+    $supervisor->supervisorDetail()->create([
+      'office_id' => $office->id,
+      'position' => 'OJT Supervisor',
     ]);
   }
 }

@@ -1,5 +1,16 @@
 import { Redirect } from "expo-router";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function Index() {
-  return <Redirect href="/login" />;
+  const { session } = useAuthStore();
+
+  if (!session?.access_token) {
+    return <Redirect href="(auth)/login" />;
+  }
+
+  if (session.user?.status === "pre_activated") {
+    return <Redirect href="(auth)/complete-registration" />;
+  }
+
+  return <Redirect href="(tabs)/home" />;
 }

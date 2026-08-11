@@ -1,15 +1,30 @@
-import { api } from "./client.api";
 import {
+  CommonRegistrationRequest,
+  CommonRegistrationRequestSchema,
   LoginRequest,
   LoginRequestSchema,
-  LoginResponse,
   LoginResponseSchema,
+  RegistrationResponseSchema,
+  StudentRegistrationRequest,
+  StudentRegistrationRequestSchema,
 } from "@/schemas/auth.schema";
+import { post } from "./request.api";
 
-export async function login(input: LoginRequest) {
-  const payload = LoginRequestSchema.parse(input);
+export const login = async (data: LoginRequest) =>
+  post("/auth/login", data, LoginRequestSchema, LoginResponseSchema);
 
-  const { data } = await api.post<LoginResponse>("/auth/login", payload);
+export const registerStudent = async (data: StudentRegistrationRequest) =>
+  post(
+    "/auth/register/student",
+    data,
+    StudentRegistrationRequestSchema,
+    RegistrationResponseSchema,
+  );
 
-  return LoginResponseSchema.parse(data);
-}
+export const registerSupervisor = async (data: CommonRegistrationRequest) =>
+  post(
+    "/auth/register/supervisor",
+    data,
+    CommonRegistrationRequestSchema,
+    RegistrationResponseSchema,
+  );

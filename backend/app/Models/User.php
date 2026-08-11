@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AccountStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -28,6 +29,8 @@ class User extends Authenticatable {
     'contact_number',
     'email',
     'role',
+    'status',
+    'activated_at',
   ];
 
   protected $hidden = [
@@ -45,6 +48,8 @@ class User extends Authenticatable {
       'birth_date' => 'date',
       'email_verified_at' => 'datetime',
       'password' => 'hashed',
+      'status' => AccountStatus::class,
+      'activated_at' => 'datetime',
     ];
   }
 

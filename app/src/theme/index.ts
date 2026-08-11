@@ -5,10 +5,10 @@ import {
   themeFromSourceColor,
 } from "@material/material-color-utilities";
 
-import { Colors } from "@/constants/colors.constants";
+import { COLORS } from "@/constants/colors.constants";
 
 export function createTheme(mode: "light" | "dark"): MD3Theme {
-  const scheme = themeFromSourceColor(argbFromHex(Colors.BRAND)).schemes[mode];
+  const scheme = themeFromSourceColor(argbFromHex(COLORS.BRAND)).schemes[mode];
 
   const base = mode === "light" ? MD3LightTheme : MD3DarkTheme;
 
