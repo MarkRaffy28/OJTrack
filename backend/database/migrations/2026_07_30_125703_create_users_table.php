@@ -28,7 +28,8 @@ return new class extends Migration {
 
       $table->enum('gender', ['Male', 'Female', 'Other']);
 
-      $table->string('address', 255);
+      $table->string('home_address', 255);
+      $table->string('present_address', 255);
       $table->string('contact_number', 15);
 
       $table->string('email', 100)->unique();

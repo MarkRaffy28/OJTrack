@@ -18,17 +18,17 @@ class OfficeResource extends JsonResource {
       'name' => $this->name,
       'address' => $this->address,
 
-      'contact_email' => $this->contact_email,
-      'contact_phone' => $this->contact_phone,
+      'contactEmail' => $this->contact_email,
+      'contactPhone' => $this->contact_phone,
 
-      'morning_in' => $this->morning_in,
-      'morning_out' => $this->morning_out,
+      'morningIn' => $this->morning_in,
+      'morningOut' => $this->morning_out,
 
-      'afternoon_in' => $this->afternoon_in,
-      'afternoon_out' => $this->afternoon_out,
+      'afternoonIn' => $this->afternoon_in,
+      'afternoonOut' => $this->afternoon_out,
 
-      'created_at' => $this->created_at,
-      'updated_at' => $this->updated_at,
+      'createdAt' => $this->created_at,
+      'updatedAt' => $this->updated_at,
     ];
   }
 }

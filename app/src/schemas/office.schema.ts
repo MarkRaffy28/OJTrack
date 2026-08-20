@@ -7,17 +7,17 @@ export const OfficeSchema = z.object({
 
   address: z.string().max(255).nullable(),
 
-  contact_email: z.email().max(150).nullable(),
+  contactEmail: z.email().max(150).nullable(),
 
-  contact_phone: z.string().max(20).nullable(),
+  contactPhone: z.string().max(20).nullable(),
 
-  morning_in: z.iso.time(),
-  morning_out: z.iso.time(),
-  afternoon_in: z.iso.time(),
-  afternoon_out: z.iso.time(),
+  morningIn: z.iso.time(),
+  morningOut: z.iso.time(),
+  afternoonIn: z.iso.time(),
+  afternoonOut: z.iso.time(),
 
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const CreateOfficeSchema = z.object({
@@ -25,14 +25,14 @@ export const CreateOfficeSchema = z.object({
 
   address: z.string().max(255).nullable().optional(),
 
-  contact_email: z.email().max(150).nullable().optional(),
+  contactEmail: z.email().max(150).nullable().optional(),
 
-  contact_phone: z.string().max(20).nullable().optional(),
+  contactPhone: z.string().max(20).nullable().optional(),
 
-  morning_in: z.iso.time().default("08:00:00"),
-  morning_out: z.iso.time().default("12:00:00"),
-  afternoon_in: z.iso.time().default("13:00:00"),
-  afternoon_out: z.iso.time().default("17:00:00"),
+  morningIn: z.iso.time().default("08:00:00"),
+  morningOut: z.iso.time().default("12:00:00"),
+  afternoonIn: z.iso.time().default("13:00:00"),
+  afternoonOut: z.iso.time().default("17:00:00"),
 });
 
 export const UpdateOfficeSchema = CreateOfficeSchema.partial();

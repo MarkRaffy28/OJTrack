@@ -27,7 +27,8 @@ class UserSeeder extends Seeder {
       'user_id' => 'ADM-0001',
       'birth_date' => '1990-01-01',
       'gender' => 'Male',
-      'address' => 'Sta. Maria, Ilocos Sur',
+      'home_address' => 'Sta. Maria, Ilocos Sur',
+      'present_address' => 'Sta. Maria, Ilocos Sur',
       'contact_number' => '09123456789',
       'email' => 'admin@ojtrack.test',
       'role' => 'admin',
@@ -48,7 +49,8 @@ class UserSeeder extends Seeder {
       'birth_date' => '2004-05-10',
       'gender' => 'Male',
 
-      'address' => 'Sta. Maria, Ilocos Sur',
+      'home_address' => 'Sta. Maria, Ilocos Sur',
+      'present_address' => 'Sta. Maria, Ilocos Sur',
       'contact_number' => '09123456789',
 
       'email' => 'student@ojtrack.test',
@@ -63,6 +65,14 @@ class UserSeeder extends Seeder {
       'section' => 'A',
     ]);
 
+    $student->emergencyContacts()->create([
+      'name' => 'Maria Dela Cruz',
+      'relationship' => 'Mother',
+      'contact_number' => '09123456789',
+      'address' => 'Sta. Maria, Ilocos Sur',
+      'is_primary' => true,
+    ]);
+
     // Supervisor
     $supervisor = User::create([
       'username' => 'supervisor',
@@ -74,7 +84,8 @@ class UserSeeder extends Seeder {
       'user_id' => 'SUP-0001',
       'birth_date' => '1985-03-15',
       'gender' => 'Female',
-      'address' => 'Sta. Maria, Ilocos Sur',
+      'home_address' => 'Sta. Maria, Ilocos Sur',
+      'present_address' => 'Sta. Maria, Ilocos Sur',
       'contact_number' => '09123456789',
       'email' => 'supervisor@ojtrack.test',
       'role' => 'supervisor',

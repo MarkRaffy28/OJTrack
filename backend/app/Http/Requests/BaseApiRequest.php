@@ -16,7 +16,7 @@ abstract class BaseApiRequest extends FormRequest {
       response()->json([
         'message' => $errors->first(),
         'errors' => $errors,
-      ]),
+      ], 422),
     );
   }
 }

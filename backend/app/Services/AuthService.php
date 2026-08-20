@@ -26,6 +26,7 @@ class AuthService {
       'studentDetail',
       'instructorDetail',
       'supervisorDetail.office',
+      'emergencyContacts',
     ]);
 
     $token = $user->createToken("auth-token")->plainTextToken;
@@ -52,21 +53,25 @@ class AuthService {
         'extension_name' => $data['extensionName'] ?? null,
         'birth_date' => $data['birthDate'],
         'gender' => $data['gender'],
-        'address' => $data['address'],
+        'home_address' => $data['homeAddress'],
+        'present_address' => $data['presentAddress'],
         'contact_number' => $data['contactNumber'],
         'email' => $data['email'],
         'status' => AccountStatus::ACTIVE,
         'activated_at' => now(),
       ]);
 
-      $user->studentDetail()->create([
-        'year' => $data['year'],
-        'program' => $data['program'],
-        'major' => $data['major'],
-        'section' => $data['section'],
-      ]);
+      if (isset($data['emergencyContact'])) {
+        $user->emergencyContacts()->create([
+          'name' => $data['emergencyContact']['name'],
+          'relationship' => $data['emergencyContact']['relationship'],
+          'contact_number' => $data['emergencyContact']['contactNumber'],
+          'address' => $data['emergencyContact']['address'] ?? null,
+          'is_primary' => true,
+        ]);
+      }
 
-      return $user->load('studentDetail');
+      return $user->load(['studentDetail', 'emergencyContacts']);
     });
   }
 
@@ -84,7 +89,8 @@ class AuthService {
       'extension_name' => $data['extensionName'] ?? null,
       'birth_date' => $data['birthDate'],
       'gender' => $data['gender'],
-      'address' => $data['address'],
+      'home_address' => $data['homeAddress'],
+      'present_address' => $data['presentAddress'],
       'contact_number' => $data['contactNumber'],
       'email' => $data['email'],
       'status' => AccountStatus::ACTIVE,

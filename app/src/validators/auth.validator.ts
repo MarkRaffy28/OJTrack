@@ -7,17 +7,17 @@ import {
 import { getBirthDateRange } from "@/utils/date.util";
 
 export const ChangePasswordValidator = ChangePasswordRequestSchema.refine(
-  (data) => data.new_password === data.new_password_confirmation,
+  (data) => data.newPassword === data.newPasswordConfirmation,
   {
-    path: ["new_password_confirmation"],
+    path: ["newPasswordConfirmation"],
     message: "Passwords do not match.",
   },
 );
 
 export const ResetPasswordValidator = ResetPasswordRequestSchema.refine(
-  (data) => data.password === data.password_confirmation,
+  (data) => data.password === data.passwordConfirmation,
   {
-    path: ["password_confirmation"],
+    path: ["passwordConfirmation"],
     message: "Passwords do not match.",
   },
 );
@@ -41,8 +41,4 @@ export const registrationValidator = <T extends z.ZodObject<any>>(schema: T) =>
         path: ["birthDate"],
         error: "Age must be between 17 and 100 years.",
       },
-    )
-    .refine((data) => data.gender !== undefined, {
-      path: ["gender"],
-      error: "Gender is required.",
-    });
+    );

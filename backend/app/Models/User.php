@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\AccountStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -25,7 +26,8 @@ class User extends Authenticatable {
     'user_id',
     'birth_date',
     'gender',
-    'address',
+    'home_address',
+    'present_address',
     'contact_number',
     'email',
     'role',
@@ -69,8 +71,12 @@ class User extends Authenticatable {
   public function instructorDetail(): HasOne {
     return $this->hasOne(InstructorDetail::class);
   }
-
   public function supervisorDetail(): HasOne {
     return $this->hasOne(SupervisorDetail::class);
+  }
+
+  public function emergencyContacts(): HasMany {
+    return $this->hasMany(EmergencyContact::class)
+      ->orderBy('is_primary', 'desc');
   }
 }

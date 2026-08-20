@@ -24,14 +24,16 @@ class RegisterStudentRequest extends BaseApiRequest {
       'birthDate' => ['required', 'date'],
       'gender' => ['required', 'in:Male,Female,Other'],
 
-      'address' => ['required', 'string', 'max:255'],
+      'homeAddress' => ['required', 'string', 'max:255'],
+      'presentAddress' => ['required', 'string', 'max:255'],
       'contactNumber' => ['required', 'string', 'max:15'],
       'email' => ['required', 'email', 'max:100', 'unique:users,email'],
 
-      'year' => ['required', 'integer', 'min:1', 'max:10'],
-      'program' => ['required', 'string', 'max:100'],
-      'major' => ['required', 'string', 'max:100'],
-      'section' => ['required', 'string', 'max:10'],
+      'emergencyContact' => ['required', 'array'],
+      'emergencyContact.name' => ['required', 'string', 'max:210'],
+      'emergencyContact.relationship' => ['required', 'string', 'max:50'],
+      'emergencyContact.contactNumber' => ['required', 'string', 'max:15'],
+      'emergencyContact.address' => ['required', 'string', 'max:255'],
     ];
   }
 }

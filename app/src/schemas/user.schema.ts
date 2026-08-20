@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OfficeSchema } from "./office.schema";
+import { ContactNumberSchema } from "./common.schema";
 
 export const GenderSchema = z.enum(["Male", "Female", "Other"]);
 
@@ -8,10 +9,22 @@ export const RoleSchema = z.enum(["student", "instructor", "supervisor", "admin"
 export const StatusSchema = z.enum(["pre_activated", "active", "suspended"]);
 
 export const StudentDetailSchema = z.object({
-  year: z.coerce.number().int().min(1).max(10),
-  program: z.string().min(1).max(100),
-  major: z.string().min(1).max(100),
-  section: z.string().min(1).max(10),
+  year: z.number().int().min(1, "Year is required").max(10),
+
+  program: z
+    .string()
+    .min(1, "Program is required")
+    .max(100, "Program must be at most 100 characters long"),
+
+  major: z
+    .string()
+    .min(1, "Major is required")
+    .max(100, "Major must be at most 100 characters long"),
+
+  section: z
+    .string()
+    .min(1, "Section is required")
+    .max(10, "Section must be at most 10 characters long"),
 });
 
 export const InstructorDetailSchema = z.object({
@@ -24,51 +37,112 @@ export const SupervisorDetailSchema = z.object({
   office: OfficeSchema,
 });
 
-const BaseUserSchema = z.object({
+export const EmergencyContactSchema = z.object({
+  id: z.number(),
+
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(210, "Name must be at most 210 characters long"),
+
+  relationship: z
+    .string()
+    .min(1, "Relationship is required")
+    .max(50, "Relationship must be at most 50 characters long"),
+
+  contactNumber: ContactNumberSchema,
+
+  address: z
+    .string()
+    .min(1, "Address is required")
+    .max(255, "Address must be at most 255 characters long"),
+
+  isPrimary: z.boolean(),
+});
+
+export const BaseUserSchema = z.object({
   id: z.number().int().positive(),
 
-  username: z.string().min(1).max(100),
+  username: z
+    .string()
+    .min(1, "Username is required")
+    .max(100, "Username must be at most 100 characters long"),
 
-  profile_picture: z.string().nullable(),
+  profilePicture: z.string().nullable(),
 
-  first_name: z.string().min(1).max(100),
-  middle_name: z.string().max(50).nullable(),
-  last_name: z.string().min(1).max(50),
-  extension_name: z.string().max(10).nullable(),
-  full_name: z.string().nullable(),
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .max(100, "First must be at most 100 characters long"),
 
-  user_id: z.string().min(1).max(50),
+  middleName: z
+    .string()
+    .max(50, "Middle name must be at most 50 characters long")
+    .optional()
+    .nullable(),
 
-  birth_date: z.iso.date(),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(50, "Last name must be at most 50 characters long"),
+
+  extensionName: z
+    .string()
+    .max(10, "Extension name must be at most 10 characters long")
+    .optional()
+    .nullable(),
+
+  fullName: z.string().nullable(),
+
+  userId: z.string().min(1).max(50),
+
+  birthDate: z
+    .string()
+    .min(1, "Birthdate is required")
+    .pipe(z.iso.date("Invalid birth date")),
 
   gender: GenderSchema,
 
-  address: z.string().max(255),
-  contact_number: z.string().max(15),
+  homeAddress: z
+    .string()
+    .min(1, "Home address is required")
+    .max(255, "Home address must be at most 255 characters long"),
 
-  email: z.email().max(100),
-  email_verified_at: z.iso.datetime().nullable(),
+  presentAddress: z
+    .string()
+    .min(1, "Present address is required")
+    .max(255, "Present address must be at most 255 characters long"),
+
+  contactNumber: ContactNumberSchema,
+
+  email: z
+    .email("Invalid email address")
+    .min(1, "Email is required")
+    .max(100, "Email must be at most 100 characters long"),
+
+  emailVerifiedAt: z.iso.datetime().nullable(),
 
   status: StatusSchema,
-  activated_at: z.iso.datetime().nullable(),
+  activatedAt: z.iso.datetime().nullable(),
 
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const StudentUserSchema = BaseUserSchema.extend({
   role: z.literal("student"),
-  student_detail: StudentDetailSchema,
+  studentDetail: StudentDetailSchema,
+  emergencyContacts: z.array(EmergencyContactSchema),
 });
 
 export const InstructorUserSchema = BaseUserSchema.extend({
   role: z.literal("instructor"),
-  instructor_detail: InstructorDetailSchema,
+  instructorDetail: InstructorDetailSchema,
 });
 
 export const SupervisorUserSchema = BaseUserSchema.extend({
   role: z.literal("supervisor"),
-  supervisor_detail: SupervisorDetailSchema,
+  supervisorDetail: SupervisorDetailSchema,
 });
 
 export const AdminUserSchema = BaseUserSchema.extend({
@@ -86,25 +160,25 @@ export const CreateUserSchema = z.object({
   username: z.string().min(3).max(100),
   password: z.string().min(8),
 
-  first_name: z.string().min(1).max(100),
-  middle_name: z.string().max(50).nullable().optional(),
-  last_name: z.string().min(1).max(50),
-  extension_name: z.string().max(10).nullable().optional(),
+  firstName: z.string().min(1).max(100),
+  middleName: z.string().max(50).nullable().optional(),
+  lastName: z.string().min(1).max(50),
+  extensionName: z.string().max(10).nullable().optional(),
 
-  user_id: z.string().min(1).max(50),
+  userId: z.string().min(1).max(50),
 
-  birth_date: z.iso.date(),
+  birthDate: z.iso.date(),
 
   gender: GenderSchema,
 
-  address: z.string().max(255),
-  contact_number: z.string().max(20),
+  homeAddress: z.string().max(255),
+  presentAddress: z.string().max(255),
+  contactNumber: z.string().max(20),
 
   email: z.email().max(100),
 
   role: RoleSchema,
-
-  profile_picture: z.string().nullable().optional(),
+  profilePicture: z.string().nullable().optional(),
 });
 
 export const UpdateUserSchema = CreateUserSchema.omit({
@@ -118,6 +192,10 @@ export type Status = z.infer<typeof StatusSchema>;
 export type StudentDetail = z.infer<typeof StudentDetailSchema>;
 export type InstructorDetail = z.infer<typeof InstructorDetailSchema>;
 export type SupervisorDetail = z.infer<typeof SupervisorDetailSchema>;
+
+export type EmergencyContact = z.infer<typeof EmergencyContactSchema>;
+
+export type BaseUser = z.infer<typeof BaseUserSchema>;
 
 export type StudentUser = z.infer<typeof StudentUserSchema>;
 export type InstructorUser = z.infer<typeof InstructorUserSchema>;

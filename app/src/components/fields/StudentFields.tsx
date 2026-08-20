@@ -1,15 +1,10 @@
-import { z } from "zod";
-
 import { AppFormInstance } from "@/form/context";
-import { StudentRegistrationRequestSchema } from "@/schemas/auth.schema";
 
-type StudentFormValues = z.input<typeof StudentRegistrationRequestSchema>;
-
-type Props<TFormData extends StudentFormValues> = {
+type Props<TFormData extends Record<string, any>> = {
   form: AppFormInstance<TFormData>;
 };
 
-export function StudentFields<TFormData extends StudentFormValues>({
+export function StudentFields<TFormData extends Record<string, any>>({
   form,
 }: Props<TFormData>) {
   return (
@@ -19,7 +14,7 @@ export function StudentFields<TFormData extends StudentFormValues>({
           <field.Select
             label="Year"
             icon="numeric"
-            options={[{ label: "4", value: "4" }]}
+            options={[{ label: "4", value: 4 }]}
           />
         )}
       </form.AppField>

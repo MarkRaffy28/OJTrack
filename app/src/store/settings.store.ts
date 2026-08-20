@@ -1,14 +1,13 @@
 import { Appearance } from "react-native";
-import { MD3Theme } from "react-native-paper";
 import { create } from "zustand";
 
 import { SettingsStorage } from "@/storage/settings.storage";
 import { createTheme } from "@/theme";
-import { ThemeMode } from "@/types/theme.types";
+import { AppTheme, ThemeMode } from "@/types/theme.types";
 
 type SettingsStore = {
   mode: ThemeMode;
-  theme: MD3Theme;
+  theme: AppTheme;
 
   setMode: (mode: ThemeMode) => Promise<void>;
 

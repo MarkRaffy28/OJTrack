@@ -1,14 +1,33 @@
-import { MD3DarkTheme, MD3LightTheme, type MD3Theme } from "react-native-paper";
+import { MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import {
   argbFromHex,
   hexFromArgb,
   themeFromSourceColor,
 } from "@material/material-color-utilities";
 
-import { COLORS } from "@/constants/colors.constants";
+import {
+  COLORS,
+  DARK_SHADE,
+  LIGHT_SHADE,
+  MATERIAL_COLORS,
+  SEMANTIC_COlORS,
+} from "@/constants/colors.constants";
+import { AppColors, AppTheme } from "@/types/theme.types";
 
-export function createTheme(mode: "light" | "dark"): MD3Theme {
+export function createTheme(mode: "light" | "dark"): AppTheme {
   const scheme = themeFromSourceColor(argbFromHex(COLORS.BRAND)).schemes[mode];
+  const shade = mode === "light" ? LIGHT_SHADE : DARK_SHADE;
+
+  const semanticSchemes = Object.fromEntries(
+    Object.entries(SEMANTIC_COlORS).map(([key, hex]) => [
+      key,
+      themeFromSourceColor(argbFromHex(hex)).schemes[mode],
+    ]),
+  );
+
+  const appColors = Object.fromEntries(
+    Object.entries(MATERIAL_COLORS).map(([key, scale]) => [key, scale[shade]]),
+  ) as AppColors;
 
   const base = mode === "light" ? MD3LightTheme : MD3DarkTheme;
 
@@ -53,6 +72,23 @@ export function createTheme(mode: "light" | "dark"): MD3Theme {
       inverseSurface: hexFromArgb(scheme.inverseSurface),
       inverseOnSurface: hexFromArgb(scheme.inverseOnSurface),
       inversePrimary: hexFromArgb(scheme.inversePrimary),
+
+      success: hexFromArgb(semanticSchemes.success.primary),
+      onSuccess: hexFromArgb(semanticSchemes.success.onPrimary),
+      successContainer: hexFromArgb(semanticSchemes.success.primaryContainer),
+      onSuccessContainer: hexFromArgb(semanticSchemes.success.onPrimaryContainer),
+
+      warning: hexFromArgb(semanticSchemes.warning.primary),
+      onWarning: hexFromArgb(semanticSchemes.warning.onPrimary),
+      warningContainer: hexFromArgb(semanticSchemes.warning.primaryContainer),
+      onWarningContainer: hexFromArgb(semanticSchemes.warning.onPrimaryContainer),
+
+      info: hexFromArgb(semanticSchemes.info.primary),
+      onInfo: hexFromArgb(semanticSchemes.info.onPrimary),
+      infoContainer: hexFromArgb(semanticSchemes.info.primaryContainer),
+      onInfoContainer: hexFromArgb(semanticSchemes.info.onPrimaryContainer),
+
+      app: appColors,
 
       shadow: "#000000",
       scrim: "#000000",

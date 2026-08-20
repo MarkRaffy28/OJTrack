@@ -3,6 +3,7 @@ import { HelperText, TextInput, TextInputProps } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 import { useFieldContext } from "@/form/context";
+import { useTheme } from "@/store/settings.store";
 
 interface Props extends Omit<
   TextInputProps,
@@ -15,6 +16,7 @@ interface Props extends Omit<
 
 export function FormField({ label, icon, secure, ...props }: Props) {
   const field = useFieldContext();
+  const theme = useTheme();
 
   if (!field) {
     throw new Error("useFieldContext must be used within a Form");
@@ -29,6 +31,12 @@ export function FormField({ label, icon, secure, ...props }: Props) {
 
   const error = isTouched && errors.length > 0 ? String(errors[0]?.message) : undefined;
 
+  const leftIconColor = props.disabled
+    ? theme.colors.onSurfaceDisabled
+    : error
+      ? theme.colors.error
+      : theme.colors.onSurfaceVariant;
+
   return (
     <>
       <TextInput
@@ -41,7 +49,7 @@ export function FormField({ label, icon, secure, ...props }: Props) {
         onBlur={field.handleBlur}
         error={!!error}
         secureTextEntry={secureTextEntry}
-        left={<TextInput.Icon icon={icon} />}
+        left={<TextInput.Icon icon={icon} color={leftIconColor} tabIndex={-1} />}
         right={
           secure && (
             <TextInput.Icon
@@ -52,7 +60,7 @@ export function FormField({ label, icon, secure, ...props }: Props) {
         }
       />
 
-      <HelperText type="error" visible={!!error}>
+      <HelperText type="error" visible={!!error} padding="none">
         {error}
       </HelperText>
     </>

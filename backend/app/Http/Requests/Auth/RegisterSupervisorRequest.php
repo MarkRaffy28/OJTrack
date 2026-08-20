@@ -24,7 +24,8 @@ class RegisterSupervisorRequest extends BaseApiRequest {
       'birthDate' => ['required', 'date'],
       'gender' => ['required', 'in:Male,Female,Other'],
 
-      'address' => ['required', 'string', 'max:255'],
+      'homeAddress' => ['required', 'string', 'max:255'],
+      'presentAddress' => ['required', 'string', 'max:255'],
       'contactNumber' => ['required', 'string', 'max:15'],
       'email' => ['required', 'email', 'max:100', 'unique:users,email'],
     ];

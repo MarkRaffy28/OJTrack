@@ -13,9 +13,10 @@ interface Props extends Omit<
 > {
   label: string;
   icon: IconSource;
+  disabled?: boolean;
 }
 
-export function FormDatePicker({ label, icon, ...pickerProps }: Props) {
+export function FormDatePicker({ label, icon, disabled = false, ...pickerProps }: Props) {
   const field = useFieldContext();
 
   if (!field) {
@@ -33,6 +34,12 @@ export function FormDatePicker({ label, icon, ...pickerProps }: Props) {
 
   const selectedDate = typeof value === "string" && value ? new Date(value) : undefined;
 
+  const handleOpen = () => {
+    if (disabled) return;
+
+    setVisible(true);
+  };
+
   const handleDismiss = () => {
     setVisible(false);
     field.handleBlur();
@@ -48,20 +55,19 @@ export function FormDatePicker({ label, icon, ...pickerProps }: Props) {
 
     field.handleBlur();
     field.validate("blur");
-
-    console.info(formatDateOnly(date!));
   };
 
   return (
     <>
-      <Pressable onPress={() => setVisible(true)}>
+      <Pressable onPress={handleOpen} disabled={disabled}>
         <View pointerEvents="none">
           <TextInput
             mode="outlined"
             label={label}
-            value={selectedDate ? formatNamedDate(new Date(selectedDate)) : ""}
-            editable={false}
-            left={<TextInput.Icon icon={icon} />}
+            value={selectedDate ? formatNamedDate(selectedDate) : ""}
+            editable={!disabled}
+            disabled={disabled}
+            left={<TextInput.Icon icon={icon} tabIndex={-1} />}
             right={<TextInput.Icon icon="calendar" />}
             error={!!error}
           />

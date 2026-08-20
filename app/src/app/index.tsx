@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/auth.store";
 export default function Index() {
   const { session } = useAuthStore();
 
-  if (!session?.access_token) {
+  if (!session?.accessToken) {
     return <Redirect href="(auth)/login" />;
   }
 
