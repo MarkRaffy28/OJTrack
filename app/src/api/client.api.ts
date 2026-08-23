@@ -17,6 +17,10 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `${session.tokenType} ${session.accessToken}`;
   }
 
+  if (config.data instanceof FormData) {
+    config.headers["Content-Type"] = undefined;
+  }
+
   return config;
 });
 

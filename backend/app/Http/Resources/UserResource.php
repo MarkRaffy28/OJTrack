@@ -17,7 +17,12 @@ class UserResource extends JsonResource {
 
       'username' => $this->username,
 
-      'profilePicture' => $this->profile_picture,
+      'profilePicture' => $this->profile_picture
+        ? 'data:' . finfo_buffer(
+          finfo_open(FILEINFO_MIME_TYPE),
+          $this->profile_picture,
+        ) . ';base64,' . base64_encode($this->profile_picture)
+        : null,
 
       'firstName' => $this->first_name,
       'middleName' => $this->middle_name,

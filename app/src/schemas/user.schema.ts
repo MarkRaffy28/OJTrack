@@ -156,34 +156,11 @@ export const UserSchema = z.discriminatedUnion("role", [
   AdminUserSchema,
 ]);
 
-export const CreateUserSchema = z.object({
-  username: z.string().min(3).max(100),
-  password: z.string().min(8),
+export const updateProfilePictureRequestSchema = z.instanceof(FormData);
 
-  firstName: z.string().min(1).max(100),
-  middleName: z.string().max(50).nullable().optional(),
-  lastName: z.string().min(1).max(50),
-  extensionName: z.string().max(10).nullable().optional(),
-
-  userId: z.string().min(1).max(50),
-
-  birthDate: z.iso.date(),
-
-  gender: GenderSchema,
-
-  homeAddress: z.string().max(255),
-  presentAddress: z.string().max(255),
-  contactNumber: z.string().max(20),
-
-  email: z.email().max(100),
-
-  role: RoleSchema,
-  profilePicture: z.string().nullable().optional(),
+export const updateProfilePictureResponseSchema = z.object({
+  user: UserSchema 
 });
-
-export const UpdateUserSchema = CreateUserSchema.omit({
-  password: true,
-}).partial();
 
 export type Gender = z.infer<typeof GenderSchema>;
 export type Role = z.infer<typeof RoleSchema>;
@@ -203,6 +180,3 @@ export type SupervisorUser = z.infer<typeof SupervisorUserSchema>;
 export type AdminUser = z.infer<typeof AdminUserSchema>;
 
 export type User = z.infer<typeof UserSchema>;
-
-export type CreateUserInput = z.infer<typeof CreateUserSchema>;
-export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;

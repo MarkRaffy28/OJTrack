@@ -99,7 +99,7 @@ export default function CompleteRegistrationScreen() {
 
   const onSuccess = async (data: RegistrationResponse) => {
     updateUser(data.user);
-    router.push("(tabs)/home");
+    router.replace("(tabs)/home");
   };
 
   const studentMutation = useMutation({
@@ -175,7 +175,7 @@ export default function CompleteRegistrationScreen() {
 
   const handlePrev = () => {
     if (currentStep === 0) {
-      router.back();
+      router.navigate("/login");
     } else {
       handleStepTransition(currentStep - 1);
     }

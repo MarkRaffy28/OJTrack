@@ -44,6 +44,12 @@ class AuthService {
         throw new LogicException('This account is not available for registration.');
       }
 
+      $studentDetail = $user->studentDetail;
+
+      if (!$studentDetail) {
+        throw new LogicException("This student doesn't have Student Detail yet.");
+      }
+
       $user->update([
         'password' => Hash::make($data['newPassword']),
         'username' => $data['username'],
@@ -78,6 +84,12 @@ class AuthService {
   public function registerSupervisor(User $user, array $data): User {
     if ($user->status !== AccountStatus::PRE_ACTIVATED) {
       throw new LogicException('This account is not available for registration.');
+    }
+
+    $supervisorDetail = $user->supervisorDetail;
+
+    if (!$supervisorDetail || !$supervisorDetail->office_id) {
+      throw new LogicException('This supervisor account has not been assigned an office.');
     }
 
     $user->update([

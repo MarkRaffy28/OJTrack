@@ -5,10 +5,19 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { PaperProvider } from "react-native-paper";
 import { ThemeProvider } from "@react-navigation/native";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { Snackbar } from "@/components/ui/Snackbar";
 import { SplashScreen } from "@/components/ui/SplashScreen";
 import { useAuthStore, useIsHydrated } from "@/store/auth.store";
+import {
+  useSnackbarVisible,
+  useSnackbarType,
+  useSnackbarMessage,
+  useSnackbarDuration,
+  useHideSnackbar,
+} from "@/store/snackbar.store";
 import { useSettingsStore, useTheme } from "@/store/settings.store";
 import { useRootLayoutStyles } from "@/styles/rootLayout.styles";
 
@@ -19,6 +28,12 @@ export default function RootLayout() {
   const styles = useRootLayoutStyles();
 
   const isAuthHydrated = useIsHydrated();
+
+  const snackbarVisible = useSnackbarVisible();
+  const snackbarType = useSnackbarType();
+  const snackbarMessage = useSnackbarMessage();
+  const snackbarDuration = useSnackbarDuration();
+  const hideSnackbar = useHideSnackbar();
 
   useEffect(() => {
     const hydrate = async () => {
@@ -38,16 +53,27 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.rootView}>
       <PaperProvider theme={theme}>
-        <ThemeProvider value={styles.navTheme}>
-          <QueryClientProvider client={queryClient}>
-            <StatusBar style={styles.statusBar.container} />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            />
-          </QueryClientProvider>
-        </ThemeProvider>
+        <BottomSheetModalProvider>
+          <ThemeProvider value={styles.navTheme}>
+            <QueryClientProvider client={queryClient}>
+              <StatusBar style={styles.statusBar.container} />
+
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              />
+
+              <Snackbar
+                visible={snackbarVisible}
+                type={snackbarType}
+                message={snackbarMessage}
+                duration={snackbarDuration}
+                onDismiss={hideSnackbar}
+              />
+            </QueryClientProvider>
+          </ThemeProvider>
+        </BottomSheetModalProvider>
       </PaperProvider>
     </GestureHandlerRootView>
   );

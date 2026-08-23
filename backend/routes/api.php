@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -19,4 +20,10 @@ Route::prefix('auth')->group(function () {
 
   });
 
+});
+
+Route::prefix('profile')->group(function () {
+  Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/profile-picture', [ProfileController::class, 'updateProfilePicture']);
+  });
 });
