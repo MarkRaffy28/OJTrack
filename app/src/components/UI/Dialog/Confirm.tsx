@@ -7,28 +7,30 @@ import { Dialog, type BaseDialogProps } from "./Dialog";
 import { useDialogStyles } from "./styles";
 
 interface Props extends BaseDialogProps {
-  discardLabel?: ReactNode;
-  onDiscard: () => void;
+  actionLabel?: ReactNode;
+  destructive?: Boolean;
+  onAction: () => void;
 }
 
-export function DiscardDialog({
+export function ConfirmDialog({
   visible,
   item,
   title,
   description,
   cancelLabel = "Cancel",
-  discardLabel = "Discard",
+  actionLabel = "Confirm",
+  destructive = false,
   loading = false,
   onCancel,
-  onDiscard,
+  onAction,
 }: Props) {
   const styles = useDialogStyles();
 
-  const defaultTitle = title ?? `Discard ${capitalize(item ?? "Changes")}`;
+  const defaultTitle = title ?? capitalize(item ?? "Confirm");
 
   const defaultDescription =
     description ??
-    `You have unsaved changes. Are you sure you want to discard ${item ?? "them"}?`;
+    `Are you sure you want to ${item?.toLowerCase() ?? "continue"}?`;
 
   return (
     <Dialog
@@ -44,11 +46,12 @@ export function DiscardDialog({
 
           <Button
             mode="contained"
-            onPress={onDiscard}
+            buttonColor={destructive ? "red" : undefined}
+            onPress={onAction}
             loading={loading}
             disabled={loading}
           >
-            {discardLabel}
+            {actionLabel}
           </Button>
         </View>
       }
@@ -56,4 +59,4 @@ export function DiscardDialog({
   );
 }
 
-DiscardDialog.displayName = "DiscardDialog";
+ConfirmDialog.displayName = "ConfirmDialog";

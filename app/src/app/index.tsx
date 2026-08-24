@@ -9,7 +9,7 @@ export default function Index() {
   }
 
   if (session.user?.status === "pre_activated") {
-    return <Redirect href="(auth)/complete-registration" />;
+    return <Redirect href="complete-registration" />;
   }
 
   return <Redirect href="(tabs)/home" />;

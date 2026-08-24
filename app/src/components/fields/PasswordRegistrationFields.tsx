@@ -1,4 +1,4 @@
-import { AppFormInstance } from "@/form/context";
+import { AppFormInstance } from "@/form/hook";
 import { PasswordRegistration } from "@/schemas/auth.schema";
 
 type PasswordRegistrationFormValues = PasswordRegistration;

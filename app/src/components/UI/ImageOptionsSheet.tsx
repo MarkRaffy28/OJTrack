@@ -3,7 +3,8 @@ import { List } from "react-native-paper";
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 
 import { Sheet } from "@/components/ui/Sheet";
-import { ImagePickerResult, useImagePicker } from "@/hooks/useImagePicker";
+import { useImagePicker } from "@/hooks/useImagePicker";
+import { ImagePickerResult } from "@/types/media.types";
 
 export type ImageOptionsSheetRef = {
   present: () => void;
@@ -12,11 +13,12 @@ export type ImageOptionsSheetRef = {
 
 type Props = {
   onImageSelected: (image: ImagePickerResult) => void;
+  onTakePhoto: () => void;
 };
 
 export const ImageOptionsSheet = forwardRef<ImageOptionsSheetRef, Props>(
-  ({ onImageSelected }, ref) => {
-    const { pickFromLibrary, takePhoto } = useImagePicker();
+  ({ onImageSelected, onTakePhoto }, ref) => {
+    const { pickFromLibrary } = useImagePicker();
 
     const sheetRef = useRef<BottomSheetModal>(null);
 
@@ -24,17 +26,6 @@ export const ImageOptionsSheet = forwardRef<ImageOptionsSheetRef, Props>(
       present: () => sheetRef.current?.present(),
       dismiss: () => sheetRef.current?.dismiss(),
     }));
-
-    const handleTakePhoto = useCallback(async () => {
-      const image = await takePhoto();
-
-      if (!image) {
-        return;
-      }
-
-      sheetRef.current?.dismiss();
-      onImageSelected(image);
-    }, [takePhoto, onImageSelected]);
 
     const handleChooseFromLibrary = useCallback(async () => {
       const image = await pickFromLibrary();
@@ -54,7 +45,7 @@ export const ImageOptionsSheet = forwardRef<ImageOptionsSheetRef, Props>(
         <List.Item
           title="Take Photo"
           left={(props) => <List.Icon {...props} icon="camera" />}
-          onPress={() => void handleTakePhoto()}
+          onPress={onTakePhoto}
         />
 
         <List.Item

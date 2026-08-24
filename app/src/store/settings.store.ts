@@ -5,15 +5,19 @@ import { SettingsStorage } from "@/storage/settings.storage";
 import { createTheme } from "@/theme";
 import { AppTheme, ThemeMode } from "@/types/theme.types";
 
-type SettingsStore = {
+type SettingsState = {
   mode: ThemeMode;
   theme: AppTheme;
+};
 
+type SettingsActions = {
   setMode: (mode: ThemeMode) => Promise<void>;
 
   hydrate: () => Promise<void>;
   reset: () => Promise<void>;
 };
+
+type SettingsStore = SettingsState & SettingsActions;
 
 const DEFAULT_MODE: ThemeMode = "system";
 
@@ -57,4 +61,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   },
 }));
 
+export const useMode = () => useSettingsStore((s) => s.mode);
 export const useTheme = () => useSettingsStore((s) => s.theme);
+
+export const useSetMode = () => useSettingsStore((s) => s.setMode);
+export const useResetTheme = () => useSettingsStore((s) => s.reset);

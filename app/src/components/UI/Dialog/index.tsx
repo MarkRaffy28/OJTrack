@@ -1,8 +1,8 @@
 import type { ComponentProps } from "react";
 import { Dialog as PaperDialog } from "react-native-paper";
 
+import { ConfirmDialog } from "./Confirm";
 import { DeleteDialog } from "./Delete";
-import { DiscardDialog } from "./Discard";
 import { useDialogStyles } from "./styles";
 
 function DialogBase(props: ComponentProps<typeof PaperDialog>) {
@@ -22,6 +22,6 @@ export const Dialog = Object.assign(DialogBase, {
   ScrollArea: PaperDialog.ScrollArea,
   Title: DialogTitle,
 
+  Confirm: ConfirmDialog,
   Delete: DeleteDialog,
-  Discard: DiscardDialog,
 });

@@ -1,4 +1,4 @@
-import { AppFormInstance } from "@/form/context";
+import { AppFormInstance } from "@/form/hook";
 import { BaseUser } from "@/schemas/user.schema";
 
 type IdentityFormValues = Pick<

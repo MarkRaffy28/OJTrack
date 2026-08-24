@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { Snackbar } from "@/components/ui/Snackbar";
 import { SplashScreen } from "@/components/ui/SplashScreen";
-import { useAuthStore, useIsHydrated } from "@/store/auth.store";
+import { useAuthSession, useAuthStore, useIsHydrated } from "@/store/auth.store";
 import {
   useSnackbarVisible,
   useSnackbarType,
@@ -28,6 +28,7 @@ export default function RootLayout() {
   const styles = useRootLayoutStyles();
 
   const isAuthHydrated = useIsHydrated();
+  const session = useAuthSession();
 
   const snackbarVisible = useSnackbarVisible();
   const snackbarType = useSnackbarType();
@@ -62,7 +63,24 @@ export default function RootLayout() {
                 screenOptions={{
                   headerShown: false,
                 }}
-              />
+              >
+                <Stack.Protected guard={!session}>
+                  <Stack.Screen name="(auth)" />
+                </Stack.Protected>
+
+                <Stack.Protected guard={session?.user?.status === "pre_activated"}>
+                  <Stack.Screen name="complete-registration" />
+                </Stack.Protected>
+
+                <Stack.Protected guard={session?.user?.status === "active"}>
+                  <Stack.Screen name="(tabs)" />
+
+                  <Stack.Screen
+                    name="camera"
+                    options={{ presentation: "fullScreenModal" }}
+                  />
+                </Stack.Protected>
+              </Stack>
 
               <Snackbar
                 visible={snackbarVisible}

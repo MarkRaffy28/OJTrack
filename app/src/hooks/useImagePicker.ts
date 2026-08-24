@@ -1,14 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useState } from "react";
 
-export type ImagePickerResult = {
-  uri: string;
-  width: number;
-  height: number;
-  mimeType?: string | null;
-  fileName?: string | null;
-  fileSize?: number | null;
-};
+import { ImagePickerResult } from "@/types/media.types";
 
 export function useImagePicker() {
   const [image, setImage] = useState<ImagePickerResult | null>(null);
@@ -64,16 +57,6 @@ export function useImagePicker() {
     return await launchPicker(ImagePicker.launchImageLibraryAsync, 1);
   }, [launchPicker]);
 
-  const takePhoto = useCallback(async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-
-    if (!permission.granted) {
-      return null;
-    }
-
-    return await launchPicker(ImagePicker.launchCameraAsync);
-  }, [launchPicker]);
-
   const reset = useCallback(() => {
     setImage(null);
   }, []);
@@ -82,7 +65,6 @@ export function useImagePicker() {
     image,
     isPicking,
     pickFromLibrary,
-    takePhoto,
     reset,
   };
 }

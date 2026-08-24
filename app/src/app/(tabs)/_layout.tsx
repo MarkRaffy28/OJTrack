@@ -1,11 +1,10 @@
 import { View } from "react-native";
-import { Redirect, Tabs } from "expo-router";
+import { Tabs } from "expo-router";
 import { Icon } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
-import { useAuthSession } from "@/store/auth.store";
+import { QRTabButton } from "@/components/navigation/QRTabButton";
 import { useTabLayoutStyles } from "@/styles/tabLayout.styles";
-import { QRTabButton } from "./QRTabButton";
 
 const getIcon = (
   focused: boolean,
@@ -28,11 +27,6 @@ const getIcon = (
 
 export default function TabLayout() {
   const styles = useTabLayoutStyles();
-  const session = useAuthSession();
-
-  if (!session) {
-    return <Redirect href="/login" />;
-  }
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { AppFormInstance } from "@/form/context";
+import { AppFormInstance } from "@/form/hook";
 
 type Props<TFormData extends Record<string, any>> = {
   form: AppFormInstance<TFormData>;

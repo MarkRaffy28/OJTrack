@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
 
+    alignSelf: "center",
     marginTop: -28,
 
     elevation: 3,

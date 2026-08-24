@@ -1,4 +1,4 @@
-import { AppFormInstance } from "@/form/context";
+import { AppFormInstance } from "@/form/hook";
 import { EmergencyContact } from "@/schemas/user.schema";
 
 type EmergencyContactFormValues = Pick<

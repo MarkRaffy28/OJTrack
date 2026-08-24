@@ -1,5 +1,6 @@
-import { ComponentProps, useCallback, useRef, useState } from "react";
+import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Button, Divider, List, Text } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
@@ -15,8 +16,9 @@ import {
 import { LogoutDialog } from "@/components/ui/LogoutDialog";
 import { SafeView } from "@/components/ui/SafeView";
 
-import { ImagePickerResult } from "@/hooks/useImagePicker";
+import { useImage } from "@/hooks/useImage";
 import { useAuthUser, useUpdateUser } from "@/store/auth.store";
+import { useCameraImage, useClearCameraImage } from "@/store/camera.store";
 import { useShowSnackbar } from "@/store/snackbar.store";
 import { useTheme } from "@/store/settings.store";
 import { getInitials } from "@/utils/string.util";
@@ -41,34 +43,50 @@ function ProfileItem({ leftIcon, destination, ...props }: ProfileItemProps) {
 export default function ProfileScreen() {
   const theme = useTheme();
 
-  const user = useAuthUser();
-  const updateUser = useUpdateUser();
+  const insets = useSafeAreaInsets();
+
+  const cameraImage = useCameraImage();
+  const clearCameraImage = useClearCameraImage();
 
   const showSnackbar = useShowSnackbar();
 
+  const user = useAuthUser();
+  const updateUser = useUpdateUser();
+
+  const {
+    image: editingImage,
+    setImage: setEditingImage,
+    clearImage: clearEditingImage,
+  } = useImage();
+
   const imageOptionsSheetRef = useRef<ImageOptionsSheetRef>(null);
 
-  const [editingImage, setEditingImage] = useState<string | null>(null);
   const [logoutVisible, setLogoutVisible] = useState(false);
+
+  useEffect(() => {
+    if (!cameraImage) {
+      return;
+    }
+
+    setEditingImage(cameraImage.uri);
+    clearCameraImage();
+  }, [cameraImage]);
 
   const handleChangePhoto = useCallback(() => {
     imageOptionsSheetRef.current?.present();
   }, []);
 
-  const handleImageSelected = useCallback((image: ImagePickerResult) => {
-    setEditingImage(image.uri);
+  const handleTakePhoto = useCallback(() => {
+    imageOptionsSheetRef.current?.dismiss();
+    router.push("camera");
   }, []);
-
-  const handleCancelEdit = () => {
-    setEditingImage(null);
-  };
 
   const mutation = useMutation({
     mutationFn: updateProfilePictureApi,
 
     onSuccess: ({ user }) => {
       updateUser(user);
-      setEditingImage(null);
+      clearEditingImage();
 
       showSnackbar("Profile picture updated successfully");
     },
@@ -145,7 +163,11 @@ export default function ProfileScreen() {
         <List.Section>
           <List.Subheader>APP</List.Subheader>
 
-          <ProfileItem title="Appearance" leftIcon="palette-outline" destination="" />
+          <ProfileItem
+            title="Appearance"
+            leftIcon="palette-outline"
+            destination="/profile/appearance"
+          />
 
           <ProfileItem
             title="About OJTrack"
@@ -161,12 +183,20 @@ export default function ProfileScreen() {
 
       <ImageOptionsSheet
         ref={imageOptionsSheetRef}
-        onImageSelected={handleImageSelected}
+        onImageSelected={(image) => setEditingImage(image.uri)}
+        onTakePhoto={handleTakePhoto}
       />
 
       {editingImage && (
         <View
-          style={[styles.editorOverlay, { backgroundColor: theme.colors.background }]}
+          style={[
+            styles.editorOverlay,
+            {
+              backgroundColor: theme.colors.background,
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+            },
+          ]}
         >
           <ImageEditor
             uri={editingImage}
@@ -177,7 +207,7 @@ export default function ProfileScreen() {
             maxZoom={3}
             zoomStep={0.05}
             isSaving={mutation.isPending}
-            onCancel={handleCancelEdit}
+            onCancel={clearEditingImage}
             onComplete={handleImageComplete}
           />
         </View>

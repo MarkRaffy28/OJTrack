@@ -26,7 +26,7 @@ import { PersonalFields } from "@/components/fields/PersonalFields";
 import { SafeView } from "@/components/ui/SafeView";
 
 import { ICON_SIZES } from "@/constants/icons.constants";
-import { useAppForm } from "@/form/context";
+import { useAppForm } from "@/form/hook";
 import {
   CommonRegistrationRequestSchema,
   RegistrationResponse,

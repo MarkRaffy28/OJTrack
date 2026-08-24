@@ -101,21 +101,36 @@ export function ImageEditor({
     [bounds],
   );
 
-  const panGesture = Gesture.Pan().onChange((event) => {
-    setOffset((current) =>
-      clampOffset(current.x + event.changeX, current.y + event.changeY),
-    );
-  });
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .runOnJS(true)
+        .onChange((event) => {
+          setOffset((current) =>
+            clampOffset(current.x + event.changeX, current.y + event.changeY),
+          );
+        }),
+    [clampOffset],
+  );
 
-  const pinchGesture = Gesture.Pinch().onChange((event) => {
-    setZoom((current) => {
-      const next = current * event.scaleChange;
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch()
+        .runOnJS(true)
+        .onChange((event) => {
+          setZoom((current) => {
+            const next = current * event.scaleChange;
 
-      return Math.max(minZoom, Math.min(maxZoom, next));
-    });
-  });
+            return Math.max(minZoom, Math.min(maxZoom, next));
+          });
+        }),
+    [minZoom, maxZoom],
+  );
 
-  const imageGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+  const imageGesture = useMemo(
+    () => Gesture.Simultaneous(panGesture, pinchGesture),
+    [panGesture, pinchGesture],
+  );
 
   const handleZoomChange = useCallback(
     (value: number) => {
@@ -127,12 +142,10 @@ export function ImageEditor({
   );
 
   const handleRotate = useCallback(() => {
-    context.rotate(90);
-
     setRotation((current) => (current + 90) % 360);
 
     setOffset({ x: 0, y: 0 });
-  }, [context]);
+  }, []);
 
   const handleReset = useCallback(() => {
     context.reset();
@@ -147,24 +160,37 @@ export function ImageEditor({
       return;
     }
 
+    context.reset();
+
+    const rotationSteps = rotation / 90;
+
+    for (let i = 0; i < rotationSteps; i++) {
+      context.rotate(90);
+    }
+
+    const isRotated90or270 = rotation === 90 || rotation === 270;
+    const effectiveWidth = isRotated90or270 ? imageSize.height : imageSize.width;
+    const effectiveHeight = isRotated90or270 ? imageSize.width : imageSize.height;
+
     const scale = baseScale * zoom;
 
-    const cropWidth = cropSize / scale;
-    const cropHeight = cropSize / scale;
+    const cropWidth = Math.min(cropSize / scale, effectiveWidth);
+    const cropHeight = Math.min(cropSize / scale, effectiveHeight);
 
-    const originX = imageSize.width / 2 - cropWidth / 2 - offset.x / scale;
+    const originX = effectiveWidth / 2 - cropWidth / 2 - offset.x / scale;
+    const originY = effectiveHeight / 2 - cropHeight / 2 - offset.y / scale;
 
-    const originY = imageSize.height / 2 - cropHeight / 2 - offset.y / scale;
+    const safeOriginX = Math.floor(Math.max(0, Math.min(effectiveWidth - cropWidth, originX)));
+    const safeOriginY = Math.floor(Math.max(0, Math.min(effectiveHeight - cropHeight, originY)));
 
-    const safeOriginX = Math.max(0, Math.min(imageSize.width - cropWidth, originX));
-
-    const safeOriginY = Math.max(0, Math.min(imageSize.height - cropHeight, originY));
+    const safeCropWidth = Math.floor(Math.min(cropWidth, effectiveWidth - safeOriginX));
+    const safeCropHeight = Math.floor(Math.min(cropHeight, effectiveHeight - safeOriginY));
 
     context.crop({
       originX: safeOriginX,
       originY: safeOriginY,
-      width: cropWidth,
-      height: cropHeight,
+      width: safeCropWidth,
+      height: safeCropHeight,
     });
 
     context.resize({
@@ -191,6 +217,7 @@ export function ImageEditor({
     zoom,
     cropSize,
     offset,
+    rotation,
     outputSize,
     compression,
     isSaving,
