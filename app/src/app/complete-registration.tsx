@@ -29,9 +29,9 @@ import { ICON_SIZES } from "@/constants/icons.constants";
 import { useAppForm } from "@/form/hook";
 import {
   CommonRegistrationRequestSchema,
-  RegistrationResponse,
   StudentRegistrationRequestSchema,
 } from "@/schemas/auth.schema";
+import { UserResponse } from "@/schemas/user.schema";
 import { useAuthUser, useUpdateUser } from "@/store/auth.store";
 import { useTheme } from "@/store/settings.store";
 import { getApiErrorMessage } from "@/utils/api.util";
@@ -60,21 +60,23 @@ const STEP_CONFIGS: StepConfig[] = [
 ];
 
 export default function CompleteRegistrationScreen() {
+  const theme = useTheme();
+
   const user = useAuthUser();
   const updateUser = useUpdateUser();
-  const theme = useTheme();
-  const isStudent = user?.role === "student";
-  const maxSteps = isStudent ? 4 : 3;
 
   const stepOpacity = useRef(new Animated.Value(1)).current;
 
   const [currentStep, setCurrentStep] = useState(0);
 
+  const isStudent = user?.role === "student";
+  const maxSteps = isStudent ? 4 : 3;
+
   const commonDefaultValues: UnifiedRegistrationRequest = {
     userId: user?.userId ?? "",
     newPassword: "",
     confirmPassword: "",
-    username: "",
+    username: user?.username ?? "",
     firstName: user?.firstName ?? "",
     middleName: user?.middleName ?? null,
     lastName: user?.lastName ?? "",
@@ -84,20 +86,29 @@ export default function CompleteRegistrationScreen() {
     homeAddress: user?.homeAddress ?? "",
     presentAddress: user?.presentAddress ?? "",
     contactNumber: user?.contactNumber ?? "",
-    email: "",
+    email: user?.email ?? "",
   };
+
+  const primaryContacts = isStudent
+    ? (user?.emergencyContacts?.filter((contact) => contact.isPrimary) ?? [])
+    : [];
+
+  // prettier-ignore
+  const primaryEmergencyContact = primaryContacts.length > 0
+    ? primaryContacts.reduce((max, contact) => (contact.id > max.id ? contact : max))
+    : undefined;
 
   const studentDefaultValues: UnifiedRegistrationRequest = {
     ...commonDefaultValues,
     emergencyContact: {
-      name: (isStudent ? user?.emergencyContacts?.[0]?.name : "") ?? "",
-      relationship: (isStudent ? user?.emergencyContacts?.[0]?.relationship : "") ?? "",
-      address: (isStudent ? user?.emergencyContacts?.[0]?.address : "") ?? "",
-      contactNumber: (isStudent ? user?.emergencyContacts?.[0]?.contactNumber : "") ?? "",
+      name: primaryEmergencyContact?.name ?? "",
+      relationship: primaryEmergencyContact?.relationship ?? "",
+      address: primaryEmergencyContact?.address ?? "",
+      contactNumber: primaryEmergencyContact?.contactNumber ?? "",
     },
   };
 
-  const onSuccess = async (data: RegistrationResponse) => {
+  const onSuccess = async (data: UserResponse) => {
     updateUser(data.user);
     router.replace("(tabs)/home");
   };

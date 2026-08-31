@@ -1,20 +1,23 @@
 import { useState } from "react";
-import { HelperText, TextInput, TextInputProps } from "react-native-paper";
+import { StyleSheet, View } from "react-native";
+import { HelperText, Icon, Text, TextInput, TextInputProps } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
+import { ICON_SIZES } from "@/constants/icons.constants";
 import { useFieldContext } from "@/form/context";
 import { useTheme } from "@/store/settings.store";
 
 interface Props extends Omit<
   TextInputProps,
-  "value" | "onChangeText" | "onBlur" | "error"
+  "value" | "onChangeText" | "onBlur" | "error" | "label" | "mode"
 > {
   label: string;
   icon: IconSource;
   secure?: boolean;
+  mode?: "view" | "edit";
 }
 
-export function FormField({ label, icon, secure, ...props }: Props) {
+export function FormField({ label, icon, secure, mode = "edit", ...props }: Props) {
   const field = useFieldContext();
   const theme = useTheme();
 
@@ -31,25 +34,78 @@ export function FormField({ label, icon, secure, ...props }: Props) {
 
   const error = isTouched && errors.length > 0 ? String(errors[0]?.message) : undefined;
 
-  const leftIconColor = props.disabled
+  const iconColor = props.disabled
     ? theme.colors.onSurfaceDisabled
     : error
       ? theme.colors.error
-      : theme.colors.onSurfaceVariant;
+      : theme.colors.primary;
+
+  const labelColor = props.disabled
+    ? theme.colors.onSurfaceDisabled
+    : error
+      ? theme.colors.error
+      : theme.colors.onSurface;
+
+  if (mode === "view") {
+    return (
+      <View style={[styles.viewCard, { backgroundColor: theme.colors.surfaceVariant }]}>
+        <View style={[styles.viewIconBadge, { backgroundColor: theme.colors.surface }]}>
+          <Icon
+            source={icon}
+            size={ICON_SIZES.lg}
+            color={theme.colors.primary}
+          />
+        </View>
+
+        <View style={styles.viewTextColumn}>
+          <Text
+            variant="labelMedium"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
+            {label}
+          </Text>
+
+          <Text
+            variant="titleMedium"
+            style={[styles.viewValue, { color: theme.colors.onSurface }]}
+          >
+            {String(value ?? "")}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <>
+    <View style={styles.container}>
+      <View style={styles.labelRow}>
+        <Icon
+          source={icon}
+          size={ICON_SIZES.md}
+          color={iconColor}
+        />
+
+        <Text
+          variant="labelLarge"
+          style={[styles.labelText, { color: labelColor }]}
+        >
+          {label}
+        </Text>
+      </View>
+
       <TextInput
         {...props}
         mode="outlined"
-        label={label}
         placeholder={props.placeholder ?? `Enter ${label}`}
         value={String(value ?? "")}
         onChangeText={field.handleChange}
         onBlur={field.handleBlur}
         error={!!error}
         secureTextEntry={secureTextEntry}
-        left={<TextInput.Icon icon={icon} color={leftIconColor} tabIndex={-1} />}
+        outlineColor={theme.colors.outlineVariant}
+        activeOutlineColor={theme.colors.primary}
+        style={[styles.input, { backgroundColor: theme.colors.surfaceVariant }]}
+        outlineStyle={styles.inputOutline}
         right={
           secure && (
             <TextInput.Icon
@@ -63,6 +119,49 @@ export function FormField({ label, icon, secure, ...props }: Props) {
       <HelperText type="error" visible={!!error} padding="none">
         {error}
       </HelperText>
-    </>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 4,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  labelText: {
+    fontWeight: "600",
+  },
+  input: {
+    fontSize: 15,
+  },
+  inputOutline: {
+    borderRadius: 16,
+  },
+  viewCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 12,
+  },
+  viewIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewTextColumn: {
+    flex: 1,
+    gap: 2,
+  },
+  viewValue: {
+    fontWeight: "700",
+  },
+});

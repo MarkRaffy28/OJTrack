@@ -1,14 +1,36 @@
 import {
-  updateProfilePictureRequestSchema,
-  updateProfilePictureResponseSchema,
+  UpdateEmergencyContactRequest,
+  UpdateEmergencyContactRequestSchema,
+  UpdatePersonalInformationRequest,
+  UpdatePersonalInformationRequestSchema,
+  UpdateProfilePictureRequestSchema,
+  UserResponseSchema,
 } from "@/schemas/user.schema";
-import { post } from "./request.api";
+import { patch, post } from "./request.api";
+
+export const updateEmergencyContact = async (data: UpdateEmergencyContactRequest) => {
+  return patch(
+    "/profile/emergency-contact",
+    data,
+    UpdateEmergencyContactRequestSchema,
+    UserResponseSchema,
+  )
+}
 
 export const updateProfilePicture = async (formdata: FormData) => {
   return post(
     "/profile/profile-picture",
     formdata,
-    updateProfilePictureRequestSchema,
-    updateProfilePictureResponseSchema,
+    UpdateProfilePictureRequestSchema,
+    UserResponseSchema,
   );
 };
+
+export const updatePersonalInformation = async (data: UpdatePersonalInformationRequest) => {
+  return patch(
+    "/profile/personal-information",
+    data,
+    UpdatePersonalInformationRequestSchema,
+    UserResponseSchema,
+  )
+}

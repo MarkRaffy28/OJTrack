@@ -4,10 +4,10 @@ import {
   LoginRequest,
   LoginRequestSchema,
   LoginResponseSchema,
-  RegistrationResponseSchema,
   StudentRegistrationRequest,
   StudentRegistrationRequestSchema,
 } from "@/schemas/auth.schema";
+import { UserResponseSchema } from "@/schemas/user.schema";
 import { post } from "./request.api";
 
 export const login = async (data: LoginRequest) =>
@@ -18,7 +18,7 @@ export const registerStudent = async (data: StudentRegistrationRequest) =>
     "/auth/register/student",
     data,
     StudentRegistrationRequestSchema,
-    RegistrationResponseSchema,
+    UserResponseSchema,
   );
 
 export const registerSupervisor = async (data: CommonRegistrationRequest) =>
@@ -26,5 +26,5 @@ export const registerSupervisor = async (data: CommonRegistrationRequest) =>
     "/auth/register/supervisor",
     data,
     CommonRegistrationRequestSchema,
-    RegistrationResponseSchema,
+    UserResponseSchema,
   );

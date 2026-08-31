@@ -227,7 +227,7 @@ export default function LoginScreen() {
                       {(field) => (
                         <field.Field
                           label="Identifier"
-                          placeholder="Enter User ID, Username or Email"
+                          placeholder="Enter User ID, Student ID, Username or Email"
                           maxLength={100}
                           autoCapitalize="none"
                           autoCorrect={false}

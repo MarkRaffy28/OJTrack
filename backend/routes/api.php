@@ -17,13 +17,15 @@ Route::prefix('auth')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
-
   });
 
 });
 
 Route::prefix('profile')->group(function () {
   Route::middleware('auth:sanctum')->group(function () {
+    Route::patch('/emergency-contact', [ProfileController::class, 'updateEmergencyContact']);
+    Route::patch('/personal-information', [ProfileController::class, 'updatePersonalInformation']);
+    
     Route::post('/profile-picture', [ProfileController::class, 'updateProfilePicture']);
   });
 });

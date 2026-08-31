@@ -47,10 +47,6 @@ export const StudentRegistrationRequestSchema = CommonRegistrationRequestSchema.
   emergencyContact: EmergencyContactRequestSchema,
 });
 
-export const RegistrationResponseSchema = z.object({
-  user: UserSchema,
-});
-
 export const ChangePasswordRequestSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: z.string().min(8),
@@ -73,8 +69,6 @@ export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type PasswordRegistration = z.infer<typeof PasswordRegistrationSchema>;
 export type CommonRegistrationRequest = z.infer<typeof CommonRegistrationRequestSchema>;
 export type StudentRegistrationRequest = z.infer<typeof StudentRegistrationRequestSchema>;
-
-export type RegistrationResponse = z.infer<typeof RegistrationResponseSchema>;
 
 export type AuthSession = z.infer<typeof LoginResponseSchema>;
 

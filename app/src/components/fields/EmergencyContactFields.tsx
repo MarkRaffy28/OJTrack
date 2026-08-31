@@ -12,16 +12,17 @@ type Props<TFormData extends { emergencyContact?: EmergencyContactFormValues }> 
   form: AppFormInstance<TFormData>;
   fields?: EmergencyContactFieldNames[];
   readOnlyFields?: EmergencyContactFieldNames[];
+  editable?: boolean;
 };
 
 export function EmergencyContactFields<
   TFormData extends { emergencyContact?: EmergencyContactFormValues },
->({ form, fields, readOnlyFields }: Props<TFormData>) {
+>({ form, fields, readOnlyFields, editable = true }: Props<TFormData>) {
   const show = (name: EmergencyContactFieldNames) =>
     fields === undefined || fields.includes(name);
 
   const isReadOnly = (name: EmergencyContactFieldNames) =>
-    readOnlyFields?.includes(name) ?? false;
+    readOnlyFields?.includes(name) || !editable;
 
   return (
     <>
@@ -29,6 +30,7 @@ export function EmergencyContactFields<
         <form.AppField name="emergencyContact.name">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Full Name"
               placeholder="Enter emergency contact's full name"
               autoCapitalize="words"
@@ -44,6 +46,7 @@ export function EmergencyContactFields<
         <form.AppField name="emergencyContact.relationship">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Relationship"
               placeholder="e.g. Mother, Father, Guardian"
               autoCapitalize="words"
@@ -59,6 +62,7 @@ export function EmergencyContactFields<
         <form.AppField name="emergencyContact.contactNumber">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Contact Number"
               placeholder="Enter emergency contact's number"
               autoCapitalize="none"
@@ -76,6 +80,7 @@ export function EmergencyContactFields<
         <form.AppField name="emergencyContact.address">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Contact Address"
               placeholder="Enter emergency contact's address"
               autoCapitalize="words"

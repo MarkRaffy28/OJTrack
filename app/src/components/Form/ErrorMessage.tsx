@@ -4,6 +4,7 @@ import { Icon, Text } from "react-native-paper";
 import { ICON_SIZES } from "@/constants/icons.constants";
 import { useFormContext } from "@/form/context";
 import { useTheme } from "@/store/settings.store";
+import { useEffect, useState } from "react";
 
 export function FormErrorMessage() {
   const theme = useTheme();
@@ -12,7 +13,21 @@ export function FormErrorMessage() {
 
   const error = form.state.errorMap.onSubmit;
 
-  if (!error) return null;
+  const [visibleError, setVisibleError] = useState(null);
+
+  useEffect(() => {
+    if (error) {
+      setVisibleError(error);
+
+      const timeout = setTimeout(() => {
+        setVisibleError(null);
+      }, 5000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [error]);
+
+  if (!visibleError) return null;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.errorContainer }]}>
@@ -26,7 +41,7 @@ export function FormErrorMessage() {
         variant="bodyMedium"
         style={[styles.text, { color: theme.colors.onErrorContainer }]}
       >
-        {String(error)}
+        {String(visibleError)}
       </Text>
     </View>
   );

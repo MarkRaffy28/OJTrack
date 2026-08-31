@@ -1,15 +1,15 @@
 import { useEffect, useRef } from "react";
 import { Animated, Platform, Pressable, StyleSheet } from "react-native";
-import { ActivityIndicator } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { useFormContext } from "@/form/context";
 import { useTheme } from "@/store/settings.store";
-import { Text } from "react-native-paper";
 
 interface Props {
   submitLabel: string;
   submittingLabel: string;
+  initialValues?: Record<string, any>;
   style?: any;
   contentStyle?: any;
   labelStyle?: any;
@@ -18,6 +18,7 @@ interface Props {
 export function FormSubmit({
   submitLabel,
   submittingLabel,
+  initialValues,
   style,
   contentStyle,
   labelStyle,
@@ -71,11 +72,19 @@ export function FormSubmit({
         const { onSubmit, ...rest } = state.errorMap;
         const hasFormError = Object.values(rest).some(Boolean);
 
-        return [hasFieldErrors || hasFormError, state.isSubmitting] as const;
+        const hasActualChanges = initialValues
+          ? JSON.stringify(state.values) !== JSON.stringify(initialValues)
+          : true;
+
+        return [
+          hasFieldErrors || hasFormError,
+          state.isSubmitting,
+          hasActualChanges,
+        ] as const;
       }}
     >
-      {([hasFieldErrors, isSubmitting]) => {
-        const isDisabled = hasFieldErrors || isSubmitting;
+      {([hasFieldErrors, isSubmitting, hasActualChanges]) => {
+        const isDisabled = hasFieldErrors || isSubmitting || !hasActualChanges;
 
         return (
           <Pressable

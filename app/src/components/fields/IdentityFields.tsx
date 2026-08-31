@@ -1,5 +1,6 @@
 import { AppFormInstance } from "@/form/hook";
 import { BaseUser } from "@/schemas/user.schema";
+import { useAuthUser } from "@/store/auth.store";
 
 type IdentityFormValues = Pick<
   BaseUser,
@@ -18,18 +19,23 @@ type Props<TFormData extends Partial<IdentityFormValues>> = {
   form: AppFormInstance<TFormData>;
   fields?: IdentityFieldNames[];
   readOnlyFields?: Exclude<IdentityFieldNames, "fullName">[];
+  editable?: boolean;
 };
 
 export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
   form,
   fields,
   readOnlyFields,
+  editable = true,
 }: Props<TFormData>) {
+  const user = useAuthUser();
+  const isStudent = user?.role === "student";
+
   const show = (name: IdentityFieldNames) =>
     fields === undefined || fields.includes(name);
 
   const isReadOnly = (name: Exclude<IdentityFieldNames, "fullName">) =>
-    readOnlyFields?.includes(name) ?? false;
+    readOnlyFields?.includes(name) || !editable;
 
   return (
     <>
@@ -37,7 +43,8 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="userId">
           {(field) => (
             <field.Field
-              label="User ID"
+              mode={editable ? "edit" : "view"}
+              label={isStudent ? "Student ID" : "User ID"}
               icon="key-outline"
               editable={!isReadOnly("userId")}
             />
@@ -49,6 +56,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="username">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Username"
               autoCapitalize="none"
               maxLength={100}
@@ -63,6 +71,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="firstName">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="First Name"
               autoCapitalize="words"
               maxLength={100}
@@ -77,6 +86,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="middleName">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Middle Name"
               autoCapitalize="words"
               maxLength={50}
@@ -91,6 +101,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="lastName">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Last Name"
               autoCapitalize="words"
               maxLength={50}
@@ -105,6 +116,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="extensionName">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Extension Name"
               autoCapitalize="characters"
               maxLength={10}
@@ -119,6 +131,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
         <form.AppField name="fullName">
           {(field) => (
             <field.Field
+              mode={editable ? "edit" : "view"}
               label="Full Name"
               maxLength={100}
               icon="account-outline"

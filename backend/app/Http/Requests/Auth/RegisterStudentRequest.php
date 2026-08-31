@@ -3,6 +3,9 @@
 namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\BaseApiRequest;
+use App\Rules\AuthRules;
+use App\Rules\EmergencyContactsRules;
+use App\Rules\UserRules;
 
 class RegisterStudentRequest extends BaseApiRequest {
   public function authorize(): bool {
@@ -10,30 +13,32 @@ class RegisterStudentRequest extends BaseApiRequest {
   }
 
   public function rules(): array {
+    $userId = $this->user()?->id;
+
     return [
-      'newPassword' => ['required', 'string', 'min:8', 'max:255'],
-      'confirmPassword' => ['required', 'same:newPassword'],
+      'newPassword' => AuthRules::newPassword(),
+      'confirmPassword' => AuthRules::confirmPassword(),
 
-      'username' => ['required', 'string', 'max:100', 'unique:users,username'],
+      'username' => UserRules::username($userId),
 
-      'firstName' => ['required', 'string', 'max:100'],
-      'middleName' => ['nullable', 'string', 'max:50'],
-      'lastName' => ['required', 'string', 'max:50'],
-      'extensionName' => ['nullable', 'string', 'max:10'],
+      'firstName' => UserRules::firstName(),
+      'middleName' => UserRules::middleName(),
+      'lastName' => UserRules::lastName(),
+      'extensionName' => UserRules::extensionName(),
 
-      'birthDate' => ['required', 'date'],
-      'gender' => ['required', 'in:Male,Female,Other'],
+      'birthDate' => UserRules::birthDate(),
+      'gender' => UserRules::gender(),
 
-      'homeAddress' => ['required', 'string', 'max:255'],
-      'presentAddress' => ['required', 'string', 'max:255'],
-      'contactNumber' => ['required', 'string', 'max:15'],
-      'email' => ['required', 'email', 'max:100', 'unique:users,email'],
+      'homeAddress' => UserRules::homeAddress(),
+      'presentAddress' => UserRules::presentAddress(),
+      'contactNumber' => UserRules::contactNumber(),
+      'email' => UserRules::email($userId),
 
-      'emergencyContact' => ['required', 'array'],
-      'emergencyContact.name' => ['required', 'string', 'max:210'],
-      'emergencyContact.relationship' => ['required', 'string', 'max:50'],
-      'emergencyContact.contactNumber' => ['required', 'string', 'max:15'],
-      'emergencyContact.address' => ['required', 'string', 'max:255'],
+      'emergencyContact' => EmergencyContactsRules::emergencyContact(),
+      'emergencyContact.name' => EmergencyContactsRules::name(),
+      'emergencyContact.relationship' => EmergencyContactsRules::relationship(),
+      'emergencyContact.contactNumber' => EmergencyContactsRules::contactNumber(),
+      'emergencyContact.address' => EmergencyContactsRules::address(),
     ];
   }
 }

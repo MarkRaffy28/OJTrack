@@ -2,12 +2,13 @@ import { ComponentProps, useCallback, useEffect, useRef, useState } from "react"
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Button, Chip, Divider, List, Surface, Text } from "react-native-paper";
+import { Button, Divider, List, Surface, Text } from "react-native-paper";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 import { useMutation } from "@tanstack/react-query";
 
-import { updateProfilePicture as updateProfilePictureApi } from "@/api/profile.api";
+import { api } from "@/api";
 import { Avatar } from "@/components/ui/Avatar";
+import { Chip } from "@/components/ui/Chip";
 import { ImageEditor, ImageEditorResult } from "@/components/media/ImageEditor";
 import {
   ImageOptionsSheet,
@@ -84,7 +85,7 @@ export default function ProfileScreen() {
   }, []);
 
   const mutation = useMutation({
-    mutationFn: updateProfilePictureApi,
+    mutationFn: api.updateProfilePicture,
 
     onSuccess: ({ user }) => {
       updateUser(user);
@@ -132,17 +133,15 @@ export default function ProfileScreen() {
             </Text>
 
             <Chip
-              compact
-              style={[styles.roleChip, { backgroundColor: theme.colors.secondaryContainer, alignSelf: "center" }]}
+              text={user?.role ?? ""}
+              style={[
+                styles.roleChip,
+                { backgroundColor: theme.colors.secondaryContainer, alignSelf: "center" },
+              ]}
               textStyle={{ color: theme.colors.onSecondaryContainer }}
-            >
-              {user?.role}
-            </Chip>
+            />
 
-            <Text
-              variant="bodySmall"
-              style={{ color: theme.colors.onSurfaceVariant}}
-            >
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
               {user?.userId}
             </Text>
           </View>
@@ -155,7 +154,7 @@ export default function ProfileScreen() {
             <ProfileItem
               title="Personal Information"
               leftIcon="account-outline"
-              destination=""
+              destination="/profile/personal-information"
             />
 
             <Divider style={styles.rowDivider} />
@@ -163,16 +162,18 @@ export default function ProfileScreen() {
             <ProfileItem
               title="Emergency Contact"
               leftIcon="car-emergency"
-              destination=""
+              destination="profile/emergency-contact"
             />
 
             <Divider style={styles.rowDivider} />
 
-            <ProfileItem
-              title="Academic Information"
-              leftIcon="school-outline"
-              destination=""
-            />
+            {user?.role === "student" && (
+              <ProfileItem
+                title="Academic Information"
+                leftIcon="school-outline"
+                destination="profile/academic-information"
+              />
+            )}
 
             <Divider style={styles.rowDivider} />
 
@@ -184,11 +185,7 @@ export default function ProfileScreen() {
 
             <Divider style={styles.rowDivider} />
 
-            <ProfileItem
-              title="Change Password"
-              leftIcon="lock-outline"
-              destination=""
-            />
+            <ProfileItem title="Change Password" leftIcon="lock-outline" destination="" />
           </Surface>
 
           <Surface style={styles.card} elevation={1}>
@@ -260,6 +257,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
+    marginBottom: 32,
   },
   header: {
     flexDirection: "row",
@@ -295,7 +293,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     borderRadius: 12,
-    marginBottom: 32,
   },
   editorOverlay: {
     ...StyleSheet.absoluteFillObject,

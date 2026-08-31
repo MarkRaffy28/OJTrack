@@ -78,7 +78,6 @@ export const BaseUserSchema = z.object({
   middleName: z
     .string()
     .max(50, "Middle name must be at most 50 characters long")
-    .optional()
     .nullable(),
 
   lastName: z
@@ -89,7 +88,6 @@ export const BaseUserSchema = z.object({
   extensionName: z
     .string()
     .max(10, "Extension name must be at most 10 characters long")
-    .optional()
     .nullable(),
 
   fullName: z.string().nullable(),
@@ -156,10 +154,31 @@ export const UserSchema = z.discriminatedUnion("role", [
   AdminUserSchema,
 ]);
 
-export const updateProfilePictureRequestSchema = z.instanceof(FormData);
+export const UserResponseSchema = z.object({
+  user: UserSchema,
+});
 
-export const updateProfilePictureResponseSchema = z.object({
-  user: UserSchema 
+export const UpdateProfilePictureRequestSchema = z.instanceof(FormData);
+
+export const UpdatePersonalInformationRequestSchema = BaseUserSchema.pick({
+  username: true,
+  firstName: true,
+  middleName: true,
+  lastName: true,
+  extensionName: true,
+  birthDate: true,
+  gender: true,
+  homeAddress: true,
+  presentAddress: true,
+  contactNumber: true,
+  email: true,
+});
+
+export const UpdateEmergencyContactRequestSchema = z.object({
+  emergencyContact: EmergencyContactSchema.omit({
+    id: true,
+    isPrimary: true,
+  }),
 });
 
 export type Gender = z.infer<typeof GenderSchema>;
@@ -180,3 +199,13 @@ export type SupervisorUser = z.infer<typeof SupervisorUserSchema>;
 export type AdminUser = z.infer<typeof AdminUserSchema>;
 
 export type User = z.infer<typeof UserSchema>;
+
+export type UserResponse = z.infer<typeof UserResponseSchema>;
+
+export type UpdatePersonalInformationRequest = z.infer<
+  typeof UpdatePersonalInformationRequestSchema
+>;
+
+export type UpdateEmergencyContactRequest = z.infer<
+  typeof UpdateEmergencyContactRequestSchema
+>;

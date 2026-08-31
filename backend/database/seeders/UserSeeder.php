@@ -61,7 +61,7 @@ class UserSeeder extends Seeder {
     $student->studentDetail()->create([
       'year' => 4,
       'program' => 'BSIT',
-      'major' => 'Web Development',
+      'major' => 'Web and Mobile Development',
       'section' => 'A',
     ]);
 

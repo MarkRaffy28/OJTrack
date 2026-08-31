@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AccountStatus;
+use App\Enums\UserRoles;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -50,6 +51,7 @@ class User extends Authenticatable {
       'birth_date' => 'date',
       'email_verified_at' => 'datetime',
       'password' => 'hashed',
+      'role' => UserRoles::class,
       'status' => AccountStatus::class,
       'activated_at' => 'datetime',
     ];
@@ -76,7 +78,6 @@ class User extends Authenticatable {
   }
 
   public function emergencyContacts(): HasMany {
-    return $this->hasMany(EmergencyContact::class)
-      ->orderBy('is_primary', 'desc');
+    return $this->hasMany(EmergencyContact::class);
   }
 }

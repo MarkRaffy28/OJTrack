@@ -29,6 +29,7 @@ interface Props<T = string> {
   options: Option<T>[];
   searchable?: boolean;
   disabled?: boolean;
+  mode?: "view" | "edit";
 }
 
 const ITEM_HEIGHT = 56;
@@ -42,6 +43,7 @@ export function FormSelect<T = string>({
   options,
   searchable = false,
   disabled = false,
+  mode = "edit",
 }: Props<T>) {
   const field = useFieldContext();
   const theme = useTheme();
@@ -70,6 +72,18 @@ export function FormSelect<T = string>({
     );
   }, [options, query, searchable]);
 
+  const iconColor = disabled
+    ? theme.colors.onSurfaceDisabled
+    : error
+      ? theme.colors.error
+      : theme.colors.primary;
+
+  const labelColor = disabled
+    ? theme.colors.onSurfaceDisabled
+    : error
+      ? theme.colors.error
+      : theme.colors.onSurface;
+
   const handleOpen = () => {
     if (disabled) return;
 
@@ -95,28 +109,64 @@ export function FormSelect<T = string>({
     setQuery("");
   };
 
+  if (mode === "view") {
+    return (
+      <View style={[styles.viewCard, { backgroundColor: theme.colors.surfaceVariant }]}>
+        <View style={[styles.viewIconBadge, { backgroundColor: theme.colors.surface }]}>
+          <Icon source={icon} size={ICON_SIZES.lg} color={theme.colors.primary} />
+        </View>
+
+        <View style={styles.viewTextColumn}>
+          <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+            {label}
+          </Text>
+
+          <Text
+            variant="titleMedium"
+            style={[styles.viewValue, { color: theme.colors.onSurface }]}
+          >
+            {selected?.label ?? "—"}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <>
-      <Pressable onPress={handleOpen} disabled={disabled}>
-        {({ pressed }) => (
-          <View pointerEvents="none" style={{ opacity: pressed ? 0.85 : 1 }}>
-            <TextInput
-              mode="outlined"
-              label={label}
-              value={selected?.label ?? ""}
-              editable={!disabled}
-              disabled={disabled}
-              left={<TextInput.Icon icon={icon} tabIndex={-1} />}
-              right={<TextInput.Icon icon={visible ? "chevron-up" : "chevron-down"} />}
-              error={!!error}
-            />
-          </View>
-        )}
-      </Pressable>
+      <View style={styles.container}>
+        <View style={styles.labelRow}>
+          <Icon source={icon} size={ICON_SIZES.md} color={iconColor} />
 
-      <HelperText type="error" visible={!!error}>
-        {error}
-      </HelperText>
+          <Text variant="labelLarge" style={[styles.labelText, { color: labelColor }]}>
+            {label}
+          </Text>
+        </View>
+
+        <Pressable onPress={handleOpen} disabled={disabled}>
+          {({ pressed }) => (
+            <View pointerEvents="none" style={{ opacity: pressed ? 0.85 : 1 }}>
+              <TextInput
+                mode="outlined"
+                value={selected?.label ?? ""}
+                placeholder={`Select ${label}`}
+                editable={!disabled}
+                disabled={disabled}
+                right={<TextInput.Icon icon={visible ? "chevron-up" : "chevron-down"} />}
+                error={!!error}
+                outlineColor={theme.colors.outlineVariant}
+                activeOutlineColor={theme.colors.primary}
+                style={[styles.input, { backgroundColor: theme.colors.surfaceVariant }]}
+                outlineStyle={styles.inputOutline}
+              />
+            </View>
+          )}
+        </Pressable>
+
+        <HelperText type="error" visible={!!error} padding="none">
+          {error}
+        </HelperText>
+      </View>
 
       <Portal>
         <Modal
@@ -220,6 +270,46 @@ export function FormSelect<T = string>({
 }
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: 4,
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 8,
+  },
+  labelText: {
+    fontWeight: "600",
+  },
+  input: {
+    fontSize: 15,
+  },
+  inputOutline: {
+    borderRadius: 16,
+  },
+  viewCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 12,
+  },
+  viewIconBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewTextColumn: {
+    flex: 1,
+    gap: 2,
+  },
+  viewValue: {
+    fontWeight: "700",
+  },
   modalContent: {
     marginHorizontal: 24,
     alignItems: "center",

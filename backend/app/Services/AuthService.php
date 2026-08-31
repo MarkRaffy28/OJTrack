@@ -67,15 +67,17 @@ class AuthService {
         'activated_at' => now(),
       ]);
 
-      if (isset($data['emergencyContact'])) {
-        $user->emergencyContacts()->create([
-          'name' => $data['emergencyContact']['name'],
-          'relationship' => $data['emergencyContact']['relationship'],
-          'contact_number' => $data['emergencyContact']['contactNumber'],
-          'address' => $data['emergencyContact']['address'] ?? null,
-          'is_primary' => true,
-        ]);
-      }
+      $emergencyContact = $data['emergencyContact'];
+
+      $user->emergencyContacts()->updateOrCreate(
+        ['is_primary' => true],
+        [
+          'name' => $emergencyContact['name'],
+          'relationship' => $emergencyContact['relationship'],
+          'contact_number' => $emergencyContact['contactNumber'],
+          'address' => $emergencyContact['address'],
+        ],
+      );
 
       return $user->load(['studentDetail', 'emergencyContacts']);
     });

@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests\Profile;
 
 use App\Http\Requests\BaseApiRequest;
-use App\Rules\AuthRules;
 use App\Rules\UserRules;
 
-class RegisterSupervisorRequest extends BaseApiRequest {
+class UpdatePersonalInformationRequest extends BaseApiRequest {
   public function authorize(): bool {
     return true;
   }
@@ -15,9 +14,6 @@ class RegisterSupervisorRequest extends BaseApiRequest {
     $userId = $this->user()?->id;
 
     return [
-      'newPassword' => AuthRules::newPassword(),
-      'confirmPassword' => AuthRules::confirmPassword(),
-
       'username' => UserRules::username($userId),
 
       'firstName' => UserRules::firstName(),

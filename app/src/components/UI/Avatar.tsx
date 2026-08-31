@@ -66,7 +66,7 @@ export function Avatar({
           pressed && onPress && { opacity: 0.8 },
         ]}
       >
-        <Icon source="camera" size={18} color={theme.colors.onPrimary} />
+        <Icon source="pencil" size={18} color={theme.colors.onPrimary} />
       </Pressable>
     </View>
   );
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
 
   cameraButtonWrapper: {
     position: "absolute",
-    right: -10,
+    right: -8,
     bottom: -2,
 
     width: 36,
