@@ -1,5 +1,7 @@
+import { router } from "expo-router";
 import { AppFormInstance } from "@/form/hook";
 import { BaseUser } from "@/schemas/user.schema";
+import { useAuthUser } from "@/store/auth.store";
 
 type ContactFormValues = Pick<
   BaseUser,
@@ -21,6 +23,8 @@ export function ContactFields<TFormData extends ContactFormValues>({
   readOnlyFields,
   editable = true,
 }: Props<TFormData>) {
+  const user = useAuthUser();
+
   const show = (name: ContactFieldNames) => fields === undefined || fields.includes(name);
 
   const isReadOnly = (name: ContactFieldNames) => readOnlyFields?.includes(name) || !editable;
@@ -86,6 +90,8 @@ export function ContactFields<TFormData extends ContactFormValues>({
               icon="email-outline"
               keyboardType="email-address"
               editable={!isReadOnly("email")}
+              verified={!!user?.emailVerifiedAt}
+              onVerifyPress={() => router.navigate("/profile/verify-email") }
             />
           )}
         </form.AppField>

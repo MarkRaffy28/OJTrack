@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ScrollView } from "react-native";
+import { RefreshControl, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { Appbar, Tooltip } from "react-native-paper";
 import { useMutation } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { AppView } from "@/components/ui/AppView";
 import { EmergencyContactFields } from "@/components/fields/EmergencyContactFields";
 import { SafeView } from "@/components/ui/SafeView";
 import { useAppForm } from "@/form/hook";
+import { useRefreshUser } from "@/hooks/useRefreshUser";
 import { UpdateEmergencyContactRequestSchema } from "@/schemas/user.schema";
 import { useAuthUser, useUpdateUser } from "@/store/auth.store";
 import { useShowSnackbar } from "@/store/snackbar.store";
@@ -19,6 +20,8 @@ export default function EmergencyContactScreen() {
 
   const user = useAuthUser();
   const updateUser = useUpdateUser();
+
+  const { refreshing, refreshUser } = useRefreshUser();
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -65,7 +68,7 @@ export default function EmergencyContactScreen() {
       } catch (error) {
         form.setErrorMap({ onSubmit: getApiErrorMessage(error) });
       }
-    }
+    },
   });
 
   const handleSubmit = () => {
@@ -101,7 +104,11 @@ export default function EmergencyContactScreen() {
           )}
         </Appbar.Header>
 
-        <ScrollView>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refreshUser} />
+          }
+        >
           <AppView>
             <EmergencyContactFields form={form} editable={isEditing} />
 

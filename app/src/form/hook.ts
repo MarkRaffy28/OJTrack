@@ -9,6 +9,7 @@ export const { useAppForm, withForm } = createFormHook({
   fieldComponents: {
     Field: Form.Field,
     DatePicker: Form.DatePicker,
+    OTPField: Form.OTPField,
     Select: Form.Select,
   },
   formComponents: {

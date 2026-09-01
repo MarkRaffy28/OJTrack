@@ -5,6 +5,11 @@ export const ContactNumberSchema = z
   .min(1, "Contact Number is required")
   .regex(/^09\d{9}$/, "Enter a valid Philippine mobile number");
 
+export const OTPSchema = z
+  .string()
+  .length(6, "Verification code must be 6 digits.")
+  .regex(/^\d{6}$/, "Verification code must contain only numbers.");
+
 export const PasswordSchema = z
   .string()
   .min(8, "Password must be at least 8 characters long")

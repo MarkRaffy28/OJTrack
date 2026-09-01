@@ -3,11 +3,15 @@ import { api } from "./client.api";
 
 export const get = async <TResponse>(
   url: string,
-  responseSchema: ZodType<TResponse>,
+  responseSchema?: ZodType<TResponse>,
 ) => {
   const response = await api.get<TResponse>(url);
 
-  return responseSchema.parse(response.data);
+  if (!responseSchema) {
+    return response.data as TResponse;
+  }
+
+  return responseSchema?.parse(response.data);
 };
 
 export const patch = async <TRequest, TResponse>(
@@ -25,13 +29,16 @@ export const patch = async <TRequest, TResponse>(
 
 export const post = async <TRequest, TResponse>(
   url: string,
-  data: TRequest,
-  requestSchema: ZodType<TRequest>,
-  responseSchema: ZodType<TResponse>,
+  data?: TRequest,
+  requestSchema?: ZodType<TRequest>,
+  responseSchema?: ZodType<TResponse>,
 ) => {
-  const payload = requestSchema.parse(data);
-
+  const payload = requestSchema?.parse(data);
   const response = await api.post<TResponse>(url, payload);
 
-  return responseSchema.parse(response.data);
+  if (!responseSchema) {
+    return response.data as TResponse;
+  }
+
+  return responseSchema?.parse(response.data);
 };

@@ -4,6 +4,7 @@ import { HelperText, Icon, Text, TextInput, TextInputProps } from "react-native-
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 import { ICON_SIZES } from "@/constants/icons.constants";
+import { Chip } from "@/components/ui/Chip";
 import { useFieldContext } from "@/form/context";
 import { useTheme } from "@/store/settings.store";
 
@@ -15,9 +16,19 @@ interface Props extends Omit<
   icon: IconSource;
   secure?: boolean;
   mode?: "view" | "edit";
+  verified?: boolean;
+  onVerifyPress?: () => void;
 }
 
-export function FormField({ label, icon, secure, mode = "edit", ...props }: Props) {
+export function FormField({
+  label,
+  icon,
+  secure,
+  mode = "edit",
+  verified,
+  onVerifyPress,
+  ...props
+}: Props) {
   const field = useFieldContext();
   const theme = useTheme();
 
@@ -58,12 +69,25 @@ export function FormField({ label, icon, secure, mode = "edit", ...props }: Prop
         </View>
 
         <View style={styles.viewTextColumn}>
-          <Text
-            variant="labelMedium"
-            style={{ color: theme.colors.onSurfaceVariant }}
-          >
-            {label}
-          </Text>
+          <View style={styles.viewLabelRow}>
+            <Text
+              variant="labelMedium"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              {label}
+            </Text>
+
+            {verified === true && (
+              <Chip
+                text="Verified"
+                variant="filled"
+                tone="success"
+                selected
+                size="small"
+                rightIcon="check-decagram"
+              />
+            )}
+          </View>
 
           <Text
             variant="titleMedium"
@@ -72,6 +96,17 @@ export function FormField({ label, icon, secure, mode = "edit", ...props }: Prop
             {String(value ?? "")}
           </Text>
         </View>
+
+        {verified === false && (
+          <Chip
+            text="Verify"
+            variant="filled"
+            tone="warning"
+            size="medium"
+            leftIcon="alert-circle-outline"
+            onPress={onVerifyPress}
+          />
+        )}
       </View>
     );
   }
@@ -91,6 +126,17 @@ export function FormField({ label, icon, secure, mode = "edit", ...props }: Prop
         >
           {label}
         </Text>
+
+        {verified === true && (
+          <Chip
+            text="Verified"
+            variant="filled"
+            tone="success"
+            selected
+            size="small"
+            rightIcon="check-decagram"
+          />
+        )}
       </View>
 
       <TextInput
@@ -160,6 +206,11 @@ const styles = StyleSheet.create({
   viewTextColumn: {
     flex: 1,
     gap: 2,
+  },
+  viewLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   viewValue: {
     fontWeight: "700",

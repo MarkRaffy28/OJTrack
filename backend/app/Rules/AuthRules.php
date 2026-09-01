@@ -18,4 +18,8 @@ class AuthRules {
   public static function confirmPassword(): array {
     return ["required", "string", "min:8", "max:255", "same:newPassword"];
   }
+
+  public static function otp(): array {
+    return ["required", "digits:6"];
+  }
 }

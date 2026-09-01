@@ -1,5 +1,5 @@
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Button, Divider, List, Surface, Text } from "react-native-paper";
@@ -14,16 +14,18 @@ import {
   ImageOptionsSheet,
   ImageOptionsSheetRef,
 } from "@/components/ui/ImageOptionsSheet";
+import { ListSubheader } from "@/components/paper/ListSubheader";
 import { LogoutDialog } from "@/components/ui/LogoutDialog";
 import { SafeView } from "@/components/ui/SafeView";
 
 import { useImage } from "@/hooks/useImage";
+import { useRefreshUser } from "@/hooks/useRefreshUser";
 import { useAuthUser, useUpdateUser } from "@/store/auth.store";
 import { useCameraImage, useClearCameraImage } from "@/store/camera.store";
 import { useShowSnackbar } from "@/store/snackbar.store";
 import { useTheme } from "@/store/settings.store";
-import { getInitials } from "@/utils/string.util";
 import { getApiErrorMessage } from "@/utils/api.util";
+import { getInitials } from "@/utils/string.util";
 
 const CONTENT_MAX_WIDTH = 600;
 
@@ -45,7 +47,6 @@ function ProfileItem({ leftIcon, destination, ...props }: ProfileItemProps) {
 
 export default function ProfileScreen() {
   const theme = useTheme();
-
   const insets = useSafeAreaInsets();
 
   const cameraImage = useCameraImage();
@@ -55,6 +56,8 @@ export default function ProfileScreen() {
 
   const user = useAuthUser();
   const updateUser = useUpdateUser();
+
+  const { refreshing, refreshUser } = useRefreshUser();
 
   const {
     image: editingImage,
@@ -113,107 +116,170 @@ export default function ProfileScreen() {
   );
 
   return (
-    <SafeView edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.header, { paddingTop: insets.top + 32 }]}>
-          <Avatar
-            source={user?.profilePicture}
-            text={getInitials(user?.fullName ?? "")}
-            mode="edit"
-            variant="large"
-            onPress={handleChangePhoto}
-          />
+    <SafeView edges={["bottom"]} style={{ backgroundColor: theme.colors.primary }}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={refreshUser} />
+        }
+      >
+        {/* Header Background */}
+        <View
+          style={[
+            styles.brandHeader,
+            {
+              backgroundColor: theme.colors.primary,
+              paddingTop: insets.top,
+            },
+          ]}
+        />
 
-          <View style={styles.headerText}>
-            <Text
-              variant="titleMedium"
-              style={{ color: theme.colors.onSurface, fontWeight: "700" }}
-            >
-              {user?.fullName}
-            </Text>
-
-            <Chip
-              text={user?.role ?? ""}
-              style={[
-                styles.roleChip,
-                { backgroundColor: theme.colors.secondaryContainer, alignSelf: "center" },
-              ]}
-              textStyle={{ color: theme.colors.onSecondaryContainer }}
-            />
-
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              {user?.userId}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          <Surface style={styles.card} elevation={1}>
-            <List.Subheader>ACCOUNT</List.Subheader>
-
-            <ProfileItem
-              title="Personal Information"
-              leftIcon="account-outline"
-              destination="/profile/personal-information"
-            />
-
-            <Divider style={styles.rowDivider} />
-
-            <ProfileItem
-              title="Emergency Contact"
-              leftIcon="car-emergency"
-              destination="profile/emergency-contact"
-            />
-
-            <Divider style={styles.rowDivider} />
-
-            {user?.role === "student" && (
-              <ProfileItem
-                title="Academic Information"
-                leftIcon="school-outline"
-                destination="profile/academic-information"
+        {/* Full-width white body */}
+        <View style={[styles.bodyContent, { backgroundColor: theme.colors.background }]}>
+          <View style={styles.innerContainer}>
+            {/* Avatar */}
+            <View style={styles.avatarWrapper}>
+              <Avatar
+                source={user?.profilePicture}
+                text={getInitials(user?.fullName ?? "")}
+                mode="edit"
+                variant="large"
+                onPress={handleChangePhoto}
               />
-            )}
+            </View>
 
-            <Divider style={styles.rowDivider} />
+            {/* User Information */}
+            <View style={styles.headerText}>
+              <Text
+                variant="titleLarge"
+                style={[
+                  styles.centerText,
+                  { color: theme.colors.onSurface, fontWeight: "700" },
+                ]}
+              >
+                {user?.fullName}
+              </Text>
 
-            <ProfileItem
-              title="OJT Information"
-              leftIcon="briefcase-outline"
-              destination=""
-            />
+              <Text
+                variant="bodyMedium"
+                style={[
+                  styles.centerText,
+                  { color: theme.colors.onSurfaceVariant, textTransform: "uppercase" },
+                ]}
+              >
+                {user?.role}
+              </Text>
 
-            <Divider style={styles.rowDivider} />
+              <Text
+                variant="bodySmall"
+                style={[styles.centerText, { color: theme.colors.outline }]}
+              >
+                ID: {user?.userId}
+              </Text>
 
-            <ProfileItem title="Change Password" leftIcon="lock-outline" destination="" />
-          </Surface>
+              <View style={styles.emailContainer}>
+                <Text
+                  variant="bodyMedium"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  {user?.email}
+                </Text>
 
-          <Surface style={styles.card} elevation={1}>
-            <List.Subheader>APP</List.Subheader>
+                {user?.emailVerifiedAt ? (
+                  <Chip
+                    text="Verified"
+                    variant="filled"
+                    tone="success"
+                    selected
+                    size="small"
+                    rightIcon="check-decagram"
+                  />
+                ) : (
+                  <Chip
+                    text="Verify"
+                    variant="filled"
+                    tone="warning"
+                    size="small"
+                    leftIcon="alert-circle-outline"
+                    onPress={() => router.navigate("/profile/verify-email") }
+                  />
+                )}
+              </View>
+            </View>
 
-            <ProfileItem
-              title="Appearance"
-              leftIcon="palette-outline"
-              destination="/profile/appearance"
-            />
+            {/* Account Options */}
+            <Surface style={styles.card} elevation={1}>
+              <ListSubheader>ACCOUNT</ListSubheader>
 
-            <Divider style={styles.rowDivider} />
+              <ProfileItem
+                title="Personal Information"
+                leftIcon="account-outline"
+                destination="/profile/personal-information"
+              />
 
-            <ProfileItem
-              title="About OJTrack"
-              leftIcon="information-outline"
-              destination=""
-            />
-          </Surface>
+              <Divider style={styles.rowDivider} />
 
-          <Button
-            mode="outlined"
-            textColor={theme.colors.error}
-            style={[styles.logoutButton, { borderColor: theme.colors.error }]}
-            onPress={() => setLogoutVisible(true)}
-          >
-            Logout
-          </Button>
+              <ProfileItem
+                title="Emergency Contact"
+                leftIcon="car-emergency"
+                destination="profile/emergency-contact"
+              />
+
+              <Divider style={styles.rowDivider} />
+
+              {user?.role === "student" && (
+                <ProfileItem
+                  title="Academic Information"
+                  leftIcon="school-outline"
+                  destination="profile/academic-information"
+                />
+              )}
+
+              <Divider style={styles.rowDivider} />
+
+              <ProfileItem
+                title="OJT Information"
+                leftIcon="briefcase-outline"
+                destination=""
+              />
+
+              <Divider style={styles.rowDivider} />
+
+              <ProfileItem
+                title="Change Password"
+                leftIcon="lock-outline"
+                destination=""
+              />
+            </Surface>
+
+            {/* App Options */}
+            <Surface style={styles.card} elevation={1}>
+              <ListSubheader>APP</ListSubheader>
+
+              <ProfileItem
+                title="Appearance"
+                leftIcon="palette-outline"
+                destination="/profile/appearance"
+              />
+
+              <Divider style={styles.rowDivider} />
+
+              <ProfileItem
+                title="About OJTrack"
+                leftIcon="information-outline"
+                destination=""
+              />
+            </Surface>
+
+            <Button
+              mode="outlined"
+              textColor={theme.colors.error}
+              style={[styles.logoutButton, { borderColor: theme.colors.error }]}
+              onPress={() => setLogoutVisible(true)}
+            >
+              Logout
+            </Button>
+          </View>
         </View>
       </ScrollView>
 
@@ -257,32 +323,47 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
-    marginBottom: 32,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
+  brandHeader: {
+    height: 150,
+    width: "100%",
+  },
+  bodyContent: {
+    flex: 1,
+    width: "100%",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingBottom: 32,
+    marginTop: -30,
+  },
+  innerContainer: {
     alignSelf: "center",
     width: "100%",
     maxWidth: CONTENT_MAX_WIDTH,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingTop: 72,
+    gap: 24,
+  },
+  avatarWrapper: {
+    position: "absolute",
+    top: -60,
+    alignSelf: "center",
+    zIndex: 10,
   },
   headerText: {
-    minWidth: 170,
-    gap: 6,
-    alignItems: "center",
-  },
-  roleChip: {
-    alignSelf: "flex-start",
-  },
-  content: {
-    alignSelf: "center",
     width: "100%",
-    maxWidth: CONTENT_MAX_WIDTH,
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    gap: 24,
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 12,
+  },
+  centerText: {
+    textAlign: "center",
+  },
+  emailContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   card: {
     borderRadius: 24,

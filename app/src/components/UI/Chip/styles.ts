@@ -5,7 +5,7 @@ import { Props as ChipProps } from "./index";
 
 type ChipStyleProps = Pick<
   ChipProps,
-  "variant" | "size" | "selected" | "disabled"
+  "variant" | "size" | "selected" | "disabled" | "tone"
 >;
 
 const DISABLED_OPACITY = 0.38;
@@ -15,29 +15,53 @@ export const useChipStyles = ({
   size,
   selected,
   disabled,
+  tone = "neutral",
 }: ChipStyleProps) => {
   const theme = useTheme();
   const isOutlined = variant === "outlined";
+
+  const toneColors = {
+    neutral: {
+      container: theme.colors.secondaryContainer,
+      onContainer: theme.colors.onSecondaryContainer,
+      accent: theme.colors.outlineVariant,
+    },
+    success: {
+      container: theme.colors.successContainer,
+      onContainer: theme.colors.onSuccessContainer,
+      accent: theme.colors.success,
+    },
+    warning: {
+      container: theme.colors.warningContainer,
+      onContainer: theme.colors.onWarningContainer,
+      accent: theme.colors.warning,
+    },
+    info: {
+      container: theme.colors.infoContainer,
+      onContainer: theme.colors.onInfoContainer,
+      accent: theme.colors.info,
+    },
+  }[tone];
 
   const backgroundColor = disabled
     ? isOutlined
       ? "transparent"
       : theme.colors.surfaceDisabled
     : selected
-      ? theme.colors.secondaryContainer
+      ? toneColors.container
       : isOutlined
         ? theme.colors.surface
-        : theme.colors.secondaryContainer;
+        : toneColors.container;
 
   const borderColor = !isOutlined
     ? "transparent"
     : disabled
       ? theme.colors.surfaceDisabled
-      : theme.colors.outlineVariant;
+      : toneColors.accent;
 
   const textColor = disabled
     ? theme.colors.onSurfaceDisabled
-    : theme.colors.onSecondaryContainer;
+    : toneColors.onContainer;
 
   const contentOpacity = disabled ? DISABLED_OPACITY : 1;
 
@@ -48,9 +72,9 @@ export const useChipStyles = ({
       alignSelf: "flex-start",
       flexShrink: 0,
       gap: 6,
-      minHeight: size === "small" ? 18 : 28,
+      minHeight: size === "small" ? 24 : 32,
       paddingHorizontal: size === "small" ? 8 : 12,
-      borderRadius: 8,
+      borderRadius: 12,
     },
 
     icon: {

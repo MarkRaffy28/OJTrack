@@ -18,11 +18,23 @@ export const useAppStyles = () => {
           flex: 1,
           paddingHorizontal: 12,
         },
+
+        listSubheaderContainer: {
+          fontWeight: "bold",
+        },
       }),
     [theme],
   );
 
+  const { listSubheaderContainer, ...rest } = styles;
+
   return {
-    ...styles,
+    ...rest,
+
+    list: {
+      subheader: {
+        container: listSubheaderContainer,
+      }
+    }
   };
 };

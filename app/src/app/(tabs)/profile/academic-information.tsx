@@ -1,4 +1,4 @@
-import { ScrollView } from "react-native";
+import { RefreshControl, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { Appbar, Text } from "react-native-paper";
 
@@ -7,10 +7,13 @@ import { IdentityFields } from "@/components/fields/IdentityFields";
 import { SafeView } from "@/components/ui/SafeView";
 import { StudentFields } from "@/components/fields/StudentFields";
 import { useAppForm } from "@/form/hook";
+import { useRefreshUser } from "@/hooks/useRefreshUser";
 import { useAuthUser } from "@/store/auth.store";
 
 export default function AcademicInformationScreen() {
   const user = useAuthUser();
+
+  const { refreshing, refreshUser } = useRefreshUser();
 
   const isStudent = user?.role === "student";
 
@@ -31,7 +34,11 @@ export default function AcademicInformationScreen() {
         <Appbar.Content title="Academic Information" />
       </Appbar.Header>
 
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={refreshUser} />
+        }
+      >
         <AppView>
           <form.AppForm>
             <IdentityFields

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PasswordSchema } from "./common.schema";
+import { OTPSchema, PasswordSchema } from "./common.schema";
 import { BaseUserSchema, EmergencyContactSchema, UserSchema } from "./user.schema";
 
 export const LoginRequestSchema = z.object({
@@ -24,12 +24,6 @@ export const PasswordRegistrationSchema = z.object({
 });
 
 // prettier-ignore
-export const EmergencyContactRequestSchema = EmergencyContactSchema.omit({
-  id: true,
-  isPrimary: true,
-});
-
-// prettier-ignore
 export const CommonRegistrationRequestSchema = BaseUserSchema
   .omit({
     id: true,
@@ -44,7 +38,10 @@ export const CommonRegistrationRequestSchema = BaseUserSchema
   .extend(PasswordRegistrationSchema.shape);
 
 export const StudentRegistrationRequestSchema = CommonRegistrationRequestSchema.extend({
-  emergencyContact: EmergencyContactRequestSchema,
+  emergencyContact: EmergencyContactSchema.omit({
+    id: true,
+    isPrimary: true,
+  }),
 });
 
 export const ChangePasswordRequestSchema = z.object({
@@ -64,6 +61,10 @@ export const ResetPasswordRequestSchema = z.object({
   passwordConfirmation: z.string().min(8),
 });
 
+export const VerifyEmailRequestSchema = z.object({
+  otp: OTPSchema,
+});
+
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 
 export type PasswordRegistration = z.infer<typeof PasswordRegistrationSchema>;
@@ -76,3 +77,5 @@ export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
 
 export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+
+export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>;
