@@ -1,4 +1,6 @@
 import {
+  ChangePasswordRequest,
+  ChangePasswordRequestSchema,
   CommonRegistrationRequest,
   CommonRegistrationRequestSchema,
   LoginRequest,
@@ -10,7 +12,7 @@ import {
   VerifyEmailRequestSchema,
 } from "@/schemas/auth.schema";
 import { UserResponseSchema } from "@/schemas/user.schema";
-import { get, post } from "./request.api";
+import { get, patch, post } from "./request.api";
 
 export const login = async (data: LoginRequest) =>
   post("/auth/login", data, LoginRequestSchema, LoginResponseSchema);
@@ -33,13 +35,10 @@ export const registerSupervisor = async (data: CommonRegistrationRequest) =>
     UserResponseSchema,
   );
 
-export const sendVerificationCode = async () =>
-  post("/auth/email/verification-code");
+export const changePassword = async (data: ChangePasswordRequest) =>
+  patch("/auth/password", data, ChangePasswordRequestSchema);
+
+export const sendVerificationCode = async () => post("/auth/email/verification-code");
 
 export const verifyEmail = async (data: VerifyEmailRequest) =>
-  post(
-    "/auth/email/verify",
-    data,
-    VerifyEmailRequestSchema,
-    UserResponseSchema,
-  );
+  post("/auth/email/verify", data, VerifyEmailRequestSchema, UserResponseSchema);

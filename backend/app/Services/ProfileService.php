@@ -35,7 +35,9 @@ class ProfileService {
   }
 
   public function updatePersonalInformation(User $user, array $data): User {
-    $user->update([
+    $email_changed = $user->email !== $data['email'];
+
+    $user->forceFill([
       'username' => $data['username'],
       'first_name' => $data['firstName'],
       'middle_name' => $data['middleName'] ?? null,
@@ -47,7 +49,8 @@ class ProfileService {
       'present_address' => $data['presentAddress'],
       'contact_number' => $data['contactNumber'],
       'email' => $data['email'],
-    ]);
+      'email_verified_at' => $email_changed ? null : $user->email_verified_at,
+    ])->save();
 
     return $user->fresh();
   }

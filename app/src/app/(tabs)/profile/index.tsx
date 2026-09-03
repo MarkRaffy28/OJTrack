@@ -248,7 +248,7 @@ export default function ProfileScreen() {
               <ProfileItem
                 title="Change Password"
                 leftIcon="lock-outline"
-                destination=""
+                destination="/profile/change-password"
               />
             </Surface>
 

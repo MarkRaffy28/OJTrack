@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ScrollView } from "react-native";
+import { ActivityIndicator, ScrollView } from "react-native";
 import { router } from "expo-router";
 import { Appbar, Button, Text } from "react-native-paper";
 import { useMutation } from "@tanstack/react-query";
@@ -62,12 +62,15 @@ export default function VerifyEmailScreen() {
     },
   });
 
+  const handleSend = () => sendMutation.mutate();
+  const handleResend = () => resendMutation.mutate();
+
   useEffect(() => {
     if (hasSentOnOpen.current) return;
 
     hasSentOnOpen.current = true;
 
-    sendMutation.mutate();
+    handleSend();
   }, [hasSentOnOpen, sendMutation]);
 
   useEffect(() => {
@@ -98,19 +101,15 @@ export default function VerifyEmailScreen() {
     },
   });
 
-  const handleResend = async () => {
-    try {
-      await resendMutation.mutateAsync();
-    } catch (error) {
-      showSnackbar(getApiErrorMessage(error), "error");
-    }
-  };
-
   return (
     <SafeView>
       <Appbar.Header elevated statusBarHeight={0}>
         <Appbar.BackAction onPress={() => router.back()} />
         <Appbar.Content title="Verify Email" />
+
+        {sendMutation.isPending && (
+          <ActivityIndicator style={{ marginRight: 16 }} />
+        )}
       </Appbar.Header>
 
       <ScrollView>
@@ -120,30 +119,51 @@ export default function VerifyEmailScreen() {
               Verify your email address
             </Text>
 
-            <Text>Enter the 6-digit code sent to</Text>
+            {sendMutation.isSuccess && (
+              <>
+                <Text variant="bodyMedium">
+                  Enter the 6-digit code sent to {user?.email}
+                </Text>
 
-            <Text>{user?.email}</Text>
+                <form.AppField name="otp">
+                  {(field) => <field.OTPField mode="edit" />}
+                </form.AppField>
 
-            <form.AppField name="otp">
-              {(field) => <field.OTPField mode="edit" />}
-            </form.AppField>
+                <form.ErrorMessage />
 
-            <form.ErrorMessage />
+                <form.Submit submitLabel="Verify" submittingLabel="Verifying..." />
 
-            <form.Submit submitLabel="Verify" submittingLabel="Verifying..." />
+                <Text>Didn't receive the code?</Text>
 
-            <Text>Didn't receive the code?</Text>
+                <Button
+                  mode="text"
+                  onPress={handleResend}
+                  disabled={cooldown > 0 || resendMutation.isPending}
+                  loading={resendMutation.isPending}
+                >
+                  {cooldown > 0
+                    ? `Resend code in ${formatCountdown(cooldown)}`
+                    : "Resend code"}
+                </Button>
+              </>
+            )}
 
-            <Button
-              mode="text"
-              onPress={handleResend}
-              disabled={cooldown > 0 || resendMutation.isPending}
-              loading={resendMutation.isPending}
-            >
-              {cooldown > 0
-                ? `Resend code in ${formatCountdown(cooldown)}`
-                : "Resend code"}
-            </Button>
+            {!sendMutation.isSuccess && !sendMutation.isPending && (
+              <>
+                <Text variant="bodyMedium">An error occurred while sending the code.</Text>
+
+                <Button
+                  mode="contained"
+                  onPress={handleSend}
+                  disabled={cooldown > 0 || sendMutation.isPending}
+                  loading={sendMutation.isPending}
+                >
+                  {cooldown > 0
+                    ? `Resend code in ${formatCountdown(cooldown)}`
+                    : "Resend code"}
+                </Button>
+              </>
+            )}
           </form.AppForm>
         </AppView>
       </ScrollView>

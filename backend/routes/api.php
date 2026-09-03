@@ -20,6 +20,8 @@ Route::prefix('auth')->group(function () {
       Route::post('/verify', [EmailVerificationController::class, 'verify']);
     });
 
+    Route::patch('/password', [AuthController::class, 'changePassword']);
+
     Route::get('/me', [AuthController::class, 'me']);
 
     Route::post('/logout', [AuthController::class, 'logout']);

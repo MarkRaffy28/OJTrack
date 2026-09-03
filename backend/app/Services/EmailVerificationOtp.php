@@ -35,7 +35,9 @@ class EmailVerificationOtp {
     );
   }
 
-  public function verify(User $user, string $otp): User {
+  public function verify(User $user, array $data): User {
+    $otp = $data['otp'];
+
     if ($user->hasVerifiedEmail()) {
       throw new LogicException(
         'Email address is already verified.'

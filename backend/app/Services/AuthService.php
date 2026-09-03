@@ -114,6 +114,20 @@ class AuthService {
     return $user->load('supervisorDetail.office');
   }
 
+  public function changePassword(User $user, array $data): void {
+    if (!Hash::check($data['currentPassword'], $user->password)) {
+      throw new LogicException('The current password is incorrect.');
+    }
+
+    if (Hash::check($data['newPassword'], $user->password)) {
+      throw new LogicException('The new password must be different from your current password.');
+    }
+
+    $user->update([
+      'password' => Hash::make($data['newPassword']),
+    ]);
+  }
+
   public function logout(User $user): void {
     $token = $user->currentAccessToken();
 

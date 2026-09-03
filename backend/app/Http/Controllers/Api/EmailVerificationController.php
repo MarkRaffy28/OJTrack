@@ -28,7 +28,7 @@ class EmailVerificationController extends Controller {
   public function verify(EmailVerificationRequest $request): JsonResponse {
     $user = $this->emailVerificationOtpService->verify(
       $request->user(),
-      $request->validated('otp'),
+      $request->validated(),
     );
 
     return response()->json([

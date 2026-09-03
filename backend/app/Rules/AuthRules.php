@@ -11,6 +11,10 @@ class AuthRules {
     return ["required", "string"];
   }
 
+  public static function currentPassword(): array {
+    return ["required", "string", "min:8", "max:255"];
+  }
+
   public static function newPassword(): array {
     return ["required", "string", "min:8", "max:255"];
   }

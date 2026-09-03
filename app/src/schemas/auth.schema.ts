@@ -44,25 +44,20 @@ export const StudentRegistrationRequestSchema = CommonRegistrationRequestSchema.
   }),
 });
 
-export const ChangePasswordRequestSchema = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: z.string().min(8),
-  newPasswordConfirmation: z.string().min(8),
-});
-
-export const ForgotPasswordRequestSchema = z.object({
-  email: z.email(),
-});
-
-export const ResetPasswordRequestSchema = z.object({
-  token: z.string(),
-  email: z.email(),
-  password: z.string().min(8),
-  passwordConfirmation: z.string().min(8),
-});
-
 export const VerifyEmailRequestSchema = z.object({
   otp: OTPSchema,
+});
+
+export const ChangePasswordRequestSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(1, "Current password is required"),
+
+  newPassword: PasswordSchema,
+
+  confirmPassword: z
+    .string()
+    .min(1, "Confirm new password is required"),
 });
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
@@ -73,9 +68,6 @@ export type StudentRegistrationRequest = z.infer<typeof StudentRegistrationReque
 
 export type AuthSession = z.infer<typeof LoginResponseSchema>;
 
-export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
-
-export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
-export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
-
 export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>;
+
+export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
