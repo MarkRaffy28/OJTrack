@@ -5,6 +5,7 @@ import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 import { QRTabButton } from "@/components/navigation/QRTabButton";
 import { useTabLayoutStyles } from "@/styles/tabLayout.styles";
+import { useAuthUser } from "@/store/auth.store";
 
 const getIcon = (
   focused: boolean,
@@ -27,6 +28,11 @@ const getIcon = (
 
 export default function TabLayout() {
   const styles = useTabLayoutStyles();
+
+  const user = useAuthUser();
+
+  const isStudent = user?.role === "student";
+  const isSupervisor = user?.role === "supervisor";
 
   return (
     <>
@@ -67,11 +73,30 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="announcements"
+          name="attendance"
           options={{
-            title: "Announcements",
+            title: "Attendance",
+            href: isStudent ? "/attendance" : null,
             tabBarIcon: ({ size, focused }) =>
-              getIcon(focused, size, "bullhorn", "bullhorn-outline"),
+              getIcon(focused, size, "calendar-check", "calendar-check-outline"),
+          }}
+        />
+
+        <Tabs.Screen
+          name="trainees"
+          options={{
+            title: "Trainees",
+            href: isSupervisor ? "/trainees" : null,
+            tabBarIcon: ({ size, focused }) =>
+              getIcon(focused, size, "account-group", "account-group-outline"),
+          }}
+        />
+
+        {/* Evaluation is a dedicated flow opened from a trainee profile, not a tab. */}
+        <Tabs.Screen
+          name="evaluations/[id]"
+          options={{
+            href: null,
           }}
         />
 

@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\StudentDetail;
+use App\Policies\StudentPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +20,6 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void {
-        //
+        Gate::policy(StudentDetail::class, StudentPolicy::class);
     }
 }

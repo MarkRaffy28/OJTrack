@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { OjtSchema } from "./ojt.schema";
+import { OJTSchema } from "./ojt.schema";
 import { UserSchema } from "./user.schema";
 
 export const ActivitySchema = z.object({
   id: z.number().int().positive(),
 
   user: UserSchema,
-  ojt: OjtSchema.nullable(),
+  ojt: OJTSchema.nullable(),
 
   action: z.string().min(1).max(50),
   target_id: z.number().int().positive().nullable(),

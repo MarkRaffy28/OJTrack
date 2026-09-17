@@ -91,6 +91,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
               autoCapitalize="words"
               maxLength={50}
               icon="account-outline"
+              required={false}
               editable={!isReadOnly("middleName")}
             />
           )}
@@ -121,6 +122,7 @@ export function IdentityFields<TFormData extends Partial<IdentityFormValues>>({
               autoCapitalize="characters"
               maxLength={10}
               icon="account-outline"
+              required={false}
               editable={!isReadOnly("extensionName")}
             />
           )}

@@ -18,7 +18,12 @@ api.interceptors.request.use((config) => {
   }
 
   if (config.data instanceof FormData) {
-    config.headers["Content-Type"] = undefined;
+    delete config.headers["Content-Type"];
+    delete config.headers["content-type"];
+    if (typeof config.headers.unset === "function") {
+      config.headers.unset("Content-Type");
+      config.headers.unset("content-type");
+    }
   }
 
   return config;

@@ -21,7 +21,14 @@ import {
 import { useSettingsStore, useTheme } from "@/store/settings.store";
 import { useRootLayoutStyles } from "@/styles/rootLayout.styles";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function RootLayout() {
   const theme = useTheme();

@@ -19,6 +19,12 @@ export const useAppStyles = () => {
           paddingHorizontal: 12,
         },
 
+        fab: {
+          position: "absolute",
+          right: 16,
+          bottom: 20,
+        },
+
         listSubheaderContainer: {
           fontWeight: "bold",
         },
@@ -34,7 +40,7 @@ export const useAppStyles = () => {
     list: {
       subheader: {
         container: listSubheaderContainer,
-      }
-    }
+      },
+    },
   };
 };

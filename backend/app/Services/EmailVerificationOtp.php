@@ -2,66 +2,29 @@
 
 namespace App\Services;
 
-use App\Mail\OTPCodeMail;
-use App\Models\User;
-use Illuminate\Support\Facades\Mail;
-use LogicException;
-
 class EmailVerificationOtp {
-  public function __construct(
-    private readonly OtpService $otpService,
-  ) {
-  }
+  private const WINDOW_SECONDS = 300;
+  private const OTP_LENGTH = 6;
 
-  public function send(User $user): void {
-    if ($user->hasVerifiedEmail()) {
-      throw new LogicException(
-        'Email address is already verified.'
-      );
-    }
-
-    $otp = $this->otpService->generate(
-      "email-verification:{$user->id}",
+  public function generate(string $subject): string {
+    $window = intdiv(
+      now()->timestamp,
+      self::WINDOW_SECONDS,
     );
 
-    Mail::to($user->email)->send(
-      new OTPCodeMail(
-        name: $user->first_name,
-        title: 'Verify Your Email',
-        description: 'Enter the 6-digit verification code below to verify your email address.',
-        otpLabel: 'Email Verification Code',
-        otp: $otp,
-      )
-    );
-  }
-
-  public function verify(User $user, array $data): User {
-    $otp = $data['otp'];
-
-    if ($user->hasVerifiedEmail()) {
-      throw new LogicException(
-        'Email address is already verified.'
-      );
-    }
-
-    if (!preg_match('/^\d{6}$/', $otp)) {
-      throw new LogicException(
-        'Invalid verification code.'
-      );
-    }
-
-    $expectedOtp = $this->otpService->generate(
-      "email-verification:{$user->id}",
+    $hash = hash_hmac(
+      'sha256',
+      "{$subject}:{$window}",
+      config('services.email_otp.secret'),
     );
 
-    if (!hash_equals($expectedOtp, $otp)) {
-      throw new LogicException(
-        'Invalid or expired verification code.'
-      );
-    }
+    $number = hexdec(substr($hash, 0, 8));
 
-    $user->markEmailAsVerified();
-
-    return $user->fresh();
+    return str_pad(
+      (string) ($number % 1_000_000),
+      self::OTP_LENGTH,
+      '0',
+      STR_PAD_LEFT,
+    );
   }
 }

@@ -3,13 +3,19 @@ import {
   ChangePasswordRequestSchema,
   CommonRegistrationRequest,
   CommonRegistrationRequestSchema,
+  ForgotPasswordRequest,
+  ForgotPasswordRequestSchema,
   LoginRequest,
   LoginRequestSchema,
   LoginResponseSchema,
+  ResetPasswordRequest,
+  ResetPasswordRequestSchema,
   StudentRegistrationRequest,
   StudentRegistrationRequestSchema,
   VerifyEmailRequest,
   VerifyEmailRequestSchema,
+  VerifyForgotPasswordOTPRequest,
+  VerifyForgotPasswordOTPRequestSchema,
 } from "@/schemas/auth.schema";
 import { UserResponseSchema } from "@/schemas/user.schema";
 import { get, patch, post } from "./request.api";
@@ -42,3 +48,12 @@ export const sendVerificationCode = async () => post("/auth/email/verification-c
 
 export const verifyEmail = async (data: VerifyEmailRequest) =>
   post("/auth/email/verify", data, VerifyEmailRequestSchema, UserResponseSchema);
+
+export const forgotPassword = async (data: ForgotPasswordRequest) =>
+  post("/auth/forgot-password", data, ForgotPasswordRequestSchema);
+
+export const verifyForgotPassword = async (data: VerifyForgotPasswordOTPRequest) =>
+  post("/auth/forgot-password/verify", data, VerifyForgotPasswordOTPRequestSchema);
+
+export const resetPassword = async (data: ResetPasswordRequest) =>
+  post("/auth/reset-password", data, ResetPasswordRequestSchema);

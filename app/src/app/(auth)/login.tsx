@@ -255,7 +255,7 @@ export default function LoginScreen() {
                     <Button
                       mode="text"
                       compact
-                      onPress={() => {}}
+                      onPress={() => router.navigate("/forgot-password")}
                       style={styles.forgotWrap}
                       labelStyle={styles.forgotText}
                       textColor={theme.colors.primary}

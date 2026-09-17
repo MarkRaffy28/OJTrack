@@ -1,0 +1,17 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - bootstrap/
+        - config/
+        - database/
+        - routes/
+
+    # Level 0 (loose) to 9 (strict like TypeScript). 
+    level: 5
+
+    # Exclude specific files if necessary
+    # excludePaths:
+    #     - ./*/*/FileToIgnore.php

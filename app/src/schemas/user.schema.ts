@@ -33,7 +33,7 @@ export const InstructorDetailSchema = z.object({
 });
 
 export const SupervisorDetailSchema = z.object({
-  position: z.string().min(1).max(255),
+  position: z.string().min(1).max(255).nullable(),
   office: OfficeSchema,
 });
 
@@ -154,6 +154,28 @@ export const UserSchema = z.discriminatedUnion("role", [
   AdminUserSchema,
 ]);
 
+export const StudentSummarySchema = BaseUserSchema.pick({
+  id: true,
+  profilePicture: true,
+  fullName: true,
+  userId: true,
+}).extend({
+  role: z.literal("student"),
+});
+
+export const SupervisorSummarySchema = BaseUserSchema.pick({
+  id: true,
+  profilePicture: true,
+  fullName: true,
+  contactNumber: true,
+  email: true,
+}).extend({
+  role: z.literal("supervisor"),
+  supervisorDetail: SupervisorDetailSchema.pick({
+    position: true,
+  }).nullable(),
+});
+
 export const UserResponseSchema = z.object({
   user: UserSchema,
 });
@@ -201,6 +223,10 @@ export type AdminUser = z.infer<typeof AdminUserSchema>;
 export type User = z.infer<typeof UserSchema>;
 
 export type UserResponse = z.infer<typeof UserResponseSchema>;
+
+export type UpdateProfilePictureRequest = z.infer<
+  typeof UpdateProfilePictureRequestSchema
+>;
 
 export type UpdatePersonalInformationRequest = z.infer<
   typeof UpdatePersonalInformationRequestSchema

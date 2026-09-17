@@ -18,6 +18,10 @@ class Office extends Model {
   ];
 
   public function supervisors(): HasMany {
+    return $this->hasMany(SupervisorDetail::class, 'office_id');
+  }
+
+  public function supervisorDetail(): HasMany {
     return $this->hasMany(SupervisorDetail::class);
   }
 }

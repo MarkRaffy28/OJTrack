@@ -12,7 +12,7 @@ return new class extends Migration {
     Schema::create('users', function (Blueprint $table) {
       $table->id();
 
-      $table->string('username', 100)->unique();
+      $table->string('username', 100)->nullable()->unique();
       $table->string('password');
 
       $table->binary('profile_picture')->nullable();
@@ -24,15 +24,15 @@ return new class extends Migration {
 
       $table->string('user_id', 50)->unique();
 
-      $table->date('birth_date');
+      $table->date('birth_date')->nullable();
 
-      $table->enum('gender', ['Male', 'Female', 'Other']);
+      $table->enum('gender', ['Male', 'Female', 'Other'])->nullable();
 
-      $table->string('home_address', 255);
-      $table->string('present_address', 255);
-      $table->string('contact_number', 15);
+      $table->string('home_address', 255)->nullable();
+      $table->string('present_address', 255)->nullable();
+      $table->string('contact_number', 15)->nullable();
 
-      $table->string('email', 100)->unique();
+      $table->string('email', 100)->nullable()->unique();
       $table->timestamp('email_verified_at')->nullable();
 
       $table->enum('role', ['student', 'instructor', 'supervisor', 'admin']);
@@ -41,6 +41,7 @@ return new class extends Migration {
       $table->timestamp('activated_at')->nullable();
 
       $table->rememberToken();
+      $table->softDeletes();
       $table->timestamps();
     });
   }

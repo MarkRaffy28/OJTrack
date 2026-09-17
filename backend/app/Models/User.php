@@ -8,6 +8,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -15,6 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable {
   /** @use HasFactory<UserFactory> */
   use HasApiTokens, HasFactory, Notifiable;
+  use SoftDeletes;
 
   protected $fillable = [
     'username',
@@ -80,5 +82,29 @@ class User extends Authenticatable {
 
   public function emergencyContacts(): HasMany {
     return $this->hasMany(EmergencyContact::class);
+  }
+
+  public function hasRole(UserRoles $role): bool {
+    return $this->role === $role;
+  }
+
+  public function isAdmin(): bool {
+    return $this->hasRole(UserRoles::ADMIN);
+  }
+
+  public function isInstructor(): bool {
+    return $this->hasRole(UserRoles::INSTRUCTOR);
+  }
+
+  public function currentOjt(): HasOne {
+    return $this->hasOne(StudentOjt::class, 'student_id')->latestOfMany();
+  }
+
+  public function studentOjts(): HasMany {
+    return $this->hasMany(StudentOjt::class, 'student_id');
+  }
+
+  public function supervisedOjts(): HasMany {
+    return $this->hasMany(StudentOjt::class, 'supervisor_id');
   }
 }

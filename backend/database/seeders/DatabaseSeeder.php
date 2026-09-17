@@ -16,29 +16,22 @@ class DatabaseSeeder extends Seeder {
     $this->call([
       OfficeSeeder::class,
       UserSeeder::class,
+      DemoDataSeeder::class,
     ]);
 
-    DB::table('settings')->insertOrIgnore([
-      [
-        'setting_key' => 'academic_year',
-        'setting_value' => '2023-2024',
-      ],
-      [
-        'setting_key' => 'term',
-        'setting_value' => '1st',
-      ],
-      [
-        'setting_key' => 'required_hours',
-        'setting_value' => '600',
-      ],
-      [
-        'setting_key' => 'start_date',
-        'setting_value' => '2024-01-01',
-      ],
-      [
-        'setting_key' => 'end_date',
-        'setting_value' => '2024-05-31',
-      ],
-    ]);
+    foreach ([
+      'academic_year' => '2026-2027',
+      'term' => '2nd',
+      'required_hours' => '600',
+      'start_date' => '2026-09-01',
+      'end_date' => '2027-05-31',
+      'evaluation_open' => 'true',
+      'evaluation_trigger_days' => '7',
+    ] as $key => $value) {
+      DB::table('settings')->updateOrInsert(
+        ['setting_key' => $key],
+        ['setting_value' => $value, 'updated_at' => now(), 'created_at' => now()],
+      );
+    }
   }
 }
