@@ -13,13 +13,13 @@ class RegisterStudentRequest extends BaseApiRequest {
   }
 
   public function rules(): array {
-    $userId = $this->user()?->id;
+    $id = $this->user()?->id;
 
     return [
       'newPassword' => AuthRules::newPassword(),
       'confirmPassword' => AuthRules::confirmPassword(),
 
-      'username' => UserRules::username($userId),
+      'username' => UserRules::username($id),
 
       'firstName' => UserRules::firstName(),
       'middleName' => UserRules::middleName(),
@@ -32,7 +32,7 @@ class RegisterStudentRequest extends BaseApiRequest {
       'homeAddress' => UserRules::homeAddress(),
       'presentAddress' => UserRules::presentAddress(),
       'contactNumber' => UserRules::contactNumber(),
-      'email' => UserRules::email($userId),
+      'email' => UserRules::email($id),
 
       'emergencyContact' => EmergencyContactsRules::emergencyContact(),
       'emergencyContact.name' => EmergencyContactsRules::name(),

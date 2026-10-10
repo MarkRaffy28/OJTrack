@@ -10,10 +10,11 @@ import { useTheme } from "@/store/settings.store";
 
 interface Props extends Omit<
   TextInputProps,
-  "value" | "onChangeText" | "onBlur" | "error" | "label" | "mode"
+  "value" | "onChangeText" | "onBlur" | "error" | "label" | "required" | "mode"
 > {
   label: string;
   icon: IconSource;
+  required?: boolean;
   secure?: boolean;
   mode?: "view" | "edit";
   verified?: boolean;
@@ -23,6 +24,7 @@ interface Props extends Omit<
 export function FormField({
   label,
   icon,
+  required = true,
   secure,
   mode = "edit",
   verified,
@@ -124,7 +126,7 @@ export function FormField({
           variant="labelLarge"
           style={[styles.labelText, { color: labelColor }]}
         >
-          {label}
+          {label} {required ? "" : "(optional)"}
         </Text>
 
         {verified === true && (

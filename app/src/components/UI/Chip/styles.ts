@@ -41,6 +41,11 @@ export const useChipStyles = ({
       onContainer: theme.colors.onInfoContainer,
       accent: theme.colors.info,
     },
+    error: {
+      container: theme.colors.errorContainer,
+      onContainer: theme.colors.onErrorContainer,
+      accent: theme.colors.error,
+    },
   }[tone];
 
   const backgroundColor = disabled

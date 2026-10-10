@@ -24,6 +24,10 @@ return new class extends Migration {
 
       $table->softDeletes();
       $table->timestamps();
+
+      $table->index('name');
+      $table->index('contact_email');
+      $table->index('contact_phone');
     });
   }
 

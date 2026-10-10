@@ -21,6 +21,10 @@ return new class extends Migration {
       $table->string('section', 10);
 
       $table->timestamps();
+
+      $table->index('department');
+      $table->index('section');
+      $table->index(['department', 'section']);
     });
   }
 

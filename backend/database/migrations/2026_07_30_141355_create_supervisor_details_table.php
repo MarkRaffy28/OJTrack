@@ -24,6 +24,10 @@ return new class extends Migration {
       $table->string('position', 255);
 
       $table->timestamps();
+
+      $table->index('office_id');
+      $table->index('position');
+      $table->index(['office_id', 'position']);
     });
   }
 

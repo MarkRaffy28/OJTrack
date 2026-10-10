@@ -2,7 +2,8 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\UserRoles;
+use App\Enums\UserRole;
+use App\Utils\ProfilePictureUtil;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,12 +19,7 @@ class UserResource extends JsonResource {
 
       'username' => $this->username,
 
-      'profilePicture' => $this->profile_picture
-        ? 'data:' . finfo_buffer(
-          finfo_open(FILEINFO_MIME_TYPE),
-          $this->profile_picture,
-        ) . ';base64,' . base64_encode($this->profile_picture)
-        : null,
+      'profilePicture' => ProfilePictureUtil::toBase64($this->profile_picture),
 
       'firstName' => $this->first_name,
       'middleName' => $this->middle_name,
@@ -33,7 +29,7 @@ class UserResource extends JsonResource {
 
       'userId' => $this->user_id,
 
-      'birthDate' => $this->birth_date->toDateString(),
+      'birthDate' => $this->birth_date?->toDateString(),
 
       'gender' => $this->gender,
 
@@ -44,28 +40,28 @@ class UserResource extends JsonResource {
       'email' => $this->email,
       'emailVerifiedAt' => $this->email_verified_at,
 
-      'role' => $this->role,
+      'role' => $this->role?->value ?? $this->role,
 
-      'status' => $this->status,
+      'status' => $this->status?->value ?? $this->status,
       'activatedAt' => $this->activated_at,
 
       'studentDetail' => $this->when(
-        $this->role === UserRoles::STUDENT || $this->role === 'student',
+        $this->role === UserRole::STUDENT,
         fn() => StudentDetailResource::make($this->studentDetail),
       ),
 
       'instructorDetail' => $this->when(
-        $this->role === UserRoles::ADVISER || $this->role === 'instructor',
+        $this->role === UserRole::INSTRUCTOR,
         fn() => InstructorDetailResource::make($this->instructorDetail),
       ),
 
       'supervisorDetail' => $this->when(
-        $this->role === UserRoles::SUPERVISOR || $this->role === 'supervisor',
+        $this->role === UserRole::SUPERVISOR,
         fn() => SupervisorDetailResource::make($this->supervisorDetail),
       ),
 
       'emergencyContacts' => $this->when(
-        $this->role === UserRoles::STUDENT || $this->role === 'student',
+        $this->role === UserRole::STUDENT,
         fn() => EmergencyContactResource::collection($this->emergencyContacts),
       ),
 

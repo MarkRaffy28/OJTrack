@@ -3,6 +3,7 @@ import {
   UpdateEmergencyContactRequestSchema,
   UpdatePersonalInformationRequest,
   UpdatePersonalInformationRequestSchema,
+  UpdateProfilePictureRequest,
   UpdateProfilePictureRequestSchema,
   UserResponseSchema,
 } from "@/schemas/user.schema";
@@ -17,10 +18,10 @@ export const updateEmergencyContact = async (data: UpdateEmergencyContactRequest
   )
 }
 
-export const updateProfilePicture = async (formdata: FormData) => {
+export const updateProfilePicture = async (data: UpdateProfilePictureRequest) => {
   return post(
     "/profile/profile-picture",
-    formdata,
+    data,
     UpdateProfilePictureRequestSchema,
     UserResponseSchema,
   );

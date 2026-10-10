@@ -28,16 +28,22 @@ const DEFAULT_STATE: SnackbarState = {
   duration: 3000,
 };
 
-export const useSnackbarStore = create<SnackbarStore>((set) => ({
+export const useSnackbarStore = create<SnackbarStore>((set, get) => ({
   ...DEFAULT_STATE,
 
   showSnackbar: (message, type = "success", duration = 3000) => {
-    set({
-      visible: true,
-      type,
-      message,
-      duration,
-    });
+    if (get().visible) {
+      set({ visible: false });
+    }
+
+    setTimeout(() => {
+      set({
+        visible: true,
+        type,
+        message,
+        duration,
+      });
+    }, 0);
   },
 
   hideSnackbar: () => {

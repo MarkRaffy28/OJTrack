@@ -30,7 +30,6 @@ return new class extends Migration {
       ]);
 
       $table->date('report_date');
-
       $table->json('document_paths')->nullable();
 
       $table->enum('status', [
@@ -49,6 +48,17 @@ return new class extends Migration {
 
       $table->softDeletes();
       $table->timestamps();
+
+      $table->index('student_id');
+      $table->index('ojt_id');
+      $table->index('type');
+      $table->index('status');
+      $table->index('reviewed_by');
+      $table->index('report_date');
+      $table->index(['ojt_id', 'status']);
+      $table->index(['student_id', 'type']);
+      $table->index(['status', 'type']);
+      $table->index(['student_id', 'ojt_id', 'type']);
     });
   }
 

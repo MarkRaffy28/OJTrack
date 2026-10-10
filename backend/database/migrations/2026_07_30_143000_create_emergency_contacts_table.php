@@ -23,6 +23,10 @@ return new class extends Migration {
       $table->boolean('is_primary')->default(true);
 
       $table->timestamps();
+
+      $table->index('user_id');
+      $table->index('contact_number');
+      $table->index(['user_id', 'is_primary']);
     });
   }
 

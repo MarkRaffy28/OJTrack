@@ -7,7 +7,7 @@ import { useChipStyles } from "./styles";
 export type Props = {
   text: string;
   variant?: "filled" | "outlined";
-  tone?: "neutral" | "success" | "warning" | "info";
+  tone?: "neutral" | "success" | "warning" | "info" | "error";
   size?: "small" | "medium";
   selected?: boolean;
   disabled?: boolean;

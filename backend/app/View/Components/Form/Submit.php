@@ -1,0 +1,25 @@
+<?php
+
+namespace App\View\Components\Form;
+
+use Closure;
+use Illuminate\Contracts\View\View;
+use App\View\Components\BaseComponent;
+
+class Submit extends BaseComponent {
+  /**
+   * Create a new component instance.
+   */
+  public function __construct(
+    public string $text = "Submit",
+    public string $loadingText = "Submitting...",
+  ) {
+  }
+
+  /**
+   * Get the view / contents that represent the component.
+   */
+  public function render(): View|Closure|string {
+    return view('components.form.submit');
+  }
+}

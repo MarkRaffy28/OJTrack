@@ -10,7 +10,7 @@ class OfficeSeeder extends Seeder {
    * Run the database seeds.
    */
   public function run(): void {
-    Office::create([
+    Office::updateOrCreate(['name' => 'ISPSC Sta. Maria Campus'], [
       'name' => 'ISPSC Sta. Maria Campus',
       'address' => 'Sta. Maria, Ilocos Sur',
       'contact_email' => 'info@ispsc.edu.ph',
@@ -22,7 +22,7 @@ class OfficeSeeder extends Seeder {
       'afternoon_out' => '17:00:00',
     ]);
 
-    Office::create([
+    Office::updateOrCreate(['name' => 'Municipal Government Office'], [
       'name' => 'Municipal Government Office',
       'address' => 'Sta. Maria, Ilocos Sur',
       'contact_email' => null,
@@ -34,7 +34,7 @@ class OfficeSeeder extends Seeder {
       'afternoon_out' => '17:00:00',
     ]);
 
-    Office::create([
+    Office::updateOrCreate(['name' => 'ABC Computer Services'], [
       'name' => 'ABC Computer Services',
       'address' => 'Sta. Maria, Ilocos Sur',
       'contact_email' => 'contact@example.com',
