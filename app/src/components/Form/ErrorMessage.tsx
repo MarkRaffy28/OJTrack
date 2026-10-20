@@ -21,6 +21,7 @@ export function FormErrorMessage() {
 
       const timeout = setTimeout(() => {
         setVisibleError(null);
+        form.setErrorMap({ onSubmit: undefined });
       }, 5000);
 
       return () => clearTimeout(timeout);

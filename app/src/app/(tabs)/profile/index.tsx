@@ -1,5 +1,5 @@
 import { ComponentProps, useCallback, useEffect, useRef, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Button, Divider, List, Surface, Text } from "react-native-paper";
@@ -18,6 +18,7 @@ import { ListSubheader } from "@/components/paper/ListSubheader";
 import { LogoutDialog } from "@/components/ui/LogoutDialog";
 import { SafeView } from "@/components/ui/SafeView";
 
+import { CONTENT_MAX_WIDTH } from "@/constants/responsive.constant";
 import { useImage } from "@/hooks/useImage";
 import { useRefreshUser } from "@/hooks/useRefreshUser";
 import { useAuthUser, useUpdateUser } from "@/store/auth.store";
@@ -26,8 +27,6 @@ import { useShowSnackbar } from "@/store/snackbar.store";
 import { useTheme } from "@/store/settings.store";
 import { getApiErrorMessage } from "@/utils/api.util";
 import { getInitials } from "@/utils/string.util";
-
-const CONTENT_MAX_WIDTH = 600;
 
 interface ProfileItemProps extends ComponentProps<typeof List.Item> {
   leftIcon: IconSource;
@@ -40,7 +39,7 @@ function ProfileItem({ leftIcon, destination, ...props }: ProfileItemProps) {
       {...props}
       left={(props) => <List.Icon {...props} icon={leftIcon} />}
       right={(props) => <List.Icon {...props} icon="chevron-right" />}
-      onPress={() => router.navigate(destination)}
+      onPress={() => router.push(destination)}
     />
   );
 }
@@ -68,6 +67,9 @@ export default function ProfileScreen() {
   const imageOptionsSheetRef = useRef<ImageOptionsSheetRef>(null);
 
   const [logoutVisible, setLogoutVisible] = useState(false);
+
+  const isStudent = user?.role === "student";
+  const isSupervisor = user?.role === "supervisor";
 
   useEffect(() => {
     if (!cameraImage) {
@@ -104,11 +106,18 @@ export default function ProfileScreen() {
 
   const handleImageComplete = useCallback(
     async (result: ImageEditorResult) => {
-      const blob = await fetch(result.uri).then((response) => response.blob());
-
       const formData = new FormData();
 
-      formData.append("profile_picture", blob, "profile-picture.jpg");
+      if (Platform.OS === "web") {
+        const blob = await fetch(result.uri).then((response) => response.blob());
+        formData.append("profile_picture", blob, "profile-picture.jpg");
+      } else {
+        formData.append("profile_picture", {
+          uri: result.uri,
+          name: "profile-picture.jpg",
+          type: "image/jpeg",
+        } as unknown as Blob);
+      }
 
       mutation.mutate(formData);
     },
@@ -201,7 +210,7 @@ export default function ProfileScreen() {
                     tone="warning"
                     size="small"
                     leftIcon="alert-circle-outline"
-                    onPress={() => router.navigate("/profile/verify-email") }
+                    onPress={() => router.navigate("/profile/verify-email")}
                   />
                 )}
               </View>
@@ -219,31 +228,41 @@ export default function ProfileScreen() {
 
               <Divider style={styles.rowDivider} />
 
-              <ProfileItem
-                title="Emergency Contact"
-                leftIcon="car-emergency"
-                destination="profile/emergency-contact"
-              />
+              {isStudent && (
+                <>
+                  <ProfileItem
+                    title="Emergency Contact"
+                    leftIcon="car-emergency"
+                    destination="/profile/emergency-contact"
+                  />
+                  <Divider style={styles.rowDivider} />
 
-              <Divider style={styles.rowDivider} />
+                  <ProfileItem
+                    title="Academic Information"
+                    leftIcon="school-outline"
+                    destination="/profile/academic-information"
+                  />
+                  <Divider style={styles.rowDivider} />
 
-              {user?.role === "student" && (
-                <ProfileItem
-                  title="Academic Information"
-                  leftIcon="school-outline"
-                  destination="profile/academic-information"
-                />
+                  <ProfileItem
+                    title="OJT Information"
+                    leftIcon="briefcase-outline"
+                    destination="/profile/ojt-information"
+                  />
+                  <Divider style={styles.rowDivider} />
+                </>
               )}
 
-              <Divider style={styles.rowDivider} />
-
-              <ProfileItem
-                title="OJT Information"
-                leftIcon="briefcase-outline"
-                destination=""
-              />
-
-              <Divider style={styles.rowDivider} />
+              {isSupervisor && (
+                <>
+                  <ProfileItem
+                    title="Supervisor Information"
+                    leftIcon="card-account-details-outline"
+                    destination="/profile/supervisor-information"
+                  />
+                  <Divider style={styles.rowDivider} />
+                </>
+              )}
 
               <ProfileItem
                 title="Change Password"

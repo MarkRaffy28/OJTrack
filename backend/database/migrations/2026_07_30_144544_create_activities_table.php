@@ -22,16 +22,14 @@ return new class extends Migration {
         ->nullOnDelete();
 
       $table->string('action', 50);
-      $table->unsignedBigInteger('target_id')->nullable();
-      $table->string('target_type', 50)->nullable();
+      $table->nullableMorphs('subject');
       $table->text('description')->nullable();
 
       $table->timestamps();
 
-      $table->index('user_id');
-      $table->index('ojt_id');
-      $table->index('action');
-      $table->index('created_at');
+      $table->index(['user_id', 'created_at']);
+      $table->index(['ojt_id', 'created_at']);
+      $table->index(['action', 'created_at']);
     });
   }
 

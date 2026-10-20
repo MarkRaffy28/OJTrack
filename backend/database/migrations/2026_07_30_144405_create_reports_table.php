@@ -12,6 +12,11 @@ return new class extends Migration {
     Schema::create('reports', function (Blueprint $table) {
       $table->id();
 
+      $table->foreignId('report_assignment_id')
+        ->constrained('report_assignments')
+        ->cascadeOnDelete();
+
+
       $table->foreignId('student_id')
         ->constrained('users')
         ->cascadeOnDelete();
@@ -20,18 +25,9 @@ return new class extends Migration {
         ->constrained('student_ojts')
         ->cascadeOnDelete();
 
-      $table->enum('type', [
-        'daily',
-        'weekly',
-        'monthly',
-        'midterm',
-        'final',
-        'incident',
-      ]);
-
       $table->date('report_date');
-
       $table->json('document_paths')->nullable();
+      $table->boolean('is_late')->default(false);
 
       $table->enum('status', [
         'pending',
@@ -49,6 +45,20 @@ return new class extends Migration {
 
       $table->softDeletes();
       $table->timestamps();
+
+      $table->unique([
+        'report_assignment_id',
+        'student_id',
+      ]);
+
+      $table->index('student_id');
+      $table->index('ojt_id');
+      $table->index('report_assignment_id');
+      $table->index('status');
+      $table->index('reviewed_by');
+      $table->index('report_date');
+      $table->index(['ojt_id', 'status']);
+      $table->index(['student_id', 'report_assignment_id']);
     });
   }
 

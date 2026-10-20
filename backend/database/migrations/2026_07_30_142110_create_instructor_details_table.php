@@ -17,10 +17,17 @@ return new class extends Migration {
         ->constrained('users')
         ->cascadeOnDelete();
 
+      $table->string('program', 100);
       $table->string('department', 100)->default('CCS');
       $table->string('section', 10);
 
       $table->timestamps();
+
+      $table->index('department');
+      $table->index('program');
+      $table->index('section');
+      $table->index(['program', 'section']);
+      $table->index(['department', 'section']);
     });
   }
 

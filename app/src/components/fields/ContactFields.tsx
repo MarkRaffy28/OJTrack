@@ -10,14 +10,14 @@ type ContactFormValues = Pick<
 
 type ContactFieldNames = keyof ContactFormValues;
 
-type Props<TFormData extends ContactFormValues> = {
+type Props<TFormData extends Partial<ContactFormValues>> = {
   form: AppFormInstance<TFormData>;
   fields?: ContactFieldNames[];
   readOnlyFields?: ContactFieldNames[];
   editable?: boolean;
 };
 
-export function ContactFields<TFormData extends ContactFormValues>({
+export function ContactFields<TFormData extends Partial<ContactFormValues>>({
   form,
   fields,
   readOnlyFields,
@@ -27,7 +27,8 @@ export function ContactFields<TFormData extends ContactFormValues>({
 
   const show = (name: ContactFieldNames) => fields === undefined || fields.includes(name);
 
-  const isReadOnly = (name: ContactFieldNames) => readOnlyFields?.includes(name) || !editable;
+  const isReadOnly = (name: ContactFieldNames) =>
+    readOnlyFields?.includes(name) || !editable;
 
   return (
     <>
@@ -91,7 +92,7 @@ export function ContactFields<TFormData extends ContactFormValues>({
               keyboardType="email-address"
               editable={!isReadOnly("email")}
               verified={!!user?.emailVerifiedAt}
-              onVerifyPress={() => router.navigate("/profile/verify-email") }
+              onVerifyPress={() => router.navigate("/profile/verify-email")}
             />
           )}
         </form.AppField>

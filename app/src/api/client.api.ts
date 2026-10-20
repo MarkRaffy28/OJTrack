@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/store/auth.store";
+import { useSettingsStore } from "@/store/settings.store";
 import axios from "axios";
 
 export const api = axios.create({
@@ -12,13 +13,21 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const session = useAuthStore.getState().session;
+  const apiUrl = useSettingsStore.getState().apiUrl;
+
+  if (apiUrl) config.baseURL = apiUrl;
 
   if (session?.accessToken && config.url !== "/auth/login") {
     config.headers.Authorization = `${session.tokenType} ${session.accessToken}`;
   }
 
   if (config.data instanceof FormData) {
-    config.headers["Content-Type"] = undefined;
+    delete config.headers["Content-Type"];
+    delete config.headers["content-type"];
+    if (typeof config.headers.unset === "function") {
+      config.headers.unset("Content-Type");
+      config.headers.unset("content-type");
+    }
   }
 
   return config;

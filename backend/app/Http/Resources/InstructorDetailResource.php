@@ -11,6 +11,7 @@ class InstructorDetailResource extends JsonResource {
    */
   public function toArray(Request $request): array {
     return [
+      'program' => $this->program?->value ?? $this->program,
       'department' => $this->department,
       'section' => $this->section,
     ];

@@ -18,7 +18,7 @@ class RegisterSupervisorRequest extends BaseApiRequest {
       'newPassword' => AuthRules::newPassword(),
       'confirmPassword' => AuthRules::confirmPassword(),
 
-      'username' => UserRules::username($userId),
+      'username' => UserRules::username(true, $userId),
 
       'firstName' => UserRules::firstName(),
       'middleName' => UserRules::middleName(),
@@ -31,7 +31,7 @@ class RegisterSupervisorRequest extends BaseApiRequest {
       'homeAddress' => UserRules::homeAddress(),
       'presentAddress' => UserRules::presentAddress(),
       'contactNumber' => UserRules::contactNumber(),
-      'email' => UserRules::email($userId),
+      'email' => UserRules::email(true, $userId),
     ];
   }
 }

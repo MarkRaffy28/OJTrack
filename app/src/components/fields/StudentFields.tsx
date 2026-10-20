@@ -29,8 +29,8 @@ export function StudentFields<TFormData extends Record<string, any>>({
             label="Program"
             icon="school-outline"
             options={[
-              { label: "BS Information Technology", value: "BSIT" },
-              { label: "BS Information System", value: "BSIS" },
+              { label: "BS Information Technology", value: "BS Information Technology" },
+              { label: "BS Information Systems", value: "BS Information Systems" },
             ]}
           />
         )}
@@ -43,8 +43,8 @@ export function StudentFields<TFormData extends Record<string, any>>({
             label="Major"
             icon="code-tags"
             options={[
-              { label: "Web and Mobile Development", value: "WMD" },
-              { label: "Cybersecurity and Networking", value: "CSN" },
+              { label: "Web and Mobile Development", value: "Web and Mobile Development" },
+              { label: "Cybersecurity and Networking", value: "Cybersecurity and Networking" },
             ]}
           />
         )}

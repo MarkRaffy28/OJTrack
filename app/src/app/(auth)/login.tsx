@@ -1,14 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
 } from "react-native";
-import { Button, Icon, Surface, Text } from "react-native-paper";
+import { Button, Dialog, Icon, Portal, Surface, Text, TextInput } from "react-native-paper";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -20,7 +22,7 @@ import { ICON_SIZES } from "@/constants/icons.constants";
 import { useAppForm } from "@/form/hook";
 import { LoginRequestSchema } from "@/schemas/auth.schema";
 import { useLogin } from "@/store/auth.store";
-import { useTheme } from "@/store/settings.store";
+import { useApiUrl, useSetApiUrl, useTheme } from "@/store/settings.store";
 import { getApiErrorMessage } from "@/utils/api.util";
 import { getMaterialColor } from "@/utils/color.util";
 
@@ -32,6 +34,12 @@ const CONTENT_MAX_WIDTH = 440;
 export default function LoginScreen() {
   const login = useLogin();
   const theme = useTheme();
+  const apiUrl = useApiUrl();
+  const setApiUrl = useSetApiUrl();
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const [password, setPassword] = useState("");
+  const [apiUnlocked, setApiUnlocked] = useState(false);
+  const [apiUrlInput, setApiUrlInput] = useState(apiUrl);
 
   const logoAnim = useRef(new Animated.Value(0)).current;
   const formAnim = useRef(new Animated.Value(40)).current;
@@ -102,6 +110,22 @@ export default function LoginScreen() {
   const blobPrimary = getMaterialColor("pink", { lightShade: 200, darkShade: 800 });
   const blobSecondary = getMaterialColor("cyan", { lightShade: 200, darkShade: 800 });
 
+  const openSettings = () => {
+    setPassword("");
+    setApiUnlocked(false);
+    setApiUrlInput(apiUrl);
+    setSettingsVisible(true);
+  };
+
+  const unlockApiSettings = () => {
+    if (password === "OJTrack") setApiUnlocked(true);
+  };
+
+  const saveApiSettings = async () => {
+    await setApiUrl(apiUrlInput);
+    setSettingsVisible(false);
+  };
+
   return (
     <SafeView style={[styles.root, { backgroundColor: theme.colors.background }]}>
       <KeyboardAvoidingView
@@ -141,32 +165,25 @@ export default function LoginScreen() {
               pointerEvents="none"
             />
 
-            <Animated.View
-              style={[
-                styles.logoBadge,
-                {
-                  opacity: logoAnim,
-                  transform: [{ scale: logoAnim }],
-                  shadowColor: theme.colors.onSurface,
-                },
-              ]}
-            >
-              <View
+            <Pressable onLongPress={openSettings} delayLongPress={5000}>
+              <Animated.View
                 style={[
-                  styles.logoBadgeFill,
-                  { backgroundColor: theme.colors.onPrimary, opacity: 0.12 },
+                  styles.logoBadge,
+                  {
+                    opacity: logoAnim,
+                    transform: [{ scale: logoAnim }],
+                    shadowColor: theme.colors.onSurface,
+                  },
                 ]}
+              >
+              <Image
+                source={require("../../../assets/icon.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+                accessibilityLabel="OJTrack logo"
               />
-              <View
-                style={[
-                  styles.logoBadgeBorder,
-                  { borderColor: theme.colors.onPrimary, opacity: 0.4 },
-                ]}
-              />
-              <Text style={[styles.logoMark, { color: theme.colors.onPrimary }]}>
-                OJT
-              </Text>
-            </Animated.View>
+              </Animated.View>
+            </Pressable>
           </View>
 
           <View style={styles.waveWrap} pointerEvents="none">
@@ -198,7 +215,7 @@ export default function LoginScreen() {
                 Welcome back
               </Text>
               <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-                Continue your OJT journey.
+                Continue your training journey.
               </Text>
 
               <Surface
@@ -255,7 +272,7 @@ export default function LoginScreen() {
                     <Button
                       mode="text"
                       compact
-                      onPress={() => {}}
+                      onPress={() => router.navigate("/forgot-password")}
                       style={styles.forgotWrap}
                       labelStyle={styles.forgotText}
                       textColor={theme.colors.primary}
@@ -277,6 +294,45 @@ export default function LoginScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Portal>
+        <Dialog visible={settingsVisible} onDismiss={() => setSettingsVisible(false)}>
+          <Dialog.Title>Connection settings</Dialog.Title>
+          <Dialog.Content>
+            {!apiUnlocked ? (
+              <TextInput
+                mode="outlined"
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoFocus
+              />
+            ) : (
+              <TextInput
+                mode="outlined"
+                label="API link"
+                value={apiUrlInput}
+                onChangeText={setApiUrlInput}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                placeholder="https://example.com/api"
+              />
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setSettingsVisible(false)}>Cancel</Button>
+            <Button
+              mode="contained"
+              onPress={apiUnlocked ? saveApiSettings : unlockApiSettings}
+              disabled={!apiUnlocked && password.length === 0}
+            >
+              {apiUnlocked ? "Save" : "Unlock"}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </SafeView>
   );
 }
@@ -315,8 +371,8 @@ const styles = StyleSheet.create({
     left: -30,
   },
   logoBadge: {
-    width: 76,
-    height: 76,
+    width: 108,
+    height: 108,
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
@@ -327,19 +383,9 @@ const styles = StyleSheet.create({
       height: 8,
     },
   },
-  logoBadgeFill: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 22,
-  },
-  logoBadgeBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 22,
-    borderWidth: 1.5,
-  },
-  logoMark: {
-    fontSize: 26,
-    fontWeight: "800",
-    letterSpacing: 1,
+  logoImage: {
+    width: 96,
+    height: 96,
   },
   waveWrap: {
     marginTop: -WAVE_OVERLAP,

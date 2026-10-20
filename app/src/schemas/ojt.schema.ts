@@ -1,55 +1,39 @@
 import { z } from "zod";
 import { OfficeSchema } from "./office.schema";
-import { StudentUserSchema, SupervisorUserSchema } from "./user.schema";
+import { StudentSummarySchema, SupervisorSummarySchema } from "./user.schema";
 
-export const OjtStatusSchema = z.enum(["pending", "ongoing", "completed", "dropped"]);
+export const OJTStatusSchema = z.enum(["pending", "ongoing", "completed", "dropped"]);
 
-export const OjtTermSchema = z.enum(["1st", "2nd", "Summer"]);
+export const OJTTermSchema = z.enum(["1st", "2nd", "Summer"]);
 
-export const OjtSchema = z.object({
-  id: z.number().int().positive(),
+export const OJTSchema = z.object({
+  id: z.number(),
 
-  student: StudentUserSchema,
-  supervisor: SupervisorUserSchema.nullable(),
-  office: OfficeSchema,
+  student: StudentSummarySchema.nullable(),
+  supervisor: SupervisorSummarySchema.nullable(),
+  office: OfficeSchema.nullable(),
 
-  academic_year: z.string().max(20),
-  term: OjtTermSchema,
+  academicYear: z.string().max(20),
+  term: OJTTermSchema,
 
-  required_hours: z.number(),
-  rendered_hours: z.number(),
+  requiredHours: z.coerce.number(),
+  renderedHours: z.coerce.number(),
 
-  status: OjtStatusSchema,
-  start_date: z.iso.date(),
-  end_date: z.iso.date(),
-
-  created_at: z.iso.datetime(),
-
-  updated_at: z.iso.datetime(),
+  status: OJTStatusSchema,
+  startDate: z.string().nullable(),
+  endDate: z.string().nullable(),
 });
 
-export const CreateOjtSchema = z.object({
-  student_id: z.number().int().positive(),
-  supervisor_id: z.number().int().positive().nullable().optional(),
-  office_id: z.number().int().positive(),
-
-  academic_year: z.string().max(20),
-  term: OjtTermSchema,
-  required_hours: z.number().positive(),
-
-  start_date: z.iso.date(),
-  end_date: z.iso.date(),
+export const OJTSummarySchema = OJTSchema.omit({
+  student: true,
+  supervisor: true,
 });
 
-export const UpdateOjtSchema = CreateOjtSchema.extend({
-  status: OjtStatusSchema.optional(),
-  rendered_hours: z.number().min(0).optional(),
-}).partial();
+export const OJTsResponseSchema = z.array(OJTSchema);
 
-export type OjtStatus = z.infer<typeof OjtStatusSchema>;
-export type OjtTerm = z.infer<typeof OjtTermSchema>;
+export type OJTStatus = z.infer<typeof OJTStatusSchema>;
+export type OJTTerm = z.infer<typeof OJTTermSchema>;
 
-export type Ojt = z.infer<typeof OjtSchema>;
+export type OJT = z.infer<typeof OJTSchema>;
 
-export type CreateOjtInput = z.infer<typeof CreateOjtSchema>;
-export type UpdateOjtInput = z.infer<typeof UpdateOjtSchema>;
+export type OJTSummary = z.infer<typeof OJTSummarySchema>;

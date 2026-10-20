@@ -1,43 +1,34 @@
 import { z } from "zod";
 
-export const OfficeSchema = z.object({
-  id: z.number().int().positive(),
+const OfficeTimeSchema = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined || value === "") return null;
 
+    const text = String(value);
+    const match = text.match(/(?:T|\s|^)(\d{1,2}):(\d{2})(?::\d{2})?/);
+
+    return match ? `${match[1].padStart(2, "0")}:${match[2]}:00` : text;
+  },
+  z.string().nullable(),
+);
+
+export const OfficeSchema = z.object({
   name: z.string().min(1).max(150),
 
   address: z.string().max(255).nullable(),
 
-  contactEmail: z.email().max(150).nullable(),
+  // Nullable database fields may arrive as empty strings from older records.
+  contactEmail: z.preprocess(
+    (value) => value === "" ? null : value,
+    z.email().max(150).nullable(),
+  ),
 
   contactPhone: z.string().max(20).nullable(),
 
-  morningIn: z.iso.time(),
-  morningOut: z.iso.time(),
-  afternoonIn: z.iso.time(),
-  afternoonOut: z.iso.time(),
-
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  morningIn: OfficeTimeSchema,
+  morningOut: OfficeTimeSchema,
+  afternoonIn: OfficeTimeSchema,
+  afternoonOut: OfficeTimeSchema,
 });
-
-export const CreateOfficeSchema = z.object({
-  name: z.string().min(1).max(150),
-
-  address: z.string().max(255).nullable().optional(),
-
-  contactEmail: z.email().max(150).nullable().optional(),
-
-  contactPhone: z.string().max(20).nullable().optional(),
-
-  morningIn: z.iso.time().default("08:00:00"),
-  morningOut: z.iso.time().default("12:00:00"),
-  afternoonIn: z.iso.time().default("13:00:00"),
-  afternoonOut: z.iso.time().default("17:00:00"),
-});
-
-export const UpdateOfficeSchema = CreateOfficeSchema.partial();
 
 export type Office = z.infer<typeof OfficeSchema>;
-
-export type CreateOfficeInput = z.infer<typeof CreateOfficeSchema>;
-export type UpdateOfficeInput = z.infer<typeof UpdateOfficeSchema>;

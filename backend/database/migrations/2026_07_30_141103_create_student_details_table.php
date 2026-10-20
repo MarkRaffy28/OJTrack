@@ -23,6 +23,12 @@ return new class extends Migration {
       $table->string('section', 10);
 
       $table->timestamps();
+
+      $table->index('program');
+      $table->index('major');
+      $table->index('year');
+      $table->index('section');
+      $table->index(['program', 'major', 'year', 'section']);
     });
   }
 

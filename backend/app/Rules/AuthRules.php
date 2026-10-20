@@ -7,20 +7,39 @@ class AuthRules {
     return ["required", "string"];
   }
 
-  public static function password(): array {
-    return ["required", "string"];
+  public static function password(?bool $required = true): array {
+    return [
+      $required ? "required" : "nullable",
+      'string',
+      "min:8",
+      "max:255"
+    ];
+  }
+  public static function currentPassword(?bool $required = true): array {
+    return [
+      $required ? "required" : "nullable",
+      'string',
+      "min:8",
+      "max:255"
+    ];
+  }
+  public static function newPassword(?bool $required = true): array {
+    return [
+      $required ? "required" : "nullable",
+      'string',
+      "min:8",
+      "max:255"
+    ];
   }
 
-  public static function currentPassword(): array {
-    return ["required", "string", "min:8", "max:255"];
-  }
-
-  public static function newPassword(): array {
-    return ["required", "string", "min:8", "max:255"];
-  }
-
-  public static function confirmPassword(): array {
-    return ["required", "string", "min:8", "max:255", "same:newPassword"];
+  public static function confirmPassword(?bool $required = true): array {
+    return [
+      $required ? "required" : "nullable",
+      'string',
+      "min:8",
+      "max:255",
+      "same:newPassword"
+    ];
   }
 
   public static function otp(): array {

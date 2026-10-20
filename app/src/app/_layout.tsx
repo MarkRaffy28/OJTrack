@@ -20,8 +20,16 @@ import {
 } from "@/store/snackbar.store";
 import { useSettingsStore, useTheme } from "@/store/settings.store";
 import { useRootLayoutStyles } from "@/styles/rootLayout.styles";
+import { api } from "@/api";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function RootLayout() {
   const theme = useTheme();
@@ -46,6 +54,13 @@ export default function RootLayout() {
 
     hydrate();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthHydrated || !session) return;
+    api.getReportTemplates()
+      .then((templates) => useSettingsStore.getState().setReportTemplates(templates))
+      .catch(() => undefined);
+  }, [isAuthHydrated, session]);
 
   if (!isAuthHydrated) {
     return <SplashScreen />;

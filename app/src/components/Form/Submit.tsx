@@ -10,6 +10,7 @@ interface Props {
   submitLabel: string;
   submittingLabel: string;
   initialValues?: Record<string, any>;
+  allowSubmitWithoutChanges?: boolean;
   style?: any;
   contentStyle?: any;
   labelStyle?: any;
@@ -19,6 +20,7 @@ export function FormSubmit({
   submitLabel,
   submittingLabel,
   initialValues,
+  allowSubmitWithoutChanges = false,
   style,
   contentStyle,
   labelStyle,
@@ -37,6 +39,7 @@ export function FormSubmit({
       if (target?.tagName === "TEXTAREA") return;
 
       event.preventDefault();
+      form.setErrorMap({ onSubmit: undefined });
       form.handleSubmit();
     };
 
@@ -72,9 +75,10 @@ export function FormSubmit({
         const { onSubmit, ...rest } = state.errorMap;
         const hasFormError = Object.values(rest).some(Boolean);
 
-        const hasActualChanges = initialValues
-          ? JSON.stringify(state.values) !== JSON.stringify(initialValues)
-          : true;
+        const compareValues = initialValues ?? form.options.defaultValues;
+        const hasActualChanges = compareValues
+          ? JSON.stringify(state.values) !== JSON.stringify(compareValues)
+          : state.isDirty;
 
         return [
           hasFieldErrors || hasFormError,
@@ -84,13 +88,23 @@ export function FormSubmit({
       }}
     >
       {([hasFieldErrors, isSubmitting, hasActualChanges]) => {
-        const isDisabled = hasFieldErrors || isSubmitting || !hasActualChanges;
+        const isDisabled =
+          hasFieldErrors ||
+          isSubmitting ||
+          (!allowSubmitWithoutChanges && !hasActualChanges);
 
         return (
           <Pressable
             onPressIn={!isDisabled ? handlePressIn : undefined}
             onPressOut={!isDisabled ? handlePressOut : undefined}
-            onPress={!isDisabled ? form.handleSubmit : undefined}
+            onPress={
+              !isDisabled
+                ? () => {
+                    form.setErrorMap({ onSubmit: undefined });
+                    form.handleSubmit();
+                  }
+                : undefined
+            }
             disabled={isDisabled}
             style={[styles.pressable, style]}
           >

@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { OTPSchema, PasswordSchema } from "./common.schema";
-import { BaseUserSchema, EmergencyContactSchema, UserSchema } from "./user.schema";
+import {
+  AdminUserSchema,
+  BaseUserSchema,
+  EmergencyContactSchema,
+  GenderSchema,
+  InstructorUserSchema,
+  StudentUserSchema,
+  SupervisorUserSchema,
+} from "./user.schema";
+import { OfficeSchema } from "./office.schema";
 
 export const LoginRequestSchema = z.object({
   identifier: z
@@ -11,10 +20,49 @@ export const LoginRequestSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const LoginBaseUserSchema = BaseUserSchema.extend({
+  username: z.string().nullable(),
+  birthDate: z.string().nullable(),
+  gender: GenderSchema.nullable(),
+  homeAddress: z.string().nullable(),
+  presentAddress: z.string().nullable(),
+  contactNumber: z.string().nullable(),
+  email: z.string().nullable(),
+});
+
+const LoginStudentUserSchema = LoginBaseUserSchema.extend({
+  role: z.literal("student"),
+  studentDetail: StudentUserSchema.shape.studentDetail,
+  emergencyContacts: StudentUserSchema.shape.emergencyContacts,
+});
+
+const LoginInstructorUserSchema = LoginBaseUserSchema.extend({
+  role: z.literal("instructor"),
+  instructorDetail: InstructorUserSchema.shape.instructorDetail,
+});
+
+const LoginSupervisorUserSchema = LoginBaseUserSchema.extend({
+  role: z.literal("supervisor"),
+  supervisorDetail: SupervisorUserSchema.shape.supervisorDetail
+    .extend({ office: OfficeSchema.nullable() })
+    .nullable(),
+});
+
+const LoginAdminUserSchema = LoginBaseUserSchema.extend({
+  role: z.literal("admin"),
+});
+
+const LoginUserSchema = z.discriminatedUnion("role", [
+  LoginStudentUserSchema,
+  LoginInstructorUserSchema,
+  LoginSupervisorUserSchema,
+  LoginAdminUserSchema,
+]);
+
 export const LoginResponseSchema = z.object({
   accessToken: z.string(),
   tokenType: z.literal("Bearer"),
-  user: UserSchema,
+  user: LoginUserSchema,
 });
 
 export const PasswordRegistrationSchema = z.object({
@@ -49,15 +97,30 @@ export const VerifyEmailRequestSchema = z.object({
 });
 
 export const ChangePasswordRequestSchema = z.object({
-  currentPassword: z
-    .string()
-    .min(1, "Current password is required"),
+  currentPassword: z.string().min(1, "Current password is required"),
 
   newPassword: PasswordSchema,
 
-  confirmPassword: z
-    .string()
-    .min(1, "Confirm new password is required"),
+  confirmPassword: z.string().min(1, "Confirm new password is required"),
+});
+
+export const ForgotPasswordRequestSchema = z.object({
+  email: z
+    .email("Invalid email address")
+    .min(1, "Email is required")
+    .max(100, "Email must be at most 100 characters long"),
+});
+
+export const VerifyForgotPasswordOTPRequestSchema = z.object({
+  email: z.email(),
+  otp: OTPSchema,
+});
+
+export const ResetPasswordRequestSchema = z.object({
+  email: z.email(),
+  newPassword: PasswordSchema,
+
+  confirmPassword: z.string().min(1, "Confirm new password is required"),
 });
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
@@ -71,3 +134,9 @@ export type AuthSession = z.infer<typeof LoginResponseSchema>;
 export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>;
 
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
+
+export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
+export type VerifyForgotPasswordOTPRequest = z.infer<
+  typeof VerifyForgotPasswordOTPRequestSchema
+>;
+export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;

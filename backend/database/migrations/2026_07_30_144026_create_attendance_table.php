@@ -37,6 +37,11 @@ return new class extends Migration {
       $table->timestamps();
 
       $table->unique(['student_id', 'date']);
+      $table->index('student_id');
+      $table->index('ojt_id');
+      $table->index('date');
+      $table->index(['student_id', 'ojt_id']);
+      $table->index(['ojt_id', 'date']);
     });
   }
 

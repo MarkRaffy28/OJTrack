@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -237,6 +238,13 @@ export default function CompleteRegistrationScreen() {
               pointerEvents="none"
             />
 
+            <Image
+              source={require("../../assets/icon.png")}
+              style={styles.registrationLogo}
+              resizeMode="contain"
+              accessibilityLabel="OJTrack logo"
+            />
+
             <View style={styles.stepIndicatorWrap}>
               <View
                 style={[
@@ -441,6 +449,11 @@ const styles = StyleSheet.create({
     height: 140,
     bottom: -40,
     left: -30,
+  },
+  registrationLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 18,
   },
   stepIndicatorWrap: {
     position: "relative",
