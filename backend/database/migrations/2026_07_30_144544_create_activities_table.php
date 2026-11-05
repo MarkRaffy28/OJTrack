@@ -13,8 +13,9 @@ return new class extends Migration {
       $table->id();
 
       $table->foreignId('user_id')
+        ->nullable()
         ->constrained('users')
-        ->cascadeOnDelete();
+        ->nullOnDelete();
 
       $table->foreignId('ojt_id')
         ->nullable()
@@ -24,6 +25,11 @@ return new class extends Migration {
       $table->string('action', 50);
       $table->nullableMorphs('subject');
       $table->text('description')->nullable();
+
+      $table->json('properties')->nullable();
+
+      $table->ipAddress('ip_address')->nullable();
+      $table->text('user_agent')->nullable();
 
       $table->timestamps();
 

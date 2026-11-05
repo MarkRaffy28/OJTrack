@@ -22,7 +22,7 @@
 @section ("title", "View Report")
 
 @section ("header_title", "View Report")
-@section ("header_edit_route", route("web.{$role}.reports.edit", $report))
+@section ("header_edit_route", route("{$role}.reports.edit", $report))
 @section ("header_go_back", "")
 
 @section ("content")
@@ -165,7 +165,7 @@
                 }}
               </p>
               <p class="text-text-muted flex items-center gap-1.5 text-sm">
-                <span class="material-symbols-outlined text-primary-600 text-base"
+                <span class="material-symbols-outlined material-symbols-md text-primary-600 text-base"
                   >badge</span
                 >
                 Supervisor: {{
@@ -174,7 +174,7 @@
                 }}
               </p>
               <p class="text-text-muted flex items-center gap-1.5 text-sm">
-                <span class="material-symbols-outlined text-primary-600 text-base"
+                <span class="material-symbols-outlined material-symbols-md text-primary-600 text-base"
                   >business</span
                 >
                 Office: {{

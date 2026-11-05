@@ -2,8 +2,8 @@
   $role = auth()->user()->role->value;
   $editing = $ojt->exists;
   $action = $editing
-    ? route("web.{$role}.ojts.update", $ojt)
-    : route("web.{$role}.ojts.store");
+    ? route("{$role}.ojts.update", $ojt)
+    : route("{$role}.ojts.store");
 @endphp
 
 @extends ("layouts.app")
@@ -109,7 +109,7 @@
           class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
         >
           <a
-            href="{{ route("web.{$role}.ojts.index") }}"
+            href="{{ route("{$role}.ojts.index") }}"
             class="border-border bg-surface text-text hover:bg-background inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           >
             Cancel

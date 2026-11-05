@@ -37,7 +37,7 @@ class OjtController extends Controller {
     Gate::authorize('create', Ojt::class);
     Ojt::create($request->validated());
 
-    return redirect()->route("web." . Auth::user()->role->value . ".ojts.index")->with('success', 'OJT period created successfully.');
+    return redirect()->route("" . Auth::user()->role->value . ".ojts.index")->with('success', 'OJT period created successfully.');
   }
 
   public function edit(Ojt $ojt): View {
@@ -50,7 +50,7 @@ class OjtController extends Controller {
     Gate::authorize('update', $ojt);
     $ojt->update($request->validated());
 
-    return redirect()->route("web." . Auth::user()->role->value . ".ojts.index")->with('success', 'OJT period updated successfully.');
+    return redirect()->route("" . Auth::user()->role->value . ".ojts.index")->with('success', 'OJT period updated successfully.');
   }
 
   public function destroy(Ojt $ojt): RedirectResponse {
@@ -58,6 +58,6 @@ class OjtController extends Controller {
     abort_if($ojt->studentOjts()->exists(), 422, 'This OJT period cannot be deleted because it has student assignments.');
     $ojt->delete();
 
-    return redirect()->route("web." . Auth::user()->role->value . ".ojts.index")->with('success', 'OJT period deleted successfully.');
+    return redirect()->route("" . Auth::user()->role->value . ".ojts.index")->with('success', 'OJT period deleted successfully.');
   }
 }

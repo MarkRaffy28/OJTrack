@@ -12,12 +12,13 @@ use App\Models\Setting;
 use App\Models\StudentDetail;
 use App\Models\StudentOjt;
 use App\Models\User;
+use App\Services\Documents\AssignmentDocumentGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
 
 class AssignmentController extends Controller {
 
@@ -98,7 +99,7 @@ class AssignmentController extends Controller {
       $breadcrumbs = [
         [
           'label' => 'Assignments',
-          'url' => route("web.{$viewer->role->value}.assignments.index"),
+          'url' => route("{$viewer->role->value}.assignments.index"),
         ],
       ];
 
@@ -164,11 +165,10 @@ class AssignmentController extends Controller {
     if ($request->boolean('print')) {
       $studentOjts = $query->get();
 
-      return Pdf::loadView('shared.assignments.pdf', [
-        'studentOjts' => $studentOjts,
-      ])
-        ->setPaper('a4', 'landscape')
-        ->stream('assignments.pdf');
+      return app(AssignmentDocumentGenerator::class)->download(
+        ['studentOjts' => $studentOjts],
+        'assignments.docx',
+      );
     }
 
     $studentOjts = $query
@@ -182,7 +182,7 @@ class AssignmentController extends Controller {
     $breadcrumbs = [
       [
         'label' => 'Assignments',
-        'url' => route("web.{$viewer->role->value}.assignments.index"),
+        'url' => route("{$viewer->role->value}.assignments.index"),
       ],
     ];
 
@@ -263,7 +263,7 @@ class AssignmentController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.assignments.index")
+      ->route("{$role->value}.assignments.index")
       ->with("success", "Assignment created successfully.");
   }
 
@@ -273,7 +273,7 @@ class AssignmentController extends Controller {
     $studentOjt->load(['student', 'supervisor', 'office']);
 
     return view("shared.assignments.show", compact("studentOjt"));
-}
+  }
 
   public function edit(StudentOjt $studentOjt): View {
     Gate::authorize('update', $studentOjt);
@@ -316,7 +316,7 @@ class AssignmentController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.assignments.index")
+      ->route("{$role->value}.assignments.index")
       ->with("success", "Assignment updated successfully.");
   }
 
@@ -329,7 +329,7 @@ class AssignmentController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.assignments.index")
+      ->route("{$role->value}.assignments.index")
       ->with("success", "Assignment deleted successfully.");
   }
 

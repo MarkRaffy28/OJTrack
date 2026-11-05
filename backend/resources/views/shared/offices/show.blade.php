@@ -4,7 +4,7 @@
 
 @section ("header_title", "View Office")
 
-@section ("header_edit_route", route("web.{$currentRole}.offices.edit", $office))
+@section ("header_edit_route", route("{$currentRole}.offices.edit", $office))
 @section ("header_go_back", "")
 
 @section ("header_description")
@@ -83,6 +83,9 @@
           </div>
           <div class="min-w-0">
             <x-fields.office field="afternoon_out" :office="$office" mode="view" />
+          </div>
+          <div class="min-w-0 sm:col-span-2">
+            <x-fields.office field="overtime_cutoff" :office="$office" mode="view" label="Overtime Cutoff (latest checkout)" />
           </div>
         </div>
       </section>

@@ -28,7 +28,7 @@
 
   <div @class (["flex items-center gap-2" => $icon && $readonly])>
     @if ($icon && $readonly)
-      <span class="material-symbols-outlined text-text-subtle">{{ $icon }}</span>
+      <span class="material-symbols-outlined material-symbols-md text-text-subtle">{{ $icon }}</span>
     @endif
 
     <div @class (["relative flex-1", "has-icon" => $icon && !$readonly])>
@@ -69,7 +69,7 @@
 
         @if ($icon)
           <span
-            class="material-symbols-outlined text-text-subtle pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
+            class="material-symbols-outlined material-symbols-md text-text-subtle pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
           >
             {{ $icon }}
           </span>

@@ -7,7 +7,7 @@
 
 @section ("title", "OJT Period Details")
 @section ("header_title", "OJT Period Details")
-@section ("header_edit_route", route("web.{$role}.ojts.edit", $ojt))
+@section ("header_edit_route", route("{$role}.ojts.edit", $ojt))
 @section ("header_go_back", "")
 
 @section ("header_description")

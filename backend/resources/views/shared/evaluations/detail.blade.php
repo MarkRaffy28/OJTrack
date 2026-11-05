@@ -248,10 +248,10 @@
         class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
       >
         <a
-          href="{{ route('web.' . $role . '.evaluations.detail.create', [$studentOjt, $evaluationDetail->period]) }}"
+          href="{{ route('' . $role . '.evaluations.detail.create', [$studentOjt, $evaluationDetail->period]) }}"
           class="bg-primary-600 hover:bg-primary-700 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
         >
-          <span class="material-symbols-outlined text-base">edit</span>
+          <span class="material-symbols-outlined material-symbols-md">edit</span>
           Edit Draft
         </a>
       </div>

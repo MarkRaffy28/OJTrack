@@ -30,7 +30,7 @@
   @section ("header_print", "")
   @section ("header_create_route",
     route(
-      "web.{$currentRole}.assignments.create",
+      "{$currentRole}.assignments.create",
       request()->query("office_id") ? ["office_id" => request()->query("office_id")] : []
     ))
 

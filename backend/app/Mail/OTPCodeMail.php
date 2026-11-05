@@ -20,7 +20,7 @@ class OTPCodeMail extends Mailable {
 
   public function build() {
     return $this
-      ->subject('Your OJTrack verification code')
+      ->subject('Your ' . config("app.name") . ' verification code')
       ->view('emails.auth.otp-code');
   }
 }

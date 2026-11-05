@@ -87,6 +87,14 @@ class Office extends BaseField {
         'type' => 'time',
         'required' => true,
       ],
+      OfficeField::OVERTIME_CUTOFF => [
+        'id' => 'overtime_cutoff',
+        'name' => 'overtime_cutoff',
+        'label' => 'Overtime Cutoff',
+        'icon' => 'schedule',
+        'type' => 'time',
+        'required' => true,
+      ],
     };
 
     if ($this->label !== null) {
@@ -121,6 +129,7 @@ class Office extends BaseField {
       OfficeField::MORNING_OUT => $this->office->morning_out,
       OfficeField::AFTERNOON_IN => $this->office->afternoon_in,
       OfficeField::AFTERNOON_OUT => $this->office->afternoon_out,
+      OfficeField::OVERTIME_CUTOFF => $this->office->overtime_cutoff ?? '17:30:00',
     };
   }
 
@@ -137,6 +146,7 @@ class Office extends BaseField {
       OfficeField::MORNING_OUT,
       OfficeField::AFTERNOON_IN,
       OfficeField::AFTERNOON_OUT,
+      OfficeField::OVERTIME_CUTOFF,
     ], true);
 
     if ($isTimeField) {

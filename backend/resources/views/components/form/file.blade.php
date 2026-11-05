@@ -38,7 +38,7 @@
           data-file-chip="{{ $index }}"
           class="bg-background-variant inline-flex items-center gap-2 rounded-md px-3 py-2"
         >
-          <span class="material-symbols-outlined text-xs">description</span>
+          <span class="material-symbols-outlined material-symbols-md">description</span>
           @if ($readonly && $fileUrl)
             <a href="{{ $fileUrl }}" target="_blank" rel="noopener" class="text-primary-600 text-sm hover:underline" title="Open file">
               {{ $fileName }}
@@ -54,7 +54,7 @@
               data-file-path="{{ $filePath }}"
               class="text-text-subtle hover:text-danger-500 transition-colors"
             >
-              <span class="material-symbols-outlined text-sm">close</span>
+              <span class="material-symbols-outlined material-symbols-md">close</span>
             </button>
           @endif
         </div>
@@ -136,10 +136,10 @@
             
             const chipHtml = `
               <div class="bg-background-variant inline-flex items-center gap-2 rounded-md px-3 py-2" data-new-file-name="${file.name}">
-                <span class="material-symbols-outlined text-xs">description</span>
+                <span class="material-symbols-outlined material-symbols-md">description</span>
                 <span class="text-text text-sm">${file.name}</span>
                 <button type="button" tabindex="-1" class="text-text-subtle hover:text-danger-500 transition-colors remove-new-file" data-file-name="${file.name}">
-                  <span class="material-symbols-outlined text-sm">close</span>
+                  <span class="material-symbols-outlined material-symbols-md">close</span>
                 </button>
               </div>
             `;

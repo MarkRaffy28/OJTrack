@@ -14,6 +14,7 @@ enum ActivityAction: string {
   // Database Backups
   case BACKUP_CREATED = 'backup_created';
   case BACKUP_RESTORED = 'backup_restored';
+  case BACKUP_DELETED = 'backup_deleted';
 
   // User Management & Profile
   case USER_CREATED = 'user_created';
@@ -81,6 +82,7 @@ enum ActivityAction: string {
 
       self::BACKUP_CREATED => 'Database Backup Created',
       self::BACKUP_RESTORED => 'Database Backup Restored',
+      self::BACKUP_DELETED => 'Database Backup Deleted',
 
       self::USER_CREATED => 'User Created',
       self::USER_UPDATED => 'User Updated',
@@ -136,5 +138,21 @@ enum ActivityAction: string {
       ],
       self::cases()
     );
+  }
+
+  public function tracksChanges(): bool {
+    return match ($this) {
+      self::USER_UPDATED,
+      self::OFFICE_UPDATED,
+      self::OJT_TERM_UPDATED,
+      self::OJT_STATUS_CHANGED,
+      self::OJT_INSTRUCTOR_ASSIGNED,
+      self::OJT_OFFICE_ASSIGNED,
+      self::EVALUATION_UPDATED,
+      self::EVALUATION_CRITERIA_UPDATED,
+      self::SETTING_UPDATED => true,
+
+      default => false,
+    };
   }
 }

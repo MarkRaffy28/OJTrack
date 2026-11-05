@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $morning_out
  * @property string $afternoon_in
  * @property string $afternoon_out
+ * @property string $overtime_cutoff
  * @property string|null $deleted_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -63,6 +64,7 @@ class Office extends Model {
       'morning_out',
       'afternoon_in',
       'afternoon_out',
+      'overtime_cutoff',
     ];
   }
 
@@ -89,6 +91,7 @@ class Office extends Model {
       'morning_out' => 'datetime:H:i:s',
       'afternoon_in' => 'datetime:H:i:s',
       'afternoon_out' => 'datetime:H:i:s',
+      'overtime_cutoff' => 'datetime:H:i:s',
     ];
   }
 

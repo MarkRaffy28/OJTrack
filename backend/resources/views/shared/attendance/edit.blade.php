@@ -17,8 +17,8 @@
     })->all()
     : [];
   $action = $isCreate
-    ? route("web.{$role}.attendance.store")
-    : route("web.{$role}.attendance.update", $attendance);
+    ? route("{$role}.attendance.store")
+    : route("{$role}.attendance.update", $attendance);
   $mIn = $attendance?->morning_in
     ? \Carbon\Carbon::parse($attendance?->morning_in)->format("H:i")
     : "";
@@ -305,7 +305,7 @@
           class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
         >
           <a
-            href="{{ route("web.{$role}.attendance.index") }}"
+            href="{{ route("{$role}.attendance.index") }}"
             class="border-border bg-surface text-text hover:bg-background inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           >
             Cancel

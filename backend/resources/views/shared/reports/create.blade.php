@@ -1,6 +1,6 @@
 @php
   $role = auth()->user()->role->value;
-  $route = "web.{$role}.reports.store";
+  $route = "{$role}.reports.store";
 
   $studentOptions = $students->pluck("full_name", "id")->toArray();
   $reviewedByOptions = $reviewers->pluck("full_name", "id")->toArray();
@@ -122,7 +122,7 @@
           class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
         >
           <a
-            href="{{ route("web.{$role}.reports.index") }}"
+            href="{{ route("{$role}.reports.index") }}"
             class="border-border bg-surface text-text hover:bg-background inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           >
             Cancel

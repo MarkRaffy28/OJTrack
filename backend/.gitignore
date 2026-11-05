@@ -27,3 +27,5 @@ Homestead.yaml
 Thumbs.db
 
 _ide_helper.php
+_ide_helper_models.php
+format-blade.cjs

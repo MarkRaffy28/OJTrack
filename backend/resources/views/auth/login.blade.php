@@ -26,7 +26,7 @@
 
         <img
           src="{{ asset('images/logo.png') }}"
-          alt="OJTrack logo"
+          alt="{{ config('app.name') }} logo"
           class="h-16 w-16 object-contain"
         />
 
@@ -47,7 +47,7 @@
       </div>
 
       {{-- Login Form --}}
-      <x-form.form action="{{ route('web.login.authenticate') }}" class="mt-8 space-y-5">
+      <x-form.form action="{{ route('login.authenticate') }}" class="mt-8 space-y-5">
         <x-form.input
           id="identifier"
           name="identifier"

@@ -9,7 +9,7 @@
 @section ("header_description", "Published report submissions by OJT cohort.")
 
 @section ("header_show_cohort_selector", "")
-@section ("header_create_route", route("web.{$currentRole}.report-assignments.create"))
+@section ("header_create_route", route("{$currentRole}.report-assignments.create"))
 
 @section ("header_filters")
   <x-search-filter :filters="$filters" :showSearch="true" :showDateRange="false" />

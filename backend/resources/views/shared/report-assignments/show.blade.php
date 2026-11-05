@@ -21,7 +21,7 @@
 @section ("header_go_back", "")
 
 @section ("header_edit_route",
-  route("web.{$role}.report-assignments.edit", $reportAssignment))
+  route("{$role}.report-assignments.edit", $reportAssignment))
 
 @section ("content")
   <div class="mx-auto w-full max-w-6xl space-y-6">

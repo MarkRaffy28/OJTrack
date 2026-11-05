@@ -23,6 +23,7 @@ class OfficeRequest extends FormRequest {
       "morning_out" => OfficeRules::morningOut(),
       "afternoon_in" => OfficeRules::afternoonIn(),
       "afternoon_out" => OfficeRules::afternoonOut(),
+      "overtime_cutoff" => OfficeRules::overtimeCutoff(),
     ];
   }
 }

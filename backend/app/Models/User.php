@@ -178,6 +178,20 @@ class User extends Authenticatable {
     );
   }
 
+  /**
+   * Get the user's display name.
+   */
+  protected function displayName(): Attribute {
+    return Attribute::make(
+      get: fn(): string => trim(implode(' ', array_filter([
+        $this->first_name,
+        $this->middle_name ? $this->middle_name[0] . '.' : null,
+        $this->last_name,
+        $this->extension_name,
+      ])))
+    );
+  }
+
   public function studentDetail(): HasOne {
     return $this->hasOne(StudentDetail::class);
   }

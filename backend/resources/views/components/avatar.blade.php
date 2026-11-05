@@ -50,7 +50,7 @@
       "
     >
       <span
-        class="material-symbols-outlined text-text"
+        class="material-symbols-outlined material-symbols-md"
         style="font-size: {{ $editIconSize }}px;"
       >
         edit

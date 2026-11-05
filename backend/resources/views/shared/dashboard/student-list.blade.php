@@ -6,7 +6,7 @@
 @section('header_title', $title)
 @section('header_description', $description)
 @section('header_actions')
-  <a href="{{ route("web.{$role}.dashboard.index") }}" class="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-background">Back to Dashboard</a>
+  <a href="{{ route("{$role}.dashboard.index") }}" class="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-text-muted hover:bg-background">Back to Dashboard</a>
 @endsection
 
 @section('content')
@@ -52,7 +52,7 @@
           <x-table.cell alignment="left">{{ $detailValue($ojt) }}</x-table.cell>
 
           <x-table.cell>
-            <a href="{{ route("web.{$role}.student-ojts.show", ['studentOjt' => $ojt]) }}" class="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-600 hover:text-white">
+            <a href="{{ route("{$role}.student-ojts.show", ['studentOjt' => $ojt]) }}" class="rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 hover:bg-primary-600 hover:text-white">
               View details
             </a>
           </x-table.cell>

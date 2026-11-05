@@ -27,9 +27,9 @@ class AuthController extends Controller {
     if (Auth::check()) {
       $user = Auth::user();
       if ($user->role === UserRole::INSTRUCTOR && $user->status === AccountStatus::PRE_ACTIVATED) {
-        return redirect()->route("web.register");
+        return redirect()->route("register");
       }
-      return redirect()->route("web.{$user->role->value}.dashboard");
+      return redirect()->route("{$user->role->value}.dashboard");
     }
     return view("auth.login");
   }
@@ -65,12 +65,12 @@ class AuthController extends Controller {
     $request->session()->regenerate();
 
     if ($user->role === UserRole::INSTRUCTOR && $user->status === AccountStatus::PRE_ACTIVATED) {
-      return redirect()->route('web.register')
+      return redirect()->route('register')
         ->with('info', 'Please complete your instructor registration to activate your account.');
     }
 
     return redirect()->intended(
-      route("web.{$user->role->value}.dashboard")
+      route("{$user->role->value}.dashboard")
     )->with("success", "Welcome back, " . ($user->name ?? $user->username) . "!");
   }
 
@@ -82,7 +82,7 @@ class AuthController extends Controller {
     }
 
     if ($user->status !== AccountStatus::PRE_ACTIVATED) {
-      return redirect()->route("web.{$user->role->value}.dashboard");
+      return redirect()->route("{$user->role->value}.dashboard");
     }
 
     if (!$user->instructorDetail) {
@@ -100,7 +100,7 @@ class AuthController extends Controller {
     }
 
     if ($user->status !== AccountStatus::PRE_ACTIVATED) {
-      return redirect()->route("web.{$user->role->value}.dashboard");
+      return redirect()->route("{$user->role->value}.dashboard");
     }
 
     if (!$user->instructorDetail) {
@@ -142,8 +142,8 @@ class AuthController extends Controller {
     $this->activityService->log($user, ActivityAction::USER_ACTIVATED, $user);
 
     return redirect()
-      ->route('web.instructor.dashboard')
-      ->with('success', 'Registration completed successfully. Welcome to OJTrack!');
+      ->route('instructor.dashboard')
+      ->with("success", "Registration completed successfully. Welcome to " . config("app.name") . "!");
   }
 
   public function logout() {
@@ -157,6 +157,6 @@ class AuthController extends Controller {
     request()->session()->invalidate();
     request()->session()->regenerateToken();
 
-    return redirect()->route('web.login');
+    return redirect()->route('login');
   }
 }

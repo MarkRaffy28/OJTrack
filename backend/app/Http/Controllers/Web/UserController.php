@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\UserRequest;
 use App\Models\User;
 use App\Services\ActivityService;
+use App\Services\Documents\UserDocumentGenerator;
 use App\Utils\ProfilePictureUtil;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
@@ -88,11 +89,10 @@ class UserController extends Controller {
         ])
         ->get();
 
-      return Pdf::loadView('shared.users.pdf', [
-        'users' => $users,
-      ])
-        ->setPaper('a4', 'landscape')
-        ->stream('users.pdf');
+      return app(UserDocumentGenerator::class)->download(
+        ['users' => $users],
+        'users.docx',
+      );
     }
 
     $users = $query
@@ -101,7 +101,7 @@ class UserController extends Controller {
         'supervisorDetail',
         'instructorDetail',
       ])
-      ->paginate(20)
+      ->paginate(10)
       ->withQueryString();
 
     return view('shared.users.index', [
@@ -114,7 +114,7 @@ class UserController extends Controller {
   public function create(): View {
     Gate::authorize('create', [User::class, UserRole::STUDENT]);
 
-    return view("shared.users.create");
+    return view("shared.users.form");
   }
 
   public function store(UserRequest $request, ActivityService $activityService) {
@@ -204,7 +204,7 @@ class UserController extends Controller {
     $role = $actor->role;
 
     return redirect()
-      ->route("web.{$role->value}.users.index")
+      ->route("{$role->value}.users.index")
       ->with('success', 'User created successfully.');
   }
 
@@ -217,7 +217,7 @@ class UserController extends Controller {
   public function edit(User $user): View {
     Gate::authorize('update', $user);
 
-    return view("shared.users.edit", compact("user"));
+    return view("shared.users.form", compact("user"));
   }
 
   public function update(UserRequest $request, User $user, ActivityService $activityService) {
@@ -323,7 +323,7 @@ class UserController extends Controller {
     $role = $actor->role;
 
     return redirect()
-      ->route("web.{$role->value}.users.index")
+      ->route("{$role->value}.users.index")
       ->with('success', 'User updated successfully.');
   }
 
@@ -338,7 +338,7 @@ class UserController extends Controller {
     $role = $actor->role;
 
     return redirect()
-      ->route("web.{$role->value}.users.index")
+      ->route("{$role->value}.users.index")
       ->with("success", "User deleted successfully.");
   }
 

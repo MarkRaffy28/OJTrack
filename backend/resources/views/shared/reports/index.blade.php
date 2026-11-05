@@ -32,7 +32,7 @@
 
 @if (isset($reports))
   @section ("header_print", "")
-  @section ("header_create_route", route("web.{$currentRole}.reports.create"))
+  @section ("header_create_route", route("{$currentRole}.reports.create"))
   @section ("header_create_button_text", "Create Report")
   @section ("header_filters")
     <x-search-filter :filters="$filters" :showSearch="false" :showDateRange="true" />
@@ -155,7 +155,7 @@
 
               <x-table.cell>
                 <span class="text-text-muted inline-flex items-center gap-1"
-                  ><span class="material-symbols-outlined text-sm">attach_file</span>{{
+                  ><span class="material-symbols-outlined material-symbols-sm">attach_file</span>{{
                     count(
                       $report->document_paths ?? [],
                     )

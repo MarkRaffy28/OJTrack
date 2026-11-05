@@ -20,6 +20,8 @@ export const AttendanceSchema = z
     id: z.number(),
     ojt: OJTSummarySchema,
     date: z.iso.date(),
+    overtimeHours: z.number().default(0),
+    overtimeApproved: z.boolean().default(false),
   })
   .extend(AttendanceTimesSchema.shape);
 

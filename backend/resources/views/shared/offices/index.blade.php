@@ -9,7 +9,7 @@
 @section ("header_description", "Manage offices.")
 
 @section ("header_print", "")
-@section ("header_create_route", route("web.{$currentRole}.offices.create"))
+@section ("header_create_route", route("{$currentRole}.offices.create"))
 
 @section ("header_filters")
   <x-search-filter searchPlaceholder="Search Offices..." :filters="$filters" />

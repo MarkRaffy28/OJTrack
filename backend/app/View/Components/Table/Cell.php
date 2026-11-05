@@ -12,8 +12,9 @@ class Cell extends BaseComponent {
   public ?string $href = null;
 
   public function __construct(
-    public ?object $model = null,
     public string $alignment = 'center',
+    public ?string $class = null,
+    public ?object $model = null,
   ) {
     $this->alignmentClass = match ($this->alignment) {
       'left' => 'justify-start',
@@ -30,7 +31,7 @@ class Cell extends BaseComponent {
     }
 
     $resource = Str::kebab(class_basename($this->model)) . 's';
-    $prefix = "web.{$this->currentRole->value}.{$resource}";
+    $prefix = "{$this->currentRole->value}.{$resource}";
 
     $this->href = route("{$prefix}.show", $this->model);
   }

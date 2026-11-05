@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ $title }} – OJTrack</title>
+  <title>{{ $title }} – {{ config("app.name") }}</title>
   <style>
     body {
       font-family: Arial, Helvetica, sans-serif;
@@ -176,7 +176,7 @@
         <div class="security-note">
           <p>
             <strong>&#9888; Never share this code</strong>
-            OJTrack will never ask for your OTP via phone or chat.
+            {{ config("app.name") }} will never ask for your OTP via phone or chat.
             If you didn't request this, you can safely ignore this email.
           </p>
         </div>

@@ -20,6 +20,7 @@ class OfficeSeeder extends Seeder {
       'morning_out' => '12:00:00',
       'afternoon_in' => '13:00:00',
       'afternoon_out' => '17:00:00',
+      'overtime_cutoff' => '17:30:00',
     ]);
 
     Office::updateOrCreate(['name' => 'Municipal Government Office'], [
@@ -32,6 +33,7 @@ class OfficeSeeder extends Seeder {
       'morning_out' => '12:00:00',
       'afternoon_in' => '13:00:00',
       'afternoon_out' => '17:00:00',
+      'overtime_cutoff' => '17:30:00',
     ]);
 
     Office::updateOrCreate(['name' => 'ABC Computer Services'], [
@@ -44,6 +46,7 @@ class OfficeSeeder extends Seeder {
       'morning_out' => '12:00:00',
       'afternoon_in' => '13:00:00',
       'afternoon_out' => '17:00:00',
+      'overtime_cutoff' => '17:30:00',
     ]);
   }
 }

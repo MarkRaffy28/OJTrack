@@ -14,9 +14,9 @@ class TimeService {
    * Determine and log the next available attendance slot based on current GMT+8 time and constraints:
    * - morning in:    >= office->morning_in (falls back to 07:30 if not set)
    * - morning out:   >= morning_in + 1 min, < 13:00
-   * - afternoon in:  > 12:00, <= 17:30
-   * - afternoon out: >= afternoon_in + 1 min, <= 17:30
-   * - overall window: office->morning_in (or 07:30) – 17:30
+   * - afternoon in:  > 12:00, <= the office overtime cutoff
+   * - afternoon out: >= afternoon_in + 1 min, <= the office overtime cutoff
+   * - overall window: office->morning_in (or 07:30) – the office overtime cutoff
    */
   public function logNextSlot(Attendance $attendance, ?Carbon $now = null, bool $isVerified = false): Attendance {
     $now = ($now ?? Carbon::now(self::TIMEZONE))->setTimezone(self::TIMEZONE);
@@ -32,7 +32,6 @@ class TimeService {
     $sevenThirtyAm = Carbon::today(self::TIMEZONE)->setTime(7, 30, 0);
     $twelvePm      = Carbon::today(self::TIMEZONE)->setTime(12, 0, 0);
     $onePm         = Carbon::today(self::TIMEZONE)->setTime(13, 0, 0);
-    $fiveThirtyPm  = Carbon::today(self::TIMEZONE)->setTime(17, 30, 0);
 
     // Resolve office schedule (always eager-loaded via Attendance::getWith)
     $office = $attendance->relationLoaded('ojt') && $attendance->ojt?->relationLoaded('office')
@@ -46,15 +45,22 @@ class TimeService {
         )
       : $sevenThirtyAm;
 
+    // Keep 5:30 PM as the fallback for offices created before the setting existed.
+    $overtimeCutoff = $office?->overtime_cutoff
+      ? Carbon::today(self::TIMEZONE)->setTimeFromTimeString(
+          Carbon::parse($office->overtime_cutoff)->format('H:i:s')
+        )
+      : Carbon::today(self::TIMEZONE)->setTime(17, 30, 0);
+
     // Global window guard
     if ($now->lessThan($sevenThirtyAm)) {
       throw ValidationException::withMessages([
         'attendance' => ['Attendance logging is only allowed from 7:30 AM.'],
       ]);
     }
-    if ($now->greaterThan($fiveThirtyPm)) {
+    if ($now->greaterThan($overtimeCutoff)) {
       throw ValidationException::withMessages([
-        'attendance' => ['Attendance logging is only allowed until 5:30 PM.'],
+        'attendance' => ['Attendance logging is only allowed until ' . $overtimeCutoff->format('g:i A') . '.'],
       ]);
     }
 

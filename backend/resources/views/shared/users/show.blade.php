@@ -8,7 +8,7 @@
 @section ("header_title", "View User")
 @section ("header_description", "Viewing details for {$user->full_name}.")
 
-@section ("header_edit_route", route("web.{$currentRole}.users.edit", $user))
+@section ("header_edit_route", route("{$currentRole}.users.edit", $user))
 @section ("header_go_back", "")
 
 @section ("content")

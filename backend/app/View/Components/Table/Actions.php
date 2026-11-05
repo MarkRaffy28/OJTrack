@@ -53,7 +53,7 @@ class Actions extends BaseComponent {
 
   private function generateRoutes(): void {
     $resource = $this->routePrefix ?: Str::kebab(class_basename($this->model)) . 's';
-    $prefix = "web.{$this->role}.{$resource}";
+    $prefix = "{$this->role}.{$resource}";
 
     $routeMap = [
       'view'   => fn() => $this->viewRoute ?: route("{$prefix}.show", $this->model),

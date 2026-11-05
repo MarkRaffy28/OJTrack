@@ -100,7 +100,7 @@
           <div class="flex items-center justify-between gap-2">
             <p class="text-text-muted text-xs font-medium tracking-wider uppercase">{{ $label }}</p>
             <span
-              class="material-symbols-outlined text-primary-600 text-lg"
+              class="material-symbols-outlined text-primary-600 material-symbols-lg"
               aria-hidden="true"
               >{{ $icon }}</span
             >

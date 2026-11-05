@@ -75,7 +75,7 @@ class SettingController extends Controller {
     $activityService->log(Auth::user(), ActivityAction::SETTING_UPDATED);
 
     return redirect()
-      ->route("web.admin.settings.index")
+      ->route("admin.settings.index")
       ->with('success', 'Settings updated successfully.');
   }
 }

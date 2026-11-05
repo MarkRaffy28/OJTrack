@@ -311,7 +311,14 @@ class AttendanceController extends Controller {
 
     $attendance->ojt_id = $ojt->id;
 
-    $this->timeService->logNextSlot($attendance, null, true);
+    // A manual checkout may already exist. In that case, QR acts as the
+    // supervisor's verification instead of attempting to create a duplicate
+    // attendance slot.
+    if ($attendance->afternoon_out && !$attendance->afternoon_out_verified) {
+      $attendance->afternoon_out_verified = true;
+    } else {
+      $this->timeService->logNextSlot($attendance, null, true);
+    }
 
     $attendance->save();
 

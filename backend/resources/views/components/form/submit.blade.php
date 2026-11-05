@@ -9,7 +9,7 @@
   data-submit-button
   data-loading-text="{{ $loadingText }}"
 >
-  <span data-submit-spinner class="material-symbols-outlined !hidden animate-spin">
+  <span data-submit-spinner class="material-symbols-outlined material-symbols-md hidden! animate-spin">
     progress_activity
   </span>
 

@@ -1,5 +1,5 @@
 @php
-  $route = "web.{$currentRole}.offices.update";
+  $route = "{$currentRole}.offices.update";
 @endphp
 
 @extends ("layouts.app")
@@ -93,6 +93,9 @@
               <div class="min-w-0">
                 <x-fields.office field="afternoon_out" :office="$office" />
               </div>
+              <div class="min-w-0 sm:col-span-2">
+                <x-fields.office field="overtime_cutoff" :office="$office" label="Overtime Cutoff (latest checkout)" />
+              </div>
             </div>
           </section>
         </div>
@@ -102,7 +105,7 @@
           class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
         >
           <a
-            href="{{ route("web.{$currentRole}.offices.index") }}"
+            href="{{ route("{$currentRole}.offices.index") }}"
             class="border-border bg-surface text-text hover:bg-background inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           >
             Cancel

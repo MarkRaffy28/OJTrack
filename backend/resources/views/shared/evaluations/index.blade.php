@@ -28,7 +28,7 @@
   @endsection
   @section ("header_create_route",
     route(
-      "web." . $role . ".evaluations.create",
+      "" . $role . ".evaluations.create",
       array_filter(["program" => $currentProgram, "section" => $currentSection])
     ))
   @section ("header_create_button_text", "Create Evaluation")
@@ -108,7 +108,7 @@
               @if ($supervisorDetail)
                 <a
                   class="underline underline-offset-4 {{ in_array($supervisorDetail->status->value, ['submitted', 'finalized'], true) ? 'text-green-700' : 'text-amber-700' }}"
-                  href="{{ route('web.' . $role . '.evaluations.detail.show', [$studentOjt, $supervisorDetail]) }}"
+                  href="{{ route('' . $role . '.evaluations.detail.show', [$studentOjt, $supervisorDetail]) }}"
                   >{{
                     ucfirst(
                       $supervisorDetail->status->value,
@@ -118,7 +118,7 @@
               @else
                 <a
                   class="text-gray-500 underline underline-offset-4"
-                  href="{{ route('web.' . $role . '.evaluations.show', $studentOjt) }}"
+                  href="{{ route('' . $role . '.evaluations.show', $studentOjt) }}"
                   >Pending</a
                 >
               @endif
@@ -129,7 +129,7 @@
                 @if ($detail)
                   <a
                     class="underline underline-offset-4 {{ in_array($detail->status->value, ['submitted', 'finalized'], true) ? 'text-green-700' : 'text-amber-700' }}"
-                    href="{{ route('web.' . $role . '.evaluations.detail.show', [$studentOjt, $detail]) }}"
+                    href="{{ route('' . $role . '.evaluations.detail.show', [$studentOjt, $detail]) }}"
                     >{{
                       ucfirst(
                         $detail->status->value,
@@ -139,7 +139,7 @@
                 @else
                   <a
                     class="text-gray-500 underline underline-offset-4"
-                    href="{{ route('web.' . $role . '.evaluations.detail.create', [$studentOjt, $period]) }}"
+                    href="{{ route('' . $role . '.evaluations.detail.create', [$studentOjt, $period]) }}"
                     >Pending</a
                   >
                 @endif

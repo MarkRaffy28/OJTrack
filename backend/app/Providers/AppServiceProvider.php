@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Enums\UserRole;
 use App\Models\Activity;
 use App\Models\Backup;
 use App\Models\EvaluationCriteriaConfig;
@@ -29,11 +28,15 @@ use App\Policies\OjtPolicy;
 use App\Policies\ReportPolicy;
 use App\Policies\ReportAssignmentPolicy;
 use App\Policies\StudentOjtPolicy;
+use App\Policies\DeveloperConsolePolicy;
 use App\Services\DatabaseBackupService;
 use App\Support\EvaluationCriteria;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -65,16 +68,44 @@ class AppServiceProvider extends ServiceProvider {
     Gate::policy(StudentOjt::class, StudentOjtPolicy::class);
     Gate::policy(User::class, UserPolicy::class);
 
+    Gate::define('access-developer-console', [DeveloperConsolePolicy::class, 'access']);
+
+    RateLimiter::for('api', function (Request $request) {
+      return Limit::perMinute(60)
+        ->by($request->user()?->id ?: $request->ip());
+    });
+
+    RateLimiter::for('auth', function (Request $request) {
+      return Limit::perMinute(5)
+        ->by($request->ip());
+    });
+
+    RateLimiter::for('sensitive', function (Request $request) {
+      return Limit::perMinute(10)
+        ->by($request->user()?->id ?: $request->ip());
+    });
+
+    RateLimiter::for('web-auth', function (Request $request) {
+      return Limit::perMinute(5)
+        ->by(strtolower($request->input('email', '')) . '|' . $request->ip());
+    });
+
+    RateLimiter::for('web-sensitive', function (Request $request) {
+      return Limit::perMinute(20)
+        ->by($request->user()?->id ?: $request->ip());
+    });
+
     Model::shouldBeStrict($this->app->environment('local', 'testing'));
 
     View::composer('*', function ($view) {
       $user = Auth::user();
 
       $view->with([
-        'currentRole' => $user?->role->value,
-        'isSupervisor' => $user?->isSupervisor(),
+        'currentUser' => $user,
         'isAdmin' => $user?->isAdmin(),
+        'isSupervisor' => $user?->isSupervisor(),
         'isSuperAdmin' => $user?->isSuperAdmin(),
+        'currentRole' => $user?->role->value,
       ]);
     });
   }

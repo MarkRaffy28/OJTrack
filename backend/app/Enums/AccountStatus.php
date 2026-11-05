@@ -11,7 +11,15 @@ enum AccountStatus: string {
     return str($this->name)
       ->lower()
       ->replace('_', ' ')
-      ->title();
+      ->ucwords();
+  }
+
+  public function class(): string {
+    return match ($this) {
+      self::ACTIVE => 'bg-success-50 text-success-700',
+      self::SUSPENDED => 'bg-danger-50 text-danger-700',
+      default => 'bg-slate-100 text-text-muted',
+    };
   }
 
   public static function options(?array $only = null): array {
@@ -31,13 +39,5 @@ enum AccountStatus: string {
       ],
       array_values($cases)
     );
-  }
-
-  public function badgeClass(): string {
-    return match ($this) {
-      self::ACTIVE => 'bg-success-50 text-success-700',
-      self::SUSPENDED => 'bg-danger-50 text-danger-700',
-      default => 'bg-slate-100 text-text-muted',
-    };
   }
 }

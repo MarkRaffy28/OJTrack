@@ -24,6 +24,7 @@ abstract class Controller {
 
     return $query->when(
       is_array($cohort) && isset($cohort['academic_year'], $cohort['term']),
+
       fn (Builder $query) => $query->whereHas($relation, fn (Builder $ojt) => $ojt
         ->where('academic_year', $cohort['academic_year'])
         ->where('term', $cohort['term']))

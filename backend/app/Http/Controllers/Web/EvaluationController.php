@@ -11,17 +11,18 @@ use App\Models\EvaluationDetail;
 use App\Models\Office;
 use App\Models\StudentDetail;
 use App\Models\StudentOjt;
+use App\Services\Documents\EvaluationDocumentGenerator;
 use App\Support\EvaluationCriteria;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Symfony\Component\HttpFoundation\Response;
 
 class EvaluationController extends Controller {
-  public function index(Request $request): View {
+  public function index(Request $request): View|Response {
     Gate::authorize('viewAny', Evaluation::class);
     $viewer = Auth::user();
     $program = $request->input('program');
@@ -52,7 +53,7 @@ class EvaluationController extends Controller {
         'sections' => $sections,
         'totalStudentsCount' => $totalStudentsCount,
         'breadcrumbs' => [
-          ['label' => 'Evaluations', 'url' => route('web.' . $viewer->role->value . '.evaluations.index')],
+          ['label' => 'Evaluations', 'url' => route('' . $viewer->role->value . '.evaluations.index')],
           ['label' => 'All Sections', 'url' => null],
         ],
       ]);
@@ -69,8 +70,14 @@ class EvaluationController extends Controller {
       ->orderBy('id');
 
     if ($request->boolean('print')) {
-      return Pdf::loadView('shared.evaluations.print', ['evaluations' => $query->get(), 'isAdmin' => $isAdmin])
-        ->setPaper('a4', 'portrait')->stream('evaluations.pdf');
+      $evaluations = $query
+        ->with(['student', 'office', 'supervisor', 'evaluation'])
+        ->get();
+
+      return app(EvaluationDocumentGenerator::class)->download(
+        ['evaluations' => $evaluations],
+        'evaluations.docx',
+      );
     }
 
     $students = $query->paginate(10)->withQueryString();
@@ -91,43 +98,43 @@ class EvaluationController extends Controller {
     ]);
 
     $studentsForFilter = StudentOjt::query()
-    ->with('student')
-    ->tap(fn($q) => $this->selectedCohortQuery($q, 'ojt'))
-    ->whereHas('student', fn($q) => $q->visibleTo($viewer))
-    ->get();
+      ->with('student')
+      ->tap(fn($q) => $this->selectedCohortQuery($q, 'ojt'))
+      ->whereHas('student', fn($q) => $q->visibleTo($viewer))
+      ->get();
 
     $filters = [
       [
-        'name' => 'student_id', 
-        'label' => 'Student', 
-        'options' => $studentsForFilter->map(fn($item) => 
+        'name' => 'student_id',
+        'label' => 'Student',
+        'options' => $studentsForFilter->map(fn($item) =>
           [
-            'value' => $item->student_id, 
+            'value' => $item->student_id,
             'label' => $item->student?->full_name
           ])
           ->unique('value')
           ->values()
-          ->all(), 
+          ->all(),
         'searchable' => true
-        ],
+      ],
       [
-        'name' => 'office_id', 
-        'label' => 'Office', 
+        'name' => 'office_id',
+        'label' => 'Office',
         'options' => Office::query()
           ->orderBy('name')
           ->get()
-          ->map(fn($office) => 
+          ->map(fn($office) =>
             [
-              'value' => $office->id, 
+              'value' => $office->id,
               'label' => $office->name
             ])
-            ->all(), 
+          ->all(),
         'searchable' => true
       ],
     ];
 
     $breadcrumbs = [
-      ['label' => 'Evaluations', 'url' => route('web.' . $viewer->role->value . '.evaluations.index')],
+      ['label' => 'Evaluations', 'url' => route('' . $viewer->role->value . '.evaluations.index')],
     ];
 
     if ($allEvaluations) {
@@ -135,18 +142,18 @@ class EvaluationController extends Controller {
     } elseif ($program && $section) {
       $breadcrumbs[] = [
         'label' => 'All Sections',
-        'url' => route('web.' . $viewer->role->value . '.evaluations.index'),
+        'url' => route('' . $viewer->role->value . '.evaluations.index'),
       ];
       $breadcrumbs[] = ['label' => $program . ' - ' . $section, 'url' => null];
     }
 
     return view('shared.evaluations.index', [
       'evaluations' => $students,
-      'headers' => $headers, 
-      'filters' => $filters, 
-      'currentProgram' => $program, 
+      'headers' => $headers,
+      'filters' => $filters,
+      'currentProgram' => $program,
       'currentSection' => $section,
-      'isAdmin' => $isAdmin, 
+      'isAdmin' => $isAdmin,
       'breadcrumbs' => $breadcrumbs,
     ]);
   }
@@ -167,7 +174,7 @@ class EvaluationController extends Controller {
     $this->assertDetail($studentOjt, $evaluationDetail);
     Gate::authorize('view', $studentOjt);
     $evaluationDetail->load('evaluator');
-    return view('shared.evaluations.detail', ['studentOjt' => $studentOjt, 'evaluationDetail' => $evaluationDetail, 'breadcrumbs' => [['label' => 'Evaluations', 'url' => route('web.' . Auth::user()->role->value . '.evaluations.index')], ['label' => $studentOjt->student?->full_name, 'url' => route('web.' . Auth::user()->role->value . '.evaluations.show', $studentOjt)], ['label' => 'Evaluation']]]);
+    return view('shared.evaluations.detail', ['studentOjt' => $studentOjt, 'evaluationDetail' => $evaluationDetail, 'breadcrumbs' => [['label' => 'Evaluations', 'url' => route('' . Auth::user()->role->value . '.evaluations.index')], ['label' => $studentOjt->student?->full_name, 'url' => route('' . Auth::user()->role->value . '.evaluations.show', $studentOjt)], ['label' => 'Evaluation']]]);
   }
 
   public function edit(StudentOjt $studentOjt): View|RedirectResponse {
@@ -182,7 +189,7 @@ class EvaluationController extends Controller {
     $this->authorizeAdmin();
     Gate::authorize('view', $studentOjt);
     $studentOjt->evaluation?->delete();
-    return redirect()->route('web.' . Auth::user()->role->value . '.evaluations.index')->with('success', 'Evaluations deleted successfully.');
+    return redirect()->route('' . Auth::user()->role->value . '.evaluations.index')->with('success', 'Evaluations deleted successfully.');
   }
 
   public function detailEdit(StudentOjt $studentOjt, EvaluationDetail $evaluationDetail): View {
@@ -197,7 +204,7 @@ class EvaluationController extends Controller {
     $this->assertDetail($studentOjt, $evaluationDetail);
     $this->authorizeAdmin();
     $evaluationDetail->delete();
-    return redirect()->route('web.' . Auth::user()->role->value . '.evaluations.show', $studentOjt)->with('success', 'Evaluation deleted successfully.');
+    return redirect()->route('' . Auth::user()->role->value . '.evaluations.show', $studentOjt)->with('success', 'Evaluation deleted successfully.');
   }
 
   public function create(Request $request, ?StudentOjt $studentOjt = null): View {
@@ -243,7 +250,7 @@ class EvaluationController extends Controller {
     Gate::authorize('view', $studentOjt);
     $evaluationDetail = $this->detail($studentOjt, 'instructor', $period);
     if ($evaluationDetail?->exists && $evaluationDetail->status !== EvaluationStatus::DRAFT)
-      return redirect()->route('web.' . Auth::user()->role->value . '.evaluations.detail.show', [$studentOjt, $evaluationDetail]);
+      return redirect()->route('' . Auth::user()->role->value . '.evaluations.detail.show', [$studentOjt, $evaluationDetail]);
     return view('shared.evaluations.edit', compact('studentOjt', 'evaluationDetail'));
   }
 
@@ -267,7 +274,8 @@ class EvaluationController extends Controller {
       $type = $request->validate([EvaluationField::EVALUATION_TYPE->value => ['required', 'in:supervisor,instructor']])[EvaluationField::EVALUATION_TYPE->value];
       $period = $request->input(EvaluationField::PERIOD->value) ?: null;
       abort_unless(($type === 'supervisor' && $period === null) || ($type === 'instructor' && in_array($period, ['midterm', 'final'], true)), 422, 'Invalid evaluation type and period combination.');
-      if ($detail?->evaluation && $detail->evaluation->details()->where('id', '!=', $detail->id)->where('evaluation_type', $type)->where('period', $period)->exists()) abort(422, 'That evaluation type and period already exists.');
+      if ($detail?->evaluation && $detail->evaluation->details()->where('id', '!=', $detail->id)->where('evaluation_type', $type)->where('period', $period)->exists())
+        abort(422, 'That evaluation type and period already exists.');
     }
     $data = $this->validated($request);
     $evaluation = $studentOjt->evaluation()->firstOrCreate([]);
@@ -275,7 +283,7 @@ class EvaluationController extends Controller {
     $detail->evaluator_id = $type === 'supervisor' ? $studentOjt->supervisor?->id : Auth::id();
     abort_if(!$detail->evaluator_id, 422, 'An evaluator is not assigned to this OJT.');
     $detail->fill(['evaluation_type' => $type, 'period' => $period, 'criteria_scores' => $data['criteria_scores'], 'remarks' => $data['remarks'] ?? null, 'total_points' => array_sum($data['criteria_scores']), 'status' => $data['status'], 'submitted_at' => in_array($data['status'], ['submitted', 'finalized'], true) ? ($detail->submitted_at ?? now()) : null])->save();
-    return redirect()->route('web.' . Auth::user()->role->value . '.evaluations.detail.show', [$studentOjt, $detail])->with('success', 'Evaluation saved successfully.');
+    return redirect()->route('' . Auth::user()->role->value . '.evaluations.detail.show', [$studentOjt, $detail])->with('success', 'Evaluation saved successfully.');
   }
 
   private function validated(Request $request): array {

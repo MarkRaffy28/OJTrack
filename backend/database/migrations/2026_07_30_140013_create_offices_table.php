@@ -21,6 +21,7 @@ return new class extends Migration {
       $table->time('morning_out')->default('12:00:00');
       $table->time('afternoon_in')->default('13:00:00');
       $table->time('afternoon_out')->default('17:00:00');
+      $table->time('overtime_cutoff')->default('17:30:00');
 
       $table->softDeletes();
       $table->timestamps();

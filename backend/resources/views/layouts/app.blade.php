@@ -1,23 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/png" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200"
-    rel="stylesheet"
-  />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
 
   <title>
     @hasSection ("title")
       @yield ("title")
-      | OJTrack
+      | {{ config("app.name") }}
     @else
-      OJTrack
+      {{ config("app.name") }}
     @endif
   </title>
+
+  <link rel="shortcut icon" href="{{ asset('images/logo.png') }}" type="image/png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200"
+    rel="stylesheet"
+  />
 
   <link
     rel="stylesheet"
@@ -26,6 +31,11 @@
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Chewy&family=Chiron+GoRound+TC:wght@200..900&family=Chiron+Sung+HK:ital,wght@0,200..900;1,200..900&family=East+Sea+Dokdo&family=Gamja+Flower&family=Gothic+A1&family=Hi+Melody&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Jua&family=Pinyon+Script&family=Poor+Story&family=Single+Day&display=swap"
+    rel="stylesheet"
   />
 
   @vite (["resources/css/app.css", "resources/js/app.js"])
@@ -47,7 +57,7 @@
   </div>
 
   @if (auth()->check() &&
-    !request()->routeIs("web.login*", "web.register*", "login*", "register*") &&
+    !request()->routeIs("login*", "register*", "login*", "register*") &&
     !request()->is("web/login*", "web/register*", "login*", "register*"))
     <div
       class="flex h-screen overflow-hidden print:block print:h-auto print:overflow-visible"

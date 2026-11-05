@@ -11,4 +11,5 @@ enum OfficeField: string {
   case MORNING_OUT = 'morning_out';
   case AFTERNOON_IN = 'afternoon_in';
   case AFTERNOON_OUT = 'afternoon_out';
+  case OVERTIME_CUTOFF = 'overtime_cutoff';
 }

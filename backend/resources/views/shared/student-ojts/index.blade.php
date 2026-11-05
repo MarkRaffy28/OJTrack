@@ -215,7 +215,7 @@
               :actions="['view', 'evaluation']"
               :evaluationRoute="
                 route(
-    'web.' .
+    '' .
       $currentRole .
       '.evaluations.' .
       ($studentOjt->evaluation ? 'show' : 'create-for'),

@@ -9,12 +9,12 @@
   $title = ($evaluationDetail?->exists ? 'Edit ' : 'Create ') . $title;
   $isCreate = isset($studentOjts);
   $action = $evaluationDetail?->exists
-    ? route("web." . $role . ".evaluations.detail.update", [$studentOjt, $evaluationDetail])
+    ? route("" . $role . ".evaluations.detail.update", [$studentOjt, $evaluationDetail])
     : ($period
-      ? route("web." . $role . ".evaluations.detail.store", [$studentOjt, $period])
+      ? route("" . $role . ".evaluations.detail.store", [$studentOjt, $period])
       : ($isCreate
-        ? route("web." . $role . ".evaluations.store")
-        : route("web." . $role . ".evaluations.store-for", $studentOjt)));
+        ? route("" . $role . ".evaluations.store")
+        : route("" . $role . ".evaluations.store-for", $studentOjt)));
   $scores = $evaluationDetail?->criteria_scores ?? [];
   $criteria = \App\Support\EvaluationCriteria::get();
   $isAdmin = auth()->user()->isAdmin() || auth()->user()->isSuperAdmin();
@@ -253,7 +253,7 @@
           class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
         >
           <a
-            href="{{ route('web.' . $role . '.evaluations.show', $studentOjt) }}"
+            href="{{ route('' . $role . '.evaluations.show', $studentOjt) }}"
             class="border-border bg-surface text-text hover:bg-background inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
           >
             Cancel

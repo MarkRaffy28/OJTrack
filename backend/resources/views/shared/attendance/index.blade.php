@@ -46,7 +46,7 @@
   @section ("header_print", "")
   @section ("header_create_route",
     route(
-      "web.{$role}.attendance.create",
+      "{$role}.attendance.create",
       array_filter([
         "office_id" => request()->query("office_id"),
         "program" => request()->query("program"),
@@ -183,7 +183,7 @@
                       @endphp
                       <form
                         method="POST"
-                        action="{{ route("web.{$role}.attendance.toggle-slot", [$attendance, $slot]) }}"
+                        action="{{ route("{$role}.attendance.toggle-slot", [$attendance, $slot]) }}"
                         class="inline print:hidden"
                       >
                         @csrf
@@ -233,7 +233,7 @@
                       @endphp
                       <form
                         method="POST"
-                        action="{{ route("web.{$role}.attendance.toggle-slot", [$attendance, $slot]) }}"
+                        action="{{ route("{$role}.attendance.toggle-slot", [$attendance, $slot]) }}"
                         class="inline print:hidden"
                       >
                         @csrf
@@ -331,7 +331,7 @@
                   @endphp
                   <form
                     method="POST"
-                    action="{{ route("web.{$role}.attendance.toggle", $attendance) }}"
+                    action="{{ route("{$role}.attendance.toggle", $attendance) }}"
                   >
                     @csrf
                     @method ("PATCH")

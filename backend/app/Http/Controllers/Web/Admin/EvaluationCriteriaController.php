@@ -31,6 +31,6 @@ class EvaluationCriteriaController extends Controller {
 
     $activityService->log(Auth::user(), ActivityAction::EVALUATION_CRITERIA_UPDATED, $config);
 
-    return redirect()->route('web.admin.settings.evaluation-criterias.edit')->with('success', 'Evaluation criteria updated successfully.');
+    return redirect()->route('admin.settings.evaluation-criterias.edit')->with('success', 'Evaluation criteria updated successfully.');
   }
 }

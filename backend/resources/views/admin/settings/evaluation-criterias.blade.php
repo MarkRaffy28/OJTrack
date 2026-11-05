@@ -4,7 +4,7 @@
 @section('header_description', 'Manage criteria used by supervisor evaluations on web and mobile.')
 @section('content')
   <div class="max-w-5xl">
-    <form method="POST" action="{{ route('web.admin.settings.evaluation-criterias.update') }}" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" id="criteria-form">
+    <form method="POST" action="{{ route('admin.settings.evaluation-criterias.update') }}" class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm" id="criteria-form">
       @csrf @method('PUT')
       <div class="mb-5 flex items-center justify-between gap-4">
         <div><h2 class="text-lg font-semibold text-gray-900">Assessment Criteria</h2><p class="text-sm text-gray-500">Distribute exactly 100 points among the criteria.</p></div>

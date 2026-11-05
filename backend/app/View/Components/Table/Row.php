@@ -21,7 +21,7 @@ class Row extends BaseComponent {
 
   private function generateRoute(): void {
     $resource = $this->routePrefix ?: Str::kebab(class_basename($this->model)) . 's';
-    $prefix = "web.{$this->currentRole->value}.{$resource}";
+    $prefix = "{$this->currentRole->value}.{$resource}";
 
     // Use the route's named model parameter. Passing the model positionally
     // can leave named placeholders such as {studentOjt} unresolved.

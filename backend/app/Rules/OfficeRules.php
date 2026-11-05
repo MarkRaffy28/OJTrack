@@ -68,4 +68,12 @@ class OfficeRules {
       "after:afternoon_in",
     ];
   }
+
+  public static function overtimeCutoff(): array {
+    return [
+      "required",
+      "date_format:H:i",
+      "after:afternoon_out",
+    ];
+  }
 }

@@ -5,7 +5,7 @@
 @section('title', 'OJT Periods')
 @section('header_title', 'OJT Periods')
 @section('header_description', 'Create and manage academic year and term combinations used for OJT assignments.')
-@section('header_create_route', route("web.{$role}.ojts.create"))
+@section('header_create_route', route("{$role}.ojts.create"))
 @section('header_create_button_text', 'Create OJT Period')
 
 @section('content')

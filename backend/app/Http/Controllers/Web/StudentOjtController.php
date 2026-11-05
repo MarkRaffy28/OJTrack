@@ -12,12 +12,13 @@ use App\Models\Setting;
 use App\Models\StudentDetail;
 use App\Models\StudentOjt;
 use App\Models\User;
+use App\Services\Documents\StudentOjtDocumentGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
 
 class StudentOjtController extends Controller {
 
@@ -113,7 +114,7 @@ class StudentOjtController extends Controller {
       $breadcrumbs = [
         [
           'label' => 'Student Ojts',
-          'url' => route("web.{$viewer->role->value}.student-ojts.index"),
+          'url' => route("{$viewer->role->value}.student-ojts.index"),
         ],
       ];
 
@@ -228,11 +229,10 @@ class StudentOjtController extends Controller {
     if ($request->boolean('print')) {
       $studentOjts = $query->get();
 
-      return Pdf::loadView('shared.student-ojts.pdf', [
-        'studentOjts' => $studentOjts,
-      ])
-        ->setPaper('a4', 'landscape')
-        ->stream('student_ojts.pdf');
+      return app(StudentOjtDocumentGenerator::class)->download(
+        ['studentOjts' => $studentOjts],
+        'student-ojts.docx',
+      );
     }
 
     $studentOjts = $query
@@ -244,16 +244,16 @@ class StudentOjtController extends Controller {
     $breadcrumbs = [
       [
         'label' => 'Student Ojts',
-        'url' => route("web.{$viewer->role->value}.student-ojts.index"),
+        'url' => route("{$viewer->role->value}.student-ojts.index"),
       ],
     ];
 
     if ($allOffices) {
-      $breadcrumbs[] = ['label' => 'All Offices', 'url' => route("web.{$viewer->role->value}.student-ojts.index", ['all_offices' => 1])];
+      $breadcrumbs[] = ['label' => 'All Offices', 'url' => route("{$viewer->role->value}.student-ojts.index", ['all_offices' => 1])];
     } elseif ($office) {
       $breadcrumbs[] = [
         'label' => $office->name,
-        'url' => route("web.{$viewer->role->value}.student-ojts.index", ['office_id' => $office->id]),
+        'url' => route("{$viewer->role->value}.student-ojts.index", ['office_id' => $office->id]),
       ];
     }
 
@@ -329,7 +329,7 @@ class StudentOjtController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.student-ojts.index")
+      ->route("{$role->value}.student-ojts.index")
       ->with("success", "Assignment created successfully.");
   }
 
@@ -379,7 +379,7 @@ class StudentOjtController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.student-ojts.index")
+      ->route("{$role->value}.student-ojts.index")
       ->with("success", "Assignment updated successfully.");
   }
 
@@ -391,7 +391,7 @@ class StudentOjtController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.student-ojts.index")
+      ->route("{$role->value}.student-ojts.index")
       ->with("success", "Assignment deleted successfully.");
   }
 }

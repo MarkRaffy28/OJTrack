@@ -10,7 +10,7 @@
 @section ("title", "Attendance Details")
 @section ("header_title", "Attendance Details")
 @section ("header_description", "Detailed view of student attendance record.")
-@section ("header_edit_route", route("web.{$role}.attendance.edit", $attendance))
+@section ("header_edit_route", route("{$role}.attendance.edit", $attendance))
 @section ("header_go_back", "")
 
 @section ("content")
@@ -29,7 +29,7 @@
             </div>
           </div>
 
-          <form method="POST" action="{{ route("web.{$role}.attendance.toggle", $attendance) }}">
+          <form method="POST" action="{{ route("{$role}.attendance.toggle", $attendance) }}">
             @csrf
             @method ("PATCH")
             <button type="submit" @class([
@@ -37,7 +37,7 @@
               "bg-success-100 text-success-800 hover:bg-success-200" => $isApproved,
               "bg-warning-100 text-warning-800 hover:bg-warning-200" => !$isApproved,
             ])>
-              <span class="material-symbols-outlined text-base">{{ $isApproved ? "task_alt" : "motion_photos_paused" }}</span>
+              <span class="material-symbols-outlined material-symbols-md">{{ $isApproved ? "task_alt" : "motion_photos_paused" }}</span>
               {{ $isApproved ? "All Approved" : "Approve All" }}
             </button>
           </form>
@@ -93,7 +93,7 @@
                   @php($time = $attendance->{$field})
                   <div class="flex items-center justify-between rounded-xl border border-border bg-background p-4">
                     <div><p class="text-text-muted text-xs font-medium tracking-wider uppercase">{{ $label }}</p><p class="text-text mt-1 font-mono text-sm font-semibold">{{ $time ? \Carbon\Carbon::parse($time)->format("h:i A") : "Not logged" }}</p></div>
-                    <form method="POST" action="{{ route("web.{$role}.attendance.toggle-slot", [$attendance, $field]) }}">
+                    <form method="POST" action="{{ route("{$role}.attendance.toggle-slot", [$attendance, $field]) }}">
                       @csrf
                       @method ("PATCH")
                       <button type="submit" @disabled(!$time) @class([

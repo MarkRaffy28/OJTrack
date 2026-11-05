@@ -30,7 +30,7 @@
     ])
   }}
 >
-  <span class="material-symbols-outlined shrink-0">{{ $style["icon"] }}</span>
+  <span class="material-symbols-outlined material-symbols-md shrink-0">{{ $style["icon"] }}</span>
 
   <div class="flex-1">
     @if ($title)
@@ -43,7 +43,7 @@
   <button
     type="button"
     data-alert-dismiss
-    class="material-symbols-outlined shrink-0 rounded-md p-1 text-current/70 transition-colors hover:bg-black/5 hover:text-current"
+    class="material-symbols-outlined material-symbols-md shrink-0 rounded-md p-1 text-current/70 transition-colors hover:bg-black/5 hover:text-current"
     aria-label="Dismiss notification"
   >
     close

@@ -22,7 +22,7 @@
 
 @section ("title", "View Assignment")
 @section ("header_title", "View Assignment")
-@section ("header_edit_route", route("web.{$role}.assignments.edit", $studentOjt))
+@section ("header_edit_route", route("{$role}.assignments.edit", $studentOjt))
 @section ("header_go_back", "")
 
 @section ("content")

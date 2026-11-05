@@ -24,7 +24,7 @@
         <div class="bg-border h-8 w-px"></div>
         <img
           src="{{ asset('images/logo.png') }}"
-          alt="OJTrack logo"
+          alt="{{ config('app.name') }} logo"
           class="h-14 w-14 object-contain"
         />
         <div class="bg-border h-8 w-px"></div>
@@ -59,7 +59,7 @@
       @endif
 
       {{-- Registration Form --}}
-      <form method="POST" action="{{ route('web.register.store') }}" class="space-y-6">
+      <form method="POST" action="{{ route('register.store') }}" class="space-y-6">
         @csrf
 
         {{-- Account Information Section --}}
@@ -113,7 +113,7 @@
           <button
             type="submit"
             formmethod="POST"
-            formaction="{{ route('web.logout') }}"
+            formaction="{{ route('logout') }}"
             formnovalidate
             class="text-xs text-danger-600 hover:underline font-medium"
           >

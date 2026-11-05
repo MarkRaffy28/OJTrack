@@ -1,3 +1,4 @@
+import "./fluid-grid";
 
 $(function () {
   // Select2 search
@@ -87,19 +88,7 @@ $(function () {
       .addClass("flex");
   });
 
-  $(document).on("click", "[data-dialog-dismiss]", function () {
-    $(this).closest("[data-dialog]").removeClass("flex").addClass("hidden");
-  });
-
-  $(document).on("keydown", function (event) {
-    if (event.key !== "Escape") {
-      return;
-    }
-
-    $("[data-dialog]:visible").removeClass("flex").addClass("hidden");
-  });
-
-  // Modal Dismiss / Escape key
+  // Modal dismiss / Escape key
   $(document).on("click", "[data-dialog-dismiss]", function () {
     $(this).closest("[data-dialog]").removeClass("flex").addClass("hidden");
   });
@@ -122,12 +111,12 @@ $(function () {
     // Populate modal inputs/text dynamically
     $("#global-delete-form").attr("action", action);
     $("#global-delete-dialog-title").text(title);
-    $("#global-delete-dialog-description").text(`Are you sure you want to delete ${item}?`);
+    $("#global-delete-dialog-description").text(
+      `Are you sure you want to delete ${item}?`,
+    );
 
     // Open the single modal instance
-    $("#global-delete-dialog")
-      .removeClass("hidden")
-      .addClass("flex");
+    $("#global-delete-dialog").removeClass("hidden").addClass("flex");
   });
 
   // Filter form: omit empty params from the URL
@@ -135,14 +124,19 @@ $(function () {
     event.preventDefault();
 
     const form = $(this);
-    const query = $.param(form.serializeArray().filter((field) => field.value.trim() !== ""));
+    const query = $.param(
+      form.serializeArray().filter((field) => field.value.trim() !== ""),
+    );
 
     window.location.href = form.attr("action") + (query ? "?" + query : "");
   });
 
   // Table row links
   $(document).on("click", "[data-href]", function (event) {
-    if ($(event.target).closest("a, button, [data-dialog-open], [data-delete-trigger]").length) {
+    if (
+      $(event.target).closest("a, button, [data-dialog-open], [data-delete-trigger]")
+        .length
+    ) {
       return;
     }
     window.location.href = $(this).data("href");

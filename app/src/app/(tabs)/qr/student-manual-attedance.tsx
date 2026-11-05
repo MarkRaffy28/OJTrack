@@ -127,6 +127,9 @@ export default function StudentManualAttendanceScreen() {
             <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>
               Afternoon
             </Text>
+            <Text style={[styles.helperText, { color: theme.colors.onSurfaceVariant }]}>
+              Checkout after the scheduled afternoon end is overtime. Manual checkout remains pending until approved; QR checkout verifies it.
+            </Text>
             <AttendanceFields
               form={form}
               fields={["afternoonIn", "afternoonOut"]}
@@ -181,5 +184,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
     textTransform: "capitalize",
+  },
+  helperText: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
 });

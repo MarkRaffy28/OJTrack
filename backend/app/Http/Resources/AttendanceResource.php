@@ -32,6 +32,8 @@ class AttendanceResource extends JsonResource {
       'afternoonOutVerified' => (bool) $this->afternoon_out_verified,
 
       'totalHours' => $this->computeTotalHours(),
+      'overtimeHours' => $this->computeOvertimeHours(),
+      'overtimeApproved' => (bool) $this->afternoon_out_verified && $this->computeOvertimeHours() > 0,
     ];
   }
 
@@ -54,6 +56,25 @@ class AttendanceResource extends JsonResource {
     }
 
     return round($total, 2);
+  }
+
+  /** Calculate time after scheduled afternoon end, capped at the office cutoff. */
+  private function computeOvertimeHours(): float {
+    $office = $this->ojt?->office;
+    if (!$office || !$this->afternoon_out || !$office->afternoon_out) {
+      return 0.0;
+    }
+
+    $start = Carbon::parse($office->afternoon_out);
+    $cutoff = Carbon::parse($office->overtime_cutoff ?? '17:30:00');
+    $out = Carbon::parse($this->afternoon_out);
+
+    if ($out->lessThanOrEqualTo($start)) {
+      return 0.0;
+    }
+
+    $effectiveOut = $out->greaterThan($cutoff) ? $cutoff : $out;
+    return round(max(0, $start->diffInMinutes($effectiveOut, false)) / 60, 2);
   }
 
   /**

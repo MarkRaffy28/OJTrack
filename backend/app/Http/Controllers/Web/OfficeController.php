@@ -7,12 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\OfficeRequest;
 use App\Models\Office;
 use App\Services\ActivityService;
+use App\Services\Documents\OfficeDocumentGenerator;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Symfony\Component\HttpFoundation\Response;
 
 class OfficeController extends Controller {
   public function index(Request $request): View|Response {
@@ -44,11 +45,10 @@ class OfficeController extends Controller {
         ->withCount('supervisorDetails')
         ->get();
 
-      return Pdf::loadView('shared.offices.pdf', [
-        'offices' => $offices,
-      ])
-        ->setPaper('a4', 'landscape')
-        ->stream('offices.pdf');
+      return app(OfficeDocumentGenerator::class)->download(
+        ['offices' => $offices],
+        'offices.docx',
+      );
     }
 
     $offices = $query
@@ -63,7 +63,7 @@ class OfficeController extends Controller {
     ]);
   }
 
-   public function create(): View {
+  public function create(): View {
     Gate::authorize('create', Office::class);
 
     return view("shared.offices.create");
@@ -80,7 +80,7 @@ class OfficeController extends Controller {
     $role = $actor->role;
 
     return redirect()
-      ->route("web.{$role->value}.offices.index")
+      ->route("{$role->value}.offices.index")
       ->with("success", "Office created successfully.");
   }
 
@@ -107,7 +107,7 @@ class OfficeController extends Controller {
     $role = $actor->role;
 
     return redirect()
-      ->route("web.{$role->value}.offices.index")
+      ->route("{$role->value}.offices.index")
       ->with("success", "Office updated successfully.");
   }
 
@@ -122,7 +122,7 @@ class OfficeController extends Controller {
     $role = $actor->role;
 
     return redirect()
-      ->route("web.{$role->value}.offices.index")
+      ->route("{$role->value}.offices.index")
       ->with("success", "Office deleted successfully.");
   }
 

@@ -5,23 +5,24 @@ namespace App\Http\Controllers\Web\Admin;
 use App\Enums\ActivityAction;
 use App\Http\Controllers\Controller;
 use App\Models\Backup;
-use App\Services\DatabaseBackupService;
+use App\Models\Setting;
 use App\Services\ActivityService;
+use App\Services\DatabaseBackupService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class BackupController extends Controller {
-  public function index(Request $request, DatabaseBackupService $backups): \Illuminate\Contracts\View\View {
+  public function index(Request $request, DatabaseBackupService $backups): View {
     Gate::authorize('viewAny', Backup::class);
 
     $backupFiles = $backups->all();
-    $interval = \App\Models\Setting::query()->where('setting_key', 'backup_interval')->value('setting_value') ?? 'disabled';
+    $interval = Setting::query()->where('setting_key', 'backup_interval')->value('setting_value') ?? 'disabled';
     return view('admin.settings.backups', compact('backupFiles', 'interval'));
   }
 
@@ -31,7 +32,8 @@ class BackupController extends Controller {
     $user = $request->user();
     
     try {
-      $path = $backups->create();
+      $backups->create();
+      
       $activityService->log($user, ActivityAction::BACKUP_CREATED, null, null);
       return back()->with('success', 'Database backup created successfully.');
     } catch (Throwable $exception) {
@@ -51,7 +53,7 @@ class BackupController extends Controller {
     $path = $validated['backup'];
 
     try {
-      $backups->restore(Storage::disk('local')->path($path));
+      $backups->restore($path);
       $activityService->log($user, ActivityAction::BACKUP_RESTORED, null, null);
       return back()->with('success', 'Database backup restored successfully.');
     } catch (Throwable $exception) {
@@ -66,6 +68,25 @@ class BackupController extends Controller {
     $allowed = collect($backups->all())->pluck('path');
     abort_unless($allowed->contains($backup), 404);
 
-    return Storage::disk('local')->download($backup, basename($backup));
+    return Storage::disk('b2')->download($backup, basename($backup));
+  }
+
+  public function destroy(Request $request, DatabaseBackupService $backups, ActivityService $activityService, string $backup): RedirectResponse {
+    Gate::authorize('delete', Backup::class);
+
+    $allowed = collect($backups->all())->pluck('path');
+    abort_unless($allowed->contains($backup), 404);
+
+    try {
+      $backups->delete($backup);
+      $activityService->log($request->user(), ActivityAction::BACKUP_DELETED, null, null, [
+        'backup' => $backup,
+      ]);
+
+      return back()->with('success', 'Database backup deleted successfully.');
+    } catch (Throwable $exception) {
+      report($exception);
+      return back()->with('error', 'Delete failed: ' . $exception->getMessage());
+    }
   }
 }

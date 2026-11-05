@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\OjtStatus;
 use App\Enums\ReportStatus;
 use App\Enums\ReportType;
-use App\Enums\OjtStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\ReportRequest;
@@ -14,13 +14,14 @@ use App\Models\ReportAssignment;
 use App\Models\StudentDetail;
 use App\Models\StudentOjt;
 use App\Models\User;
+use App\Services\Documents\ReportDocumentGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReportController extends Controller {
 
@@ -121,7 +122,7 @@ class ReportController extends Controller {
       $breadcrumbs = [
         [
           'label' => 'Reports',
-          'url' => route("web.{$viewer->role->value}.reports.index"),
+          'url' => route("{$viewer->role->value}.reports.index"),
         ],
       ];
 
@@ -248,11 +249,10 @@ class ReportController extends Controller {
 
       $reports = $query->get();
 
-      return Pdf::loadView('shared.reports.pdf', [
-        'reports' => $reports,
-      ])
-        ->setPaper('a4', 'landscape')
-        ->stream('reports.pdf');
+      return app(ReportDocumentGenerator::class)->download(
+        ['reports' => $reports],
+        'reports.docx',
+      );
     }
 
     $reports = $query
@@ -264,16 +264,16 @@ class ReportController extends Controller {
     $breadcrumbs = [
       [
         'label' => 'Reports',
-        'url' => route("web.{$viewer->role->value}.reports.index"),
+        'url' => route("{$viewer->role->value}.reports.index"),
       ],
     ];
 
     if ($allOffices) {
-      $breadcrumbs[] = ['label' => 'All Offices', 'url' => route("web.{$viewer->role->value}.reports.index", ['all_offices' => 1])];
+      $breadcrumbs[] = ['label' => 'All Offices', 'url' => route("{$viewer->role->value}.reports.index", ['all_offices' => 1])];
     } elseif ($office) {
       $breadcrumbs[] = [
         'label' => $office->name,
-        'url' => route("web.{$viewer->role->value}.reports.index", ['office_id' => $office->id]),
+        'url' => route("{$viewer->role->value}.reports.index", ['office_id' => $office->id]),
       ];
     }
 
@@ -329,7 +329,7 @@ class ReportController extends Controller {
           'label' => ucfirst($assignment->type->value),
           'assignment_id' => $assignment->id,
         ]))
-      ->unique('value')->values()->all()
+        ->unique('value')->values()->all()
     )->all();
 
     $reviewers = User::query()
@@ -355,9 +355,9 @@ class ReportController extends Controller {
     $assignment = ReportAssignment::query()->findOrFail($data['report_assignment_id']);
     abort_unless(
       (int) $assignment->ojt_id === (int) $data['ojt_id']
-        && (int) $assignment->ojt?->student_id === (int) $data['student_id']
-        && $assignment->published_at?->isPast()
-        && !$assignment->reports()->where('student_id', $data['student_id'])->exists(),
+      && (int) $assignment->ojt?->student_id === (int) $data['student_id']
+      && $assignment->published_at?->isPast()
+      && !$assignment->reports()->where('student_id', $data['student_id'])->exists(),
       422,
       'That report type is not missing for the selected student.'
     );
@@ -379,7 +379,7 @@ class ReportController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.reports.index")
+      ->route("{$role->value}.reports.index")
       ->with("success", "Report created successfully.");
   }
 
@@ -464,7 +464,7 @@ class ReportController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.reports.index")
+      ->route("{$role->value}.reports.index")
       ->with("success", "Report updated successfully.");
   }
 
@@ -486,7 +486,7 @@ class ReportController extends Controller {
     $role = Auth::user()->role;
 
     return redirect()
-      ->route("web.{$role->value}.reports.index")
+      ->route("{$role->value}.reports.index")
       ->with("success", "Report deleted successfully.");
   }
 

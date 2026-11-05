@@ -124,7 +124,7 @@ class ReportAssignmentController extends Controller {
       'allow_late_submission' => $request->boolean('allow_late_submission'),
     ]);
 
-    return redirect()->route('web.' . Auth::user()->role->value . '.report-assignments.index')
+    return redirect()->route('' . Auth::user()->role->value . '.report-assignments.index')
       ->with('success', 'Report assignment published successfully.');
   }
 

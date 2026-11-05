@@ -1,22 +1,24 @@
 @if ($paginator->hasPages())
   <nav
-    class="flex flex-col gap-4 rounded-b-xl border border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+    class="flex flex-col gap-4 print:hidden rounded-b-xl border border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
     aria-label="Pagination Navigation"
   >
     {{-- Results Summary --}}
     <div class="flex items-center justify-between text-xs text-slate-500 sm:text-sm">
       <p>Showing
-      <span class="font-semibold text-slate-900">{{
-        $paginator->firstItem() ??
-          0
-      }}</span>
+      <span class="font-semibold text-slate-900">
+        {{ $paginator->firstItem() ??
+          0 }}
+      </span>
       to
-      <span class="font-semibold text-slate-900">{{
-        $paginator->lastItem() ??
-          0
-      }}</span>
+      <span class="font-semibold text-slate-900">
+        {{ $paginator->lastItem() ??
+          0 }}
+      </span>
       of
-      <span class="font-semibold text-slate-900">{{ $paginator->total() }}</span>
+      <span class="font-semibold text-slate-900">
+        {{ $paginator->total() }}
+      </span>
       results</p>
       <span class="font-medium text-slate-500 sm:hidden">
         Page {{ $paginator->currentPage() }} of {{ $paginator->lastPage() }}

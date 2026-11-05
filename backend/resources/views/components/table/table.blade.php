@@ -11,7 +11,7 @@
               $currentSort = request("sort") ?? "id";
               $currentDir = request("direction", "desc");
               $isCurrentSort = $currentSort === $sortKey;
-              $nextDir = !$isCurrentSort ? "desc" : ($currentDir === "desc" ? "asc" : "desc");
+              $nextDir = $isCurrentSort ? ($currentDir === "desc" ? "asc" : "desc") : "asc";
               $sortUrl = request()->fullUrlWithQuery(["sort" => $sortKey, "direction" => $nextDir]);
             @endphp
 

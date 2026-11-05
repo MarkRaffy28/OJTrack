@@ -26,17 +26,17 @@ return Application::configure(basePath: dirname(__DIR__))
       'role' => RoleMiddleware::class,
     ]);
 
-    $middleware->redirectGuestsTo(fn() => route('web.login'));
+    $middleware->redirectGuestsTo(fn() => route('login'));
     $middleware->redirectUsersTo(function () {
       $user = Auth::user();
       
       if ($user) {
         if ($user->role === UserRole::INSTRUCTOR && $user->status === AccountStatus::PRE_ACTIVATED) {
-          return route('web.register');
+          return route('register');
         }
-        return route('web.' . $user->role->value . '.dashboard');
+        return route($user->role->value . '.dashboard');
       }
-      return route('web.login');
+      return route('login');
     });
   })
   ->withExceptions(function (Exceptions $exceptions): void {

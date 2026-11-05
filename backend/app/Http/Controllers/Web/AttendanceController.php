@@ -2,20 +2,21 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Enums\UserRole;
 use App\Enums\OjtStatus;
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\Office;
 use App\Models\StudentDetail;
 use App\Models\StudentOjt;
 use App\Models\User;
+use App\Services\Documents\AttendanceDocumentGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\Response;
 
 class AttendanceController extends Controller {
 
@@ -127,7 +128,7 @@ class AttendanceController extends Controller {
       $breadcrumbs = [
         [
           'label' => 'Attendance',
-          'url' => route("web.{$viewer->role->value}.attendance.index"),
+          'url' => route("{$viewer->role->value}.attendance.index"),
         ],
       ];
 
@@ -245,11 +246,10 @@ class AttendanceController extends Controller {
 
       $attendances = $query->get();
 
-      return Pdf::loadView('shared.attendance.pdf', [
-        'attendances' => $attendances,
-      ])
-        ->setPaper('a4', 'landscape')
-        ->stream('attendance.pdf');
+      return app(AttendanceDocumentGenerator::class)->download(
+        ['attendances' => $attendances],
+        'attendance-logs.docx',
+      );
     }
 
     $attendances = $query
@@ -262,16 +262,16 @@ class AttendanceController extends Controller {
     $breadcrumbs = [
       [
         'label' => 'Attendance',
-        'url' => route("web.{$viewer->role->value}.attendance.index"),
+        'url' => route("{$viewer->role->value}.attendance.index"),
       ],
     ];
 
     if ($allOffices) {
-      $breadcrumbs[] = ['label' => 'All Offices', 'url' => route("web.{$viewer->role->value}.attendance.index", ['all_offices' => 1])];
+      $breadcrumbs[] = ['label' => 'All Offices', 'url' => route("{$viewer->role->value}.attendance.index", ['all_offices' => 1])];
     } elseif ($office) {
       $breadcrumbs[] = [
         'label' => $office->name,
-        'url' => route("web.{$viewer->role->value}.attendance.index", ['office_id' => $office->id]),
+        'url' => route("{$viewer->role->value}.attendance.index", ['office_id' => $office->id]),
       ];
     }
 
@@ -362,7 +362,7 @@ class AttendanceController extends Controller {
     $role = Auth::user()->role->value;
 
     return redirect()
-      ->route("web.{$role}.attendance.index")
+      ->route("{$role}.attendance.index")
       ->with("success", "Attendance logged successfully.");
   }
 
@@ -404,7 +404,7 @@ class AttendanceController extends Controller {
     $role = Auth::user()->role->value;
 
     return redirect()
-      ->route("web.{$role}.attendance.index")
+      ->route("{$role}.attendance.index")
       ->with("success", "Attendance record updated successfully.");
   }
 
@@ -462,7 +462,7 @@ class AttendanceController extends Controller {
     $role = Auth::user()->role->value;
 
     return redirect()
-      ->route("web.{$role}.attendance.index")
+      ->route("{$role}.attendance.index")
       ->with("success", "Attendance record deleted successfully.");
   }
 }

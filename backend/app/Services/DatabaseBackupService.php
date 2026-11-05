@@ -10,8 +10,8 @@ class DatabaseBackupService {
   private const DIRECTORY = 'backups';
 
   public function create(): string {
-    $disk = Storage::disk('local');
-    $disk->makeDirectory(self::DIRECTORY);
+    $disk = Storage::disk('b2');
+
     $connection = config('database.default');
     $timestamp = now()->format('Y-m-d_H-i-s');
 
@@ -21,9 +21,14 @@ class DatabaseBackupService {
         throw new RuntimeException('The SQLite database file could not be found.');
       }
       $name = self::DIRECTORY . "/database_{$timestamp}.sqlite";
-      if (!copy($source, $disk->path($name))) {
+      $handle = fopen($source, 'rb');
+      if ($handle === false || !$disk->put($name, $handle)) {
+        if (is_resource($handle)) {
+          fclose($handle);
+        }
         throw new RuntimeException('The database backup could not be created.');
       }
+      fclose($handle);
       return $name;
     }
 
@@ -32,7 +37,10 @@ class DatabaseBackupService {
     }
 
     $name = self::DIRECTORY . "/database_{$timestamp}.sql";
-    $output = $disk->path($name);
+    $temporaryPath = tempnam(sys_get_temp_dir(), 'ojtrack-backup-');
+    if ($temporaryPath === false) {
+      throw new RuntimeException('The database backup could not be created.');
+    }
     $database = config("database.connections.{$connection}");
     $environment = getenv();
     if (($database['password'] ?? '') !== '') {
@@ -47,41 +55,71 @@ class DatabaseBackupService {
       '--single-transaction',
       '--routines',
       '--triggers',
-      '--result-file=' . $output,
+      '--result-file=' . $temporaryPath,
       $database['database'],
     ], base_path(), $environment);
     $process->setTimeout(300);
     $process->run();
 
     if (!$process->isSuccessful()) {
-      $disk->delete($name);
+      @unlink($temporaryPath);
       throw new RuntimeException(trim($process->getErrorOutput()) ?: 'The database backup could not be created.');
+    }
+
+    $handle = fopen($temporaryPath, 'rb');
+    $uploaded = $handle !== false && $disk->put($name, $handle);
+    if (is_resource($handle)) {
+      fclose($handle);
+    }
+    @unlink($temporaryPath);
+
+    if (!$uploaded) {
+      throw new RuntimeException('The database backup could not be created.');
     }
 
     return $name;
   }
 
-  public function restore(string $absolutePath): void {
+  public function restore(string $path): void {
     $connection = config('database.default');
     $database = config("database.connections.{$connection}");
 
+    $disk = Storage::disk('b2');
+    $handle = $disk->readStream($path);
+    if ($handle === false) {
+      throw new RuntimeException('The backup file could not be opened.');
+    }
+
     if ($connection === 'sqlite') {
-      if (!str_ends_with(strtolower($absolutePath), '.sqlite')) {
+      if (!str_ends_with(strtolower($path), '.sqlite')) {
+        fclose($handle);
         throw new RuntimeException('SQLite restore files must use the .sqlite extension.');
       }
-      if (!copy($absolutePath, $database['database'])) {
+
+      $temporaryPath = tempnam(sys_get_temp_dir(), 'ojtrack-restore-');
+      if ($temporaryPath === false) {
+        fclose($handle);
+        throw new RuntimeException('The SQLite restore file could not be prepared.');
+      }
+
+      $temporaryHandle = fopen($temporaryPath, 'wb');
+      $copied = $temporaryHandle !== false && stream_copy_to_stream($handle, $temporaryHandle) !== false;
+      if (is_resource($temporaryHandle)) {
+        fclose($temporaryHandle);
+      }
+      fclose($handle);
+
+      if (!$copied || !copy($temporaryPath, $database['database'])) {
+        @unlink($temporaryPath);
         throw new RuntimeException('The SQLite database could not be restored.');
       }
+      @unlink($temporaryPath);
       return;
     }
 
     if (!in_array($connection, ['mysql', 'mariadb'], true)) {
+      fclose($handle);
       throw new RuntimeException("Backups are not supported for the {$connection} database driver.");
-    }
-
-    $handle = fopen($absolutePath, 'rb');
-    if ($handle === false) {
-      throw new RuntimeException('The backup file could not be opened.');
     }
     try {
       $environment = getenv();
@@ -108,7 +146,7 @@ class DatabaseBackupService {
   }
 
   public function all(): array {
-    $disk = Storage::disk('local');
+    $disk = Storage::disk('b2');
     return collect($disk->files(self::DIRECTORY))
       ->filter(fn(string $file) => preg_match('/\.(sql|sqlite)$/i', $file))
       ->sortByDesc(fn(string $file) => $disk->lastModified($file))
@@ -118,5 +156,11 @@ class DatabaseBackupService {
         'size' => $disk->size($file),
         'created_at' => $disk->lastModified($file),
       ])->values()->all();
+  }
+
+  public function delete(string $path): void {
+    if (!Storage::disk('b2')->delete($path)) {
+      throw new RuntimeException('The database backup could not be deleted.');
+    }
   }
 }
