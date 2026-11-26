@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet } from "react-native";
 import { Icon } from "react-native-paper";
-import { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
-import { useNavigationState } from "@react-navigation/native";
+import { BottomTabBarButtonProps } from "expo-router/js-tabs";
+import { useNavigationState } from "expo-router/react-navigation";
 
 import { ICON_SIZES } from "@/constants/icons.constants";
 import { useTheme } from "@/store/settings.store";

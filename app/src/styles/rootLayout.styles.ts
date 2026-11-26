@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { StyleSheet } from "react-native";
+import { DarkTheme, DefaultTheme } from "expo-router/react-navigation";
 import { StatusBarStyle } from "expo-status-bar";
-import { DarkTheme, DefaultTheme } from "@react-navigation/native";
 
 import { useTheme } from "@/store/settings.store";
 
@@ -20,6 +20,7 @@ export const useRootLayoutStyles = () => {
         text: theme.colors.onSurface,
         border: theme.colors.outline,
         primary: theme.colors.primary,
+        notification: theme.colors.primary,
       },
     }),
     [theme, base],
@@ -44,7 +45,6 @@ export const useRootLayoutStyles = () => {
 
     statusBar: {
       container: (theme.dark ? "light" : "dark") as StatusBarStyle,
-      background: theme.colors.background,
     },
   };
 };

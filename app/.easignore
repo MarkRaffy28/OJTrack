@@ -1,0 +1,27 @@
+
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+
+# Dependencies and caches
+node_modules/
+.expo/
+dist/
+
+# Android generated files (keep Android source/configuration)
+android/.gradle/
+android/build/
+android/app/build/
+android/**/.cxx/
+
+# iOS generated files
+ios/Pods/
+ios/build/
+
+# Logs and temporary files
+npm-debug.log*
+yarn-debug.log*
+*.log
+.DS_Store
+Thumbs.db

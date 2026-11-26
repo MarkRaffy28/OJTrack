@@ -1,7 +1,9 @@
 import { StyleSheet, ViewStyle } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/store/settings.store";
 
 export const useTabLayoutStyles = () => {
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
 
   const styles = StyleSheet.create({
@@ -9,8 +11,9 @@ export const useTabLayoutStyles = () => {
       backgroundColor: theme.colors.elevation.level1,
       borderTopWidth: 0,
       elevation: 0,
-      height: 60,
+      height: 60 + insets.bottom,
       paddingTop: 3,
+      paddingBottom: insets.bottom,
     },
     tabBarLabel: {
       fontFamily: theme.fonts.labelMedium.fontFamily,

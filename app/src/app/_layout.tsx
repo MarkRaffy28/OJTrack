@@ -1,10 +1,9 @@
 import "react-native-gesture-handler";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Stack } from "expo-router";
+import { Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { PaperProvider } from "react-native-paper";
-import { ThemeProvider } from "@react-navigation/native";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -21,6 +20,7 @@ import {
 import { useSettingsStore, useTheme } from "@/store/settings.store";
 import { useRootLayoutStyles } from "@/styles/rootLayout.styles";
 import { api } from "@/api";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,47 +67,49 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.rootView}>
-      <PaperProvider theme={theme}>
-        <BottomSheetModalProvider>
-          <ThemeProvider value={styles.navTheme}>
-            <QueryClientProvider client={queryClient}>
-              <StatusBar style={styles.statusBar.container} />
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.rootView}>
+        <PaperProvider theme={theme}>
+          <BottomSheetModalProvider>
+            <ThemeProvider value={styles.navTheme}>
+              <QueryClientProvider client={queryClient}>
+                <StatusBar style={styles.statusBar.container} />
 
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                }}
-              >
-                <Stack.Protected guard={!session}>
-                  <Stack.Screen name="(auth)" />
-                </Stack.Protected>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                  }}
+                >
+                  <Stack.Protected guard={!session}>
+                    <Stack.Screen name="(auth)" />
+                  </Stack.Protected>
 
-                <Stack.Protected guard={session?.user?.status === "pre_activated"}>
-                  <Stack.Screen name="complete-registration" />
-                </Stack.Protected>
+                  <Stack.Protected guard={session?.user?.status === "pre_activated"}>
+                    <Stack.Screen name="complete-registration" />
+                  </Stack.Protected>
 
-                <Stack.Protected guard={session?.user?.status === "active"}>
-                  <Stack.Screen name="(tabs)" />
+                  <Stack.Protected guard={session?.user?.status === "active"}>
+                    <Stack.Screen name="(tabs)" />
 
-                  <Stack.Screen
-                    name="camera"
-                    options={{ presentation: "fullScreenModal" }}
-                  />
-                </Stack.Protected>
-              </Stack>
+                    <Stack.Screen
+                      name="camera"
+                      options={{ presentation: "fullScreenModal" }}
+                    />
+                  </Stack.Protected>
+                </Stack>
 
-              <Snackbar
-                visible={snackbarVisible}
-                type={snackbarType}
-                message={snackbarMessage}
-                duration={snackbarDuration}
-                onDismiss={hideSnackbar}
-              />
-            </QueryClientProvider>
-          </ThemeProvider>
-        </BottomSheetModalProvider>
-      </PaperProvider>
-    </GestureHandlerRootView>
+                <Snackbar
+                  visible={snackbarVisible}
+                  type={snackbarType}
+                  message={snackbarMessage}
+                  duration={snackbarDuration}
+                  onDismiss={hideSnackbar}
+                />
+              </QueryClientProvider>
+            </ThemeProvider>
+          </BottomSheetModalProvider>
+        </PaperProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }

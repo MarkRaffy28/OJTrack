@@ -73,10 +73,7 @@
 
 @section ("content")
   <div class="mx-auto w-full max-w-6xl">
-    <form
-      method="POST"
-      action="{{ $action }}"
-    >
+    <form method="POST" action="{{ $action }}">
       @csrf
       @if (!$isCreate)
         @method ("PUT")
@@ -86,14 +83,10 @@
         {{-- HERO HEADER --}}
         <div class="border-border bg-surface rounded-2xl border p-6 shadow-sm">
           <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div
-              class="bg-primary-50 text-primary-600 flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-            >
-              <span
-                class="material-symbols-outlined material-symbols-md"
-                aria-hidden="true"
-                >edit_calendar</span
-              >
+            <div class="bg-primary-50 text-primary-600 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+              <span class="material-symbols-outlined material-symbols-md" aria-hidden="true">
+                edit_calendar
+              </span>
             </div>
 
             <div class="min-w-0 flex-1">
@@ -119,17 +112,11 @@
           {{-- LEFT COLUMN --}}
           <div class="space-y-6">
             {{-- RECORD DETAILS --}}
-            <section
-              class="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm"
-            >
-              <div
-                class="border-border-muted bg-background flex items-center gap-2 border-b px-5 py-3"
-              >
-                <span
-                  class="material-symbols-outlined material-symbols-md text-primary-600"
-                  aria-hidden="true"
-                  >event</span
-                >
+            <section class="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm">
+              <div class="border-border-muted bg-background flex items-center gap-2 border-b px-5 py-3">
+                <span class="material-symbols-outlined material-symbols-md text-primary-600" aria-hidden="true">
+                  event
+                </span>
                 <h2 class="text-text text-sm font-semibold">Record Details</h2>
               </div>
               <div class="space-y-4 p-5">
@@ -139,21 +126,60 @@
                     :options="$studentOjts->map(fn ($ojt) => ['value' => $ojt->student_id, 'label' => $ojt->student?->full_name ?? 'Unknown Student'])->unique('value')->values()->all()"
                     :value="old('student_id', $selectedOjt?->student_id)"
                   />
-                  <input type="hidden" id="ojt_id" name="ojt_id" value="{{ old('ojt_id', $selectedOjt?->id) }}" />
-                  <x-fields.office field="name" :office="$selectedOjt?->office" mode="view" />
-                  <x-fields.identity :field="$identityField::FULL_NAME" :user="$selectedOjt?->supervisor" label="Supervisor" field-id="attendance_supervisor" mode="view" />
-                  <x-fields.identity :field="$identityField::FULL_NAME" :user="$selectedOjt?->instructor" label="Instructor" field-id="attendance_instructor" mode="view" />
+                  <input
+                    type="hidden"
+                    id="ojt_id"
+                    name="ojt_id"
+                    value="{{ old('ojt_id', $selectedOjt?->id) }}"
+                  />
+                  <x-fields.office
+                    field="name"
+                    :office="$selectedOjt?->office"
+                    mode="view"
+                  />
+                  <x-fields.identity
+                    :field="$identityField::FULL_NAME"
+                    :user="$selectedOjt?->supervisor"
+                    label="Supervisor"
+                    field-id="attendance_supervisor"
+                    mode="view"
+                  />
+                  <x-fields.identity
+                    :field="$identityField::FULL_NAME"
+                    :user="$selectedOjt?->instructor"
+                    label="Instructor"
+                    field-id="attendance_instructor"
+                    mode="view"
+                  />
                 @else
-                  <x-fields.office field="name" :office="$attendance?->ojt?->office" mode="view" />
-                  <x-fields.identity :field="$identityField::FULL_NAME" :user="$attendance?->ojt?->supervisor" label="Supervisor" field-id="attendance_supervisor" mode="view" />
-                  <x-fields.identity :field="$identityField::FULL_NAME" :user="$attendance?->ojt?->instructor" label="Instructor" field-id="attendance_instructor" mode="view" />
+                  <x-fields.office
+                    field="name"
+                    :office="$attendance?->ojt?->office"
+                    mode="view"
+                  />
+                  <x-fields.identity
+                    :field="$identityField::FULL_NAME"
+                    :user="$attendance?->ojt?->supervisor"
+                    label="Supervisor"
+                    field-id="attendance_supervisor"
+                    mode="view"
+                  />
+                  <x-fields.identity
+                    :field="$identityField::FULL_NAME"
+                    :user="$attendance?->ojt?->instructor"
+                    label="Instructor"
+                    field-id="attendance_instructor"
+                    mode="view"
+                  />
                 @endif
                 <div class="min-w-0">
                   <x-fields.attendance
                     field="date"
                     :value="old('date', $attendance?->date ? $attendance->date->format('Y-m-d') : '')"
                   />
-                  <p class="text-text-muted mt-1.5 text-xs">Note: Attendance can only be recorded on weekdays (Mon–Fri).</p>
+                  <p class="text-text-muted mt-1.5 text-xs">
+                    Note: Attendance can only be recorded on weekdays (Mon–Fri).
+                  </p>
                   @error ("date")
                     <p class="text-danger-600 mt-1 text-xs">{{ $message }}</p>
                   @enderror
@@ -165,34 +191,25 @@
           {{-- RIGHT COLUMN --}}
           <div class="space-y-6">
             {{-- MORNING SESSION --}}
-            <section
-              class="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm"
-            >
-              <div
-                class="border-border-muted bg-background flex items-center gap-2 border-b px-5 py-3"
-              >
-                <span
-                  class="material-symbols-outlined material-symbols-md text-primary-600"
-                  aria-hidden="true"
-                  >wb_sunny</span
-                >
+            <section class="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm">
+              <div class="border-border-muted bg-background flex items-center gap-2 border-b px-5 py-3">
+                <span class="material-symbols-outlined material-symbols-md text-primary-600" aria-hidden="true">
+                  wb_sunny
+                </span>
                 <h2 class="text-text text-sm font-semibold">Morning Session</h2>
               </div>
               <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2">
                 <div class="min-w-0 space-y-2">
-                  <label
-                    class="text-text-muted block text-xs font-medium tracking-wider uppercase"
-                    >Morning In</label
-                  >
+                  <label class="text-text-muted block text-xs font-medium tracking-wider uppercase">
+                    Morning In
+                  </label>
                   <input
                     type="time"
                     name="morning_in"
                     value="{{ old('morning_in', $mIn) }}"
                     class="border-border bg-surface text-text focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm"
                   />
-                  <label
-                    class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium"
-                  >
+                  <label class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium">
                     <input
                       type="checkbox"
                       name="morning_in_verified"
@@ -205,19 +222,16 @@
                 </div>
 
                 <div class="min-w-0 space-y-2">
-                  <label
-                    class="text-text-muted block text-xs font-medium tracking-wider uppercase"
-                    >Morning Out</label
-                  >
+                  <label class="text-text-muted block text-xs font-medium tracking-wider uppercase">
+                    Morning Out
+                  </label>
                   <input
                     type="time"
                     name="morning_out"
                     value="{{ old('morning_out', $mOut) }}"
                     class="border-border bg-surface text-text focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm"
                   />
-                  <label
-                    class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium"
-                  >
+                  <label class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium">
                     <input
                       type="checkbox"
                       name="morning_out_verified"
@@ -232,34 +246,27 @@
             </section>
 
             {{-- AFTERNOON SESSION --}}
-            <section
-              class="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm"
-            >
-              <div
-                class="border-border-muted bg-background flex items-center gap-2 border-b px-5 py-3"
-              >
-                <span
-                  class="material-symbols-outlined material-symbols-md text-primary-600"
-                  aria-hidden="true"
-                  >wb_twilight</span
-                >
-                <h2 class="text-text text-sm font-semibold">Afternoon Session</h2>
+            <section class="border-border bg-surface overflow-hidden rounded-2xl border shadow-sm">
+              <div class="border-border-muted bg-background flex items-center gap-2 border-b px-5 py-3">
+                <span class="material-symbols-outlined material-symbols-md text-primary-600" aria-hidden="true">
+                  wb_twilight
+                </span>
+                <h2 class="text-text text-sm font-semibold">
+                  Afternoon Session
+                </h2>
               </div>
               <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2">
                 <div class="min-w-0 space-y-2">
-                  <label
-                    class="text-text-muted block text-xs font-medium tracking-wider uppercase"
-                    >Afternoon In</label
-                  >
+                  <label class="text-text-muted block text-xs font-medium tracking-wider uppercase">
+                    Afternoon In
+                  </label>
                   <input
                     type="time"
                     name="afternoon_in"
                     value="{{ old('afternoon_in', $aIn) }}"
                     class="border-border bg-surface text-text focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm"
                   />
-                  <label
-                    class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium"
-                  >
+                  <label class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium">
                     <input
                       type="checkbox"
                       name="afternoon_in_verified"
@@ -272,19 +279,16 @@
                 </div>
 
                 <div class="min-w-0 space-y-2">
-                  <label
-                    class="text-text-muted block text-xs font-medium tracking-wider uppercase"
-                    >Afternoon Out</label
-                  >
+                  <label class="text-text-muted block text-xs font-medium tracking-wider uppercase">
+                    Afternoon Out
+                  </label>
                   <input
                     type="time"
                     name="afternoon_out"
                     value="{{ old('afternoon_out', $aOut) }}"
                     class="border-border bg-surface text-text focus:ring-primary-500 w-full rounded-md border px-3 py-2 text-sm"
                   />
-                  <label
-                    class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium"
-                  >
+                  <label class="text-text inline-flex items-center gap-2 pt-1 text-xs font-medium">
                     <input
                       type="checkbox"
                       name="afternoon_out_verified"
@@ -301,9 +305,7 @@
         </div>
 
         {{-- ACTIONS --}}
-        <div
-          class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm"
-        >
+        <div class="border-border bg-surface flex items-center justify-end gap-3 rounded-2xl border p-4 shadow-sm">
           <a
             href="{{ route("{$role}.attendance.index") }}"
             class="border-border bg-surface text-text hover:bg-background inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors"
