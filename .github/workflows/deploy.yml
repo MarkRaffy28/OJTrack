@@ -1,4 +1,3 @@
-
 name: OJTrack CI/CD
 
 on:
@@ -38,6 +37,12 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Create Expo .env
+        working-directory: app
+        run: |
+          test -n "${{ vars.EXPO_PUBLIC_API_URL }}"
+          echo "EXPO_PUBLIC_API_URL=${{ vars.EXPO_PUBLIC_API_URL }}" > .env
+
       - name: Export Expo web
         working-directory: app
         run: npx expo export --platform web
@@ -45,17 +50,26 @@ jobs:
       - name: Prepare deployment files
         run: |
           test -f app/dist/index.html
+          test -f deploy/main.htaccess
+
           mkdir -p expo-deploy
           cp -a app/dist/. expo-deploy/
           cp deploy/main.htaccess expo-deploy/.htaccess
 
+          echo "Files prepared:"
+          ls -la expo-deploy/
+
+          test -f expo-deploy/index.html
+          test -f expo-deploy/.htaccess
+          test -d expo-deploy/_expo
+
       - name: Upload Expo artifact
         uses: actions/upload-artifact@v4
         with:
-          name: expo-production
+          name: expo-deploy
           path: expo-deploy/
+          include-hidden-files: true
           if-no-files-found: error
-          retention-days: 1
 
   # ==========================================
   # BUILD LARAVEL
@@ -79,20 +93,41 @@ jobs:
         working-directory: backend
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Build Vite assets
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+          test -f public/build/manifest.json
+
       - name: Prepare Laravel deployment files
         run: |
           test -f backend/artisan
           test -f backend/.htaccess
           test -f backend/public/.htaccess
+          test -f backend/public/build/manifest.json
 
           mkdir -p laravel-deploy
-          rsync -a backend/ laravel-deploy/
+          rsync -a --exclude='/node_modules/' backend/ laravel-deploy/
+
+          test -f laravel-deploy/artisan
+          test -f laravel-deploy/.htaccess
+          test -f laravel-deploy/public/.htaccess
+          test -f laravel-deploy/public/build/manifest.json
 
       - name: Upload Laravel artifact
         uses: actions/upload-artifact@v4
         with:
           name: laravel-production
           path: laravel-deploy/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
 
@@ -110,15 +145,23 @@ jobs:
       HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
       HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
       HOSTINGER_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
-      MAIN_DEPLOY_PATH: ${{ vars.MAIN_DEPLOY_PATH }}
-      WEB_DEPLOY_PATH: ${{ vars.WEB_DEPLOY_PATH }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
 
     steps:
       - name: Download Expo artifact
         uses: actions/download-artifact@v4
         with:
-          name: expo-production
+          name: expo-deploy
           path: expo-deploy
+
+      - name: Verify Expo artifact
+        run: |
+          echo "Downloaded files:"
+          ls -la expo-deploy/
+          test -f expo-deploy/index.html
+          test -f expo-deploy/.htaccess
+          test -d expo-deploy/_expo
+          echo "SUCCESS: Expo files are ready."
 
       - name: Configure SSH
         run: |
@@ -131,25 +174,50 @@ jobs:
           printf '%s\n' "$HOSTINGER_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-      - name: Check remote directory
+      - name: Deploy Expo files
+        run: |
+          # Keep .htaccess out of rsync.
+          # It will be copied separately after synchronization.
+
+          rsync -avz --delete \
+            --exclude='/web/' \
+            --exclude='/index.php' \
+            --exclude='/default.php' \
+            --exclude='/.htaccess' \
+            -e "ssh -p $HOSTINGER_PORT -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" \
+            expo-deploy/ \
+            "$HOSTINGER_USER@$HOSTINGER_HOST:$DEPLOY_PATH/public_html/"
+
+      - name: Restore main domain htaccess
+        run: |
+          # Upload htaccess AFTER rsync finishes.
+
+          scp -P "$HOSTINGER_PORT" \
+            -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            expo-deploy/.htaccess \
+            "$HOSTINGER_USER@$HOSTINGER_HOST:$DEPLOY_PATH/public_html/.htaccess"
+
+          # Verify deployment
+          ssh -p "$HOSTINGER_PORT" \
+            -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "test -f '$DEPLOY_PATH/public_html/index.html' &&
+             test -f '$DEPLOY_PATH/public_html/.htaccess' &&
+             echo 'SUCCESS: Expo index.html and .htaccess are deployed.'"
+
+      - name: Verify Expo deployed files
         run: |
           ssh -p "$HOSTINGER_PORT" \
             -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=yes \
             "$HOSTINGER_USER@$HOSTINGER_HOST" \
-            "test -d '$MAIN_DEPLOY_PATH'"
+            "test -f '$DEPLOY_PATH/public_html/index.html' &&
+             test -f '$DEPLOY_PATH/public_html/.htaccess' &&
+             test -d '$DEPLOY_PATH/public_html/_expo' &&
+             echo 'SUCCESS: Expo files are deployed.'"
 
-      - name: Deploy Expo files
-        run: |
-          rsync -avzn --delete \
-            --exclude='/web/' \
-            --exclude='/index.php' \
-            --exclude='/default.php' \
-            --exclude='/test/' \
-            --exclude='/ojtrack-backend.zip' \
-            -e "ssh -p $HOSTINGER_PORT -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" \
-            expo-deploy/ \
-            "$HOSTINGER_USER@$HOSTINGER_HOST:$MAIN_DEPLOY_PATH/"
 
   # ==========================================
   # DEPLOY LARAVEL TO WEB SUBDOMAIN
@@ -165,8 +233,7 @@ jobs:
       HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
       HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
       HOSTINGER_KNOWN_HOSTS: ${{ secrets.HOSTINGER_KNOWN_HOSTS }}
-      MAIN_DEPLOY_PATH: ${{ vars.MAIN_DEPLOY_PATH }}
-      WEB_DEPLOY_PATH: ${{ vars.WEB_DEPLOY_PATH }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
 
     steps:
       - name: Download Laravel artifact
@@ -174,6 +241,11 @@ jobs:
         with:
           name: laravel-production
           path: laravel-deploy
+
+      - name: Verify Laravel artifact
+        run: |
+          test -f laravel-deploy/.htaccess
+          test -f laravel-deploy/public/.htaccess
 
       - name: Configure SSH
         run: |
@@ -192,13 +264,13 @@ jobs:
             -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=yes \
             "$HOSTINGER_USER@$HOSTINGER_HOST" \
-            "test -f '$WEB_DEPLOY_PATH/.env' &&
-             test -d '$WEB_DEPLOY_PATH/storage' &&
-             test -d '$WEB_DEPLOY_PATH/public'"
+            "test -f '$DEPLOY_PATH/public_html/web/.env' &&
+             test -d '$DEPLOY_PATH/public_html/web/storage' &&
+             test -d '$DEPLOY_PATH/public_html/web/public'"
 
       - name: Deploy Laravel files
         run: |
-          rsync -avzn --delete \
+          rsync -avz --delete \
             --exclude='/.env' \
             --exclude='/.env.*' \
             --exclude='/storage/app/templates/default.docx' \
@@ -208,7 +280,21 @@ jobs:
             --exclude='/node_modules/' \
             -e "ssh -p $HOSTINGER_PORT -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" \
             laravel-deploy/ \
-            "$HOSTINGER_USER@$HOSTINGER_HOST:$WEB_DEPLOY_PATH/"
+            "$HOSTINGER_USER@$HOSTINGER_HOST:$DEPLOY_PATH/public_html/web/"
+
+      - name: Verify Laravel deployed files
+        run: |
+          ssh -p "$HOSTINGER_PORT" \
+            -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            "test -f '$DEPLOY_PATH/public_html/web/artisan' &&
+             test -f '$DEPLOY_PATH/public_html/web/.htaccess' &&
+             test -f '$DEPLOY_PATH/public_html/web/public/.htaccess' &&
+             test -f '$DEPLOY_PATH/public_html/web/public/index.php' &&
+             test -f '$DEPLOY_PATH/public_html/web/public/build/manifest.json' &&
+             test -f '$DEPLOY_PATH/public_html/web/.env' &&
+             echo 'SUCCESS: Laravel files are deployed.'"
 
       - name: Copy default DOCX template
         if: ${{ vars.DEPLOY_LIVE == 'true' }}
@@ -217,10 +303,10 @@ jobs:
             -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=yes \
             "$HOSTINGER_USER@$HOSTINGER_HOST" \
-            "mkdir -p '$WEB_DEPLOY_PATH/storage/app/templates' &&
-             test -f '/home/u944554553/domains/ojtrack.online/templates/default.docx' &&
-             cp '/home/u944554553/domains/ojtrack.online/templates/default.docx' \
-                '$WEB_DEPLOY_PATH/storage/app/templates/default.docx'"
+            "mkdir -p '$DEPLOY_PATH/public_html/web/storage/app/templates' &&
+             test -f '$DEPLOY_PATH/templates/default.docx' &&
+             cp '$DEPLOY_PATH/templates/default.docx' \
+                '$DEPLOY_PATH/public_html/web/storage/app/templates/default.docx'"
 
       - name: Refresh Laravel caches
         if: ${{ vars.DEPLOY_LIVE == 'true' }}
@@ -229,8 +315,14 @@ jobs:
             -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=yes \
             "$HOSTINGER_USER@$HOSTINGER_HOST" \
-            "cd '$WEB_DEPLOY_PATH' &&
+            "cd '$DEPLOY_PATH/public_html/web' &&
+             mkdir -p storage/framework/views \
+                      storage/framework/cache/data \
+                      storage/framework/sessions \
+                      storage/logs \
+                      bootstrap/cache &&
              chmod -R ug+rwX storage bootstrap/cache &&
+             rm -f bootstrap/cache/packages.php bootstrap/cache/services.php &&
              php artisan optimize:clear &&
              php artisan package:discover --ansi &&
              php artisan config:cache &&
@@ -245,12 +337,17 @@ jobs:
     needs:
       - deploy-expo
       - deploy-laravel
+    if: always()
 
     steps:
-      - name: Success
+      - name: Check deployment results
         run: |
-          if [ "${{ vars.DEPLOY_LIVE }}" = "true" ]; then
-            echo "OJTrack Expo and Laravel deployments completed successfully!"
+          if [ "${{ needs.deploy-expo.result }}" = "success" ] && \
+             [ "${{ needs.deploy-laravel.result }}" = "success" ]; then
+            echo "SUCCESS: OJTrack Expo and Laravel deployments completed!"
           else
-            echo "OJTrack deployment dry-run completed. No live files were deployed."
+            echo "FAILED: One or more deployments did not complete."
+            echo "Expo: ${{ needs.deploy-expo.result }}"
+            echo "Laravel: ${{ needs.deploy-laravel.result }}"
+            exit 1
           fi
