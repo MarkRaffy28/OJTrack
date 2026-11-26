@@ -1,0 +1,17 @@
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect old web URLs to the web subdomain
+    RewriteRule ^web/?(.*)$ https://web.ojtrack.online/$1 [R=302,L,NE]
+
+    # Serve existing files
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Expo Router fallback
+    RewriteRule ^ index.html [L]
+</IfModule>

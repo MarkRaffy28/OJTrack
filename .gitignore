@@ -2,3 +2,7 @@
 node_modules/
 staged.diff
 notes/
+
+# SSH deployment keys
+ojtrack_deploy
+ojtrack_deploy.pub

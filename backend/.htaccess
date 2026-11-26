@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # SECURITY: Block direct browser access to your .env file and other hidden files
+    RewriteRule ^\. - [F]
+
+    # Silently forward all traffic into the public/ folder
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
